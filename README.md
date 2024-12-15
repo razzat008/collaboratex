@@ -7,7 +7,7 @@ The project is based on MERN stack.
 ### Developer Guide:
 
 #### Prerequisites
- - Node
+ - **NodeJS**
 ```bash
 # Current LTS version: 22.12.0
 curl -sL https://deb.nodesource.com/setup_22.x | sudo -E bash - 
@@ -18,8 +18,20 @@ sudo apt install nodejs -y
 ```bash
 node -v
 ```
-
- - MongoDB
+---
+ - **pnpm**
+```bash
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
+```bash
+export PATH="$HOME/.local/share/pnpm:$PATH"
+```
+Verify the installation:
+```bash
+pnpm --version
+```
+---
+ - **MongoDB**
  ```bash
 curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
    sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg \
@@ -41,3 +53,4 @@ You can start the **mongod** process by issuing the following command:
 ```bash
 sudo systemctl start mongod
 ```
+---
