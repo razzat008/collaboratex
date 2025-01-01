@@ -9,8 +9,8 @@ const Navbar = () => {
           <a href="/features" className="text-gray-300 hover:text-white">Features and Benefits</a>
           <a href="/templates" className="text-gray-300 hover:text-white">Templates</a>
 
-          <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Sign Up</button>
-          <button className="bg-transparent hover:bg-gray-700 text-white px-4 py-2 rounded border border-white">Login</button>
+          <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"><a href="/login">Login</a></button>
+          <button className="bg-transparent hover:bg-gray-700 text-white px-4 py-2 rounded border border-white"><a href="/signup">Sign Up</a></button>
         </div>
       </div>
     </nav>
