@@ -14,6 +14,7 @@ function App() {
     <Router>
     <div className="App flex flex-col min-h-screen">
     <Navbar />
+    <div className="flex-grow">
     <Routes>
           <Route path="/" element={<Main />} />
           <Route path="/features" element={<Features />} />
@@ -21,7 +22,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
         </Routes>
-      
+    </div>
       <Footer />
     </div>
     </Router>
