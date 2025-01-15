@@ -1,8 +1,46 @@
-# React + Vite
+# Collaboratex Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend for this project uses **React and Vite**. This project also uses **pnpm** instead of npm.
 
-Currently, two official plugins are available:
+Steps for running the project:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Clone this project repo.
+- Change the directory to frontend.
+- Run `pnpm install`. This will install necessary packages as configured in the `package.json`.
+- Run `pnpm run dev` to start the project via vite.
+
+Also current directory structure:
+
+        .
+        ├── eslint.config.js
+        ├── index.html
+        ├── package.json
+        ├── pnpm-lock.yaml
+        ├── postcss.config.js
+        ├── public
+        │   └── vite.svg
+        ├── README.md
+        ├── src
+        │   ├── App.css
+        │   ├── App.jsx
+        │   ├── assets
+        │   │   └── react.svg
+        │   ├── components
+        │   │   ├── Footer
+        │   │   │   └── Footer.jsx
+        │   │   ├── Main
+        │   │   │   └── Main.jsx
+        │   │   └── Navbar
+        │   │       └── Navbar.jsx
+        │   ├── index.css
+        │   ├── main.jsx
+        │   └── pages
+        │       ├── Features.jsx
+        │       ├── Login.jsx
+        │       ├── Signup.jsx
+        │       └── Templates.jsx
+        ├── tailwind.config.js
+        └── vite.config.js
+
+
+            
