@@ -3,7 +3,7 @@ import User from '../model/user.js';
 import { createHash, validateHash } from '../_helpers/hashFunction.js';
 
 export const createUser = async (req, res) => { //siginup
-  const { email, username } = req.body;
+  const { name, email, username, password } = req.body;
 
   try {
     const existingUser = await User.findOne({ $or: [{ username: username }, { email: email }] });
@@ -14,7 +14,9 @@ export const createUser = async (req, res) => { //siginup
     const hashedPassword = await createHash(password, 10);
 
     const newUser = new User({
-      ...req.body,
+      name: name,
+      email: email,
+      username: username,
       password: hashedPassword
     });
 
@@ -22,7 +24,7 @@ export const createUser = async (req, res) => { //siginup
     res.status(201).json({ success: true, data: newUser });
   } catch (error) {
     console.error("Error creating user:", error);
-    res.status(500).json({ success: false, message: "Couldn't create new user." });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -63,5 +65,8 @@ export const authenticateUser = async (req, res) => { //logging in
   } catch (error) {
     console.log(error)
   }
-
 }
+
+// export const infoUser = async(req,res)=>{
+//
+// }

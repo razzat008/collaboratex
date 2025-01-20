@@ -1,26 +1,47 @@
 import { useState } from 'react';
+import axios from 'axios';
+import validateEmail from './email_validate.js';
+import { useNavigate } from 'react-router-dom';
 
 function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)*(ku\.edu\.np)$/
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Check email validity
-    if (!emailRegex.test(email)) {
+    if (validateEmail(email)) {
       setError('Please enter a valid email address ending with ku.edu.np');
       return;
     }
 
-    // Reset error and process form (this is where you'd handle form submission)
+    // Reset error and prepare data
     setError('');
-    alert('Form submitted successfully');
-    // You can add form submission logic here (e.g., sending data to the backend)
+    const userData = { name, email, password, username };
+    // console.log('Submitting data:', userData); // Debugging line
+
+    try {
+      await axios.post('http://localhost:5000/signup', userData,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      ).then(response => {
+        console.log('Response:', response); // Debugging line
+        navigate('/login')
+      })
+
+      // console.log('Response:', response); // Debugging line
+    } catch (error) {
+      // console.error('Error submitting form:', error); // Debugging line
+      setError('Error submitting form: ' + (error.response.data.message));
+    }
   };
 
   return (
@@ -42,7 +63,21 @@ function SignUp() {
               required
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-5">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-6">
             <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
               Email Address
             </label>
@@ -57,7 +92,7 @@ function SignUp() {
             />
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           </div>
-          <div className="mb-6">
+          <div className="mb-7">
             <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
               Password
             </label>
