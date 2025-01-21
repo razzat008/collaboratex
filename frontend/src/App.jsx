@@ -9,6 +9,7 @@ import Templates from "./pages/Templates";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import EditorPage from "./pages/EditorPage";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
     <Navbar />
     <Routes>
           <Route path="/" element={<Main />} />
+          <Route path="/editorpage" element={<EditorPage />} />
           <Route path="/features" element={<Features />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/login" element={<Login />} />
