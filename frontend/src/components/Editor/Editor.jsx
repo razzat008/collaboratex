@@ -1,38 +1,31 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/material.css";
-import "codemirror/mode/javascript/javascript";
+import "codemirror/mode/stex/stex";
 
-import { Controlled as ControlledEditor } from "react-codemirror2";
+import './editor.css';
+
+import { UnControlled as CodeMirror } from "react-codemirror2";
 
 export default function Editor({ displayName }) {
-  const [code, setCode] = useState(" ");
-
-  const handleChange = useCallback(
-    (editor, data, value) => {
-      setCode(value);
-    },
-    [],
-  );
 
   return (
-    <div className="editor-container p-3 bg-gray-800 shadow-md">
+    <div className="editor p-3 bg-gray-800">
       <div className="editor-title text-white mb-2">
         {displayName}
       </div>
-      <ControlledEditor
-        onBeforeChange={handleChange}
-        value={code}
-        onChange={(editor, data, value) => {
-        }}
+      <CodeMirror
         className="code-mirror-wrapper"
+        autoCursor={true}
+        autoScroll={true}
         options={{
           lineWrapping: true,
-          autoCursor: true,
-          lint: true,
-          mode: "javascript",
-          theme: "material",
+          lint: false,
+          mode: "stex",
+          theme: "default",
           lineNumbers: true,
+          smartIndent: true,
+          spellcheck: true,
         }}
       />
     </div>
