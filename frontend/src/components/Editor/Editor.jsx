@@ -1,19 +1,18 @@
 import React, { useState, useCallback } from "react";
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/material.css";
-import "codemirror/mode/xml/xml";
 import "codemirror/mode/javascript/javascript";
-import "codemirror/mode/css/css";
+
 import { Controlled as ControlledEditor } from "react-codemirror2";
 
-export default function Editor(props) {
-  const { displayName, value, onChange, language } = props;
+export default function Editor({ displayName }) {
+  const [code, setCode] = useState(" ");
 
   const handleChange = useCallback(
     (editor, data, value) => {
-      onChange(value);
+      setCode(value);
     },
-    [onChange],
+    [],
   );
 
   return (
@@ -23,12 +22,15 @@ export default function Editor(props) {
       </div>
       <ControlledEditor
         onBeforeChange={handleChange}
-        value={value}
+        value={code}
+        onChange={(editor, data, value) => {
+        }}
         className="code-mirror-wrapper"
         options={{
           lineWrapping: true,
+          autoCursor: true,
           lint: true,
-          mode: language,
+          mode: "javascript",
           theme: "material",
           lineNumbers: true,
         }}
