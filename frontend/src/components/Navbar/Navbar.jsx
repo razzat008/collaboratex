@@ -6,7 +6,7 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="text-white font-bold text-xl"><a href="/"> Collaboratex</a></div>
         <div className="flex items-center space-x-4">
-          <a href="/editor" className="text-gray-300 hover:text-white">Editor</a>
+          <a href="/editorpage" className="text-gray-300 hover:text-white">Editor</a>
           <a href="/features" className="text-gray-300 hover:text-white">Features and Benefits</a>
           <a href="/templates" className="text-gray-300 hover:text-white">Templates</a>
 
