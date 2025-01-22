@@ -8,6 +8,8 @@ import Features from "./pages/Features";
 import Templates from "./pages/Templates";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import EditorPage from "./pages/EditorPage";
 
 function App() {
   return (
@@ -17,10 +19,12 @@ function App() {
     <div className="flex-grow">
     <Routes>
           <Route path="/" element={<Main />} />
+          <Route path="/editorpage" element={<EditorPage />} />
           <Route path="/features" element={<Features />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
     </div>
       <Footer />
