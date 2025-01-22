@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 import User from '../model/user.js';
-import { createHash, validateHash } from '../_helpers/hashFunction.js';
+import { createHash, validateHash } from '../_helpers/hash_function.js';
 
-export const createUser = async (req, res) => { //siginup
+export const signup = async (req, res) => { //siginup
   const { name, email, username, password } = req.body;
 
   try {
@@ -28,7 +28,7 @@ export const createUser = async (req, res) => { //siginup
   }
 };
 
-export const authenticateUser = async (req, res) => { //logging in
+export const login = async (req, res) => { //logging in
   const { email, password } = req.body;
 
   try {
@@ -39,7 +39,7 @@ export const authenticateUser = async (req, res) => { //logging in
         .status(401)
         .json({ success: false, message: 'User does not exists!' });
     }
-    const result = await validateHash(password, existingUser.password);
+    const result = await validateHash(password, existingUser.password); //check with the password from database
     if (!result) {
       return res
         .status(401)
@@ -47,13 +47,12 @@ export const authenticateUser = async (req, res) => { //logging in
     }
     const token = jwt.sign(
       {
-        userId: existingUser._id,
         email: existingUser.email,
-        verified: existingUser.verified,
+        userId: existingUser._id,
       },
       process.env.JWT_TOKEN_SECRET,
       {
-        expiresIn: '8h',
+        expiresIn: '2h',
       }
     );
     res.cookie('Authorization', 'Bearer ' + token, { //convention
@@ -65,6 +64,11 @@ export const authenticateUser = async (req, res) => { //logging in
   } catch (error) {
     console.log(error)
   }
+}
+
+export const logout = async (req, res) => {
+  console.log(req.body);
+  res.clearCookie('Authorization').status(200).json({ sucess: true, message: 'Logged out sucessfully.' });
 }
 
 // export const infoUser = async(req,res)=>{
