@@ -1,12 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function Dashboard() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    console.log('User logged out');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await axios.post('http://localhost:5000/logout', {}, {
+        withCredentials: true, 
+      });
+      console.log('User  logged out');
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
@@ -16,7 +24,7 @@ function Dashboard() {
           Welcome to Your Dashboard
         </h1>
         <p className="text-center text-gray-600 mb-4">
-          This is a simple dashboard. You can add more features here as needed.
+		Sample Dashboard
         </p>
         <div className="flex justify-center space-x-4">
           <button

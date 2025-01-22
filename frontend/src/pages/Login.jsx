@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import validateEmail from './email_validate.js'; 
+import validateEmail from './email_validate.js';
 import { useNavigate } from 'react-router-dom';
 
 function Login() {
@@ -17,18 +17,17 @@ function Login() {
       return;
     }
 
-    // Reset error and prepare data
     setError('');
     const loginData = { email, password };
 
     try {
       const response = await axios.post('http://localhost:5000/login', loginData, {
         headers: { 'Content-Type': 'application/json' },
+        withCredentials: true,
       });
 
-      // Handle successful login
       console.log('Login successful:', response.data);
-      navigate('/dashboard'); 
+      navigate('/dashboard');
     } catch (err) {
       setError(
         err.response?.data?.message || 'Login failed. Please check your credentials.'
@@ -65,7 +64,7 @@ function Login() {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your password"
               value={password}
-              onChange={(e)=>setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
