@@ -1,4 +1,3 @@
-// import hash from 'bcryptjs';
 import bcryptjs from 'bcryptjs';
 
 export const createHash = (value, salt) => {
