@@ -268,13 +268,13 @@ const ProjectDashboard = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [data, setData] = useState([
-    { 
-      title: 'collaboratex', 
-      owner: 'Suraj Thapa', 
-      lastModified: 'a month ago by Dragon Law',
-      id: 1 
-    },
-    // ... other data
+    // { 
+    //   title: 'collaboratex', 
+    //   owner: 'Suraj Thapa', 
+    //   lastModified: 'a month ago by Dragon Law',
+    //   id: 1 
+    // },
+    // // ... other data
   ]);
 
   const handleCreateProject = (projectData) => {
@@ -299,6 +299,30 @@ const ProjectDashboard = () => {
     }
   };
 
+  const handleDeleteProject = (projectId) => {
+    setData(data.filter(project => project.id !== projectId));
+  };
+
+  const handleCopyProject = (project) => {
+    console.log('Copy project:', project);
+    // Implement copy functionality here
+  };
+
+  const handleDownloadProject = (project) => {
+    console.log('Download project:', project);
+    // Implement download functionality here
+  };
+
+  const handleArchiveProject = (project) => {
+    console.log('Archive project:', project);
+    // Implement archive functionality here
+  };
+
+  const handleMoreOptions = (project) => {
+    console.log('More options for project:', project);
+    // Implement more options functionality here
+  };
+
   const columns = useMemo(
     () => [
       { header: 'Title', accessorKey: 'title' },
@@ -309,19 +333,19 @@ const ProjectDashboard = () => {
         accessorKey: 'actions', 
         cell: ({ row }) => (
           <div className="flex space-x-2">
-            <button className="text-blue-500 hover:text-blue-700" onClick={() => console.log('Copy', row.original)}>
+            <button className="text-blue-500 hover:text-blue-700" onClick={() => handleCopyProject(row.original)}>
               <Copy className="w-5 h-5" />
             </button>
-            <button className="text-green-500 hover:text-green-700" onClick={() => console.log('Download', row.original)}>
+            <button className="text-green-500 hover:text-green-700" onClick={() => handleDownloadProject(row.original)}>
               <Download className="w-5 h-5" />
             </button>
-            <button className="text-yellow-500 hover:text-yellow-700" onClick={() => console.log('Archive', row.original)}>
+            <button className="text-yellow-500 hover:text-yellow-700" onClick={() => handleArchiveProject(row.original)}>
               <Archive className="w-5 h-5" />
             </button>
-            <button className="text-red-500 hover:text-red-700" onClick={() => console.log('Delete', row.original)}>
+            <button className="text-red-500 hover:text-red-700" onClick={() => handleDeleteProject(row.original.id)}>
               <Trash2 className="w-5 h-5" />
             </button>
-            <button className="text-gray-500 hover:text-gray-700" onClick={() => console.log('More', row.original)}>
+            <button className="text-gray-500 hover:text-gray-700" onClick={() => handleMoreOptions(row.original)}>
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
