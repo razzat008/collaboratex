@@ -1,51 +1,4 @@
-<<<<<<< HEAD
-# Collaboratex Frontend
 
-The frontend for this project uses **React and Vite**. This project also uses **pnpm** instead of npm.
-
-Steps for running the project:
-
-- Clone this project repo.
-- Change the directory to frontend.
-- Run `pnpm install`. This will install necessary packages as configured in the `package.json`.
-- Run `pnpm run dev` to start the project via vite.
-
-Also current directory structure:
-
-        .
-        ├── eslint.config.js
-        ├── index.html
-        ├── package.json
-        ├── pnpm-lock.yaml
-        ├── postcss.config.js
-        ├── public
-        │   └── vite.svg
-        ├── README.md
-        ├── src
-        │   ├── App.css
-        │   ├── App.jsx
-        │   ├── assets
-        │   │   └── react.svg
-        │   ├── components
-        │   │   ├── Footer
-        │   │   │   └── Footer.jsx
-        │   │   ├── Main
-        │   │   │   └── Main.jsx
-        │   │   └── Navbar
-        │   │       └── Navbar.jsx
-        │   ├── index.css
-        │   ├── main.jsx
-        │   └── pages
-        │       ├── Features.jsx
-        │       ├── Login.jsx
-        │       ├── Signup.jsx
-        │       └── Templates.jsx
-        ├── tailwind.config.js
-        └── vite.config.js
-
-
-            
-=======
 # Collaboratex
 
 Collaboratex is a collaborative LaTeX editor designed for Kathmandu University (KU). The platform addresses the limitations of existing online LaTeX editors, such as no. of user restrictions and inadequate support for collaborative workflows.
@@ -102,4 +55,68 @@ You can start the **mongod** process by issuing the following command:
 sudo systemctl start mongod
 ```
 ---
->>>>>>> origin/master
+
+## Project Overview
+### Frontend
+
+The frontend for this project uses **React and Vite**.
+
+Steps for running the project:
+
+- Clone this project repo.
+```bash
+cd frontend
+npm i
+npm run dev
+```
+
+Also current directory structure:
+
+        .
+        ├── eslint.config.js
+        ├── index.html
+        ├── package.json
+        ├── postcss.config.js
+        ├── public/
+        ├── README.md
+        ├── src
+        │   ├── App.css
+        │   ├── App.jsx
+        │   ├── assets
+        │   │   └── react.svg
+        │   ├── components
+        │   │   ├── Main/
+        │   │   └── ..
+        │   ├── index.css
+        │   ├── main.jsx
+        │   └── pages/
+        │       └── ..
+        ├── tailwind.config.js
+        └── vite.config.js
+
+
+### Backend
+
+```bash
+cd backend
+pnpm i
+pnpm nodemon server.js
+```
+
+        ├── config/  
+        │   └── db.js  
+        │   └── db.js  
+        ├── controllers  
+        │   └── user_controller.js  
+        ├──\_helpers  
+        │   └── hash_function.js  
+        ├── middlewares  
+        │   └── auth_middleware.js  
+        ├── model  
+        │   └── user.js  
+        ├── node_modules/  
+        ├── package.json  
+        ├── pnpm-lock.yaml  
+        ├── routes  
+        │   └── user_routes.js  
+        └── server.js  
