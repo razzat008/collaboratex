@@ -27,6 +27,8 @@ function Login() {
       });
 
       console.log('Login successful:', response.data);
+
+      localStorage.setItem("isAuthenticated", "true");
       navigate('/dashboard');
     } catch (err) {
       setError(
