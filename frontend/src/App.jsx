@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import EditorPage from "./pages/EditorPage";
+import { Edit } from "lucide-react";
 
 function App() {
   return (
@@ -18,13 +19,19 @@ function App() {
     <Navbar />
     <div className="flex-grow">
     <Routes>
-          <Route path="/" element={<Main />} />
-          <Route path="/editorpage" element={<EditorPage />} />
+          <Route path="/" element={<Navigate to="/login" />} />
+          
+          <Route path="/editorpage" element={<PrivateRoute><EditorPage /></PrivateRoute>} /> {/*makind dashboard and editorpage private*/}
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+
           <Route path="/features" element={<Features />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+
+          {/*catching all the route to redirect unknown routes to login */}
+          <Route path="*" element={<Navigate to="/login" />} />
+
         </Routes>
     </div>
       <Footer />
