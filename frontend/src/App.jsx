@@ -21,7 +21,7 @@ function App() {
         <div className="flex-grow">
           <Routes>
             <Route path="/" element={<Navigate to="/login" />} />
-            
+            <Route path="/" element={<Navigate to="/login" />} />
             <Route path="/editorpage" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
 
