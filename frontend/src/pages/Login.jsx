@@ -22,7 +22,7 @@ function Login() {
 
     try {
       const response = await axios.post('http://localhost:5000/login', loginData, {
-        headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
         withCredentials: true,
       });
 
