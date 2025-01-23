@@ -12,7 +12,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (validateEmail(email)) {
+    if (!validateEmail(email)) {
       setError('Please enter a valid email address ending with ku.edu.np');
       return;
     }
