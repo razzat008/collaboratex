@@ -6,10 +6,10 @@ import Main from "./components/Main/Main";
 
 import Features from "./pages/Features";
 import Templates from "./pages/Templates";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Login from "./pages/Login/Login";
+import Signup from "./pages/Login/Signup";
 import Dashboard from "./pages/Dashboard";
-import EditorPage from "./pages/EditorPage";
+import EditorPage from "./pages/EditorPage/EditorPage";
 
 function App() {
   return (
