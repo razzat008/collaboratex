@@ -66,8 +66,8 @@ Steps for running the project:
 - Clone this project repo.
 ```bash
 cd frontend
-npm i
-npm run dev
+pnpm i
+pnpm run dev
 ```
 
 Also current directory structure:
