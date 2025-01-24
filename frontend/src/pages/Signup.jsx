@@ -40,7 +40,7 @@ function SignUp() {
       // console.log('Response:', response); // Debugging line
     } catch (error) {
       // console.error('Error submitting form:', error); // Debugging line
-      setError('Error submitting form: ' + (error.response.data.message));
+      setError('Error submitting form: ' + (error.response.data));
     }
   };
 
