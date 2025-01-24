@@ -14,10 +14,9 @@ import EditorPage from "./pages/EditorPage";
 function App() {
   return (
     <Router>
-    <div className="App flex flex-col min-h-screen">
-    <Navbar />
-    <div className="flex-grow">
-    <Routes>
+      <div className="App flex flex-col min-h-screen h-screen">
+        <Navbar />
+        <Routes>
           <Route path="/" element={<Main />} />
           <Route path="/editorpage" element={<EditorPage />} />
           <Route path="/features" element={<Features />} />
@@ -26,9 +25,8 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
-    </div>
-      <Footer />
-    </div>
+        <Footer />
+      </div>
     </Router>
   )
 }
