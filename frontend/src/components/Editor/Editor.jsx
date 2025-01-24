@@ -10,10 +10,11 @@ import { UnControlled as CodeMirror } from "react-codemirror2";
 export default function Editor({ displayName }) {
 
   return (
-    <div className="editor p-3 bg-gray-800">
-      <div className="editor-title text-white mb-2">
+    <div className="editor h-full p-2 bg-gray-800">
+      <div className="editor-title text-white mb-2.5">
         {displayName}
       </div>
+      <div>
       <CodeMirror
         className="code-mirror-wrapper"
         autoCursor={true}
@@ -28,6 +29,7 @@ export default function Editor({ displayName }) {
           spellcheck: true,
         }}
       />
+      </div>
     </div>
   );
 }
