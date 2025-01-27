@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Copy, Download, Archive, Trash2, MoreHorizontal, X, Github } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 
+import { useAuth } from '../context/AuthContext';
+
 // Generic Modal Component with different forms based on type
 const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
   const [formData, setFormData] = useState({
@@ -265,6 +267,7 @@ const NewProjectDropdown = ({ isOpen, setIsOpen, onSelectOption }) => {
 };
 
 const ProjectDashboard = () => {
+  const { isAuthenticated, token } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [data, setData] = useState([
@@ -362,7 +365,7 @@ const ProjectDashboard = () => {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-6 h-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-700">All Projects</h1>
         <div className="relative">
