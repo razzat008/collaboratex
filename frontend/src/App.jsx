@@ -11,23 +11,27 @@ import Signup from "./pages/Login/Signup";
 import Dashboard from "./pages/Dashboard";
 import EditorPage from "./pages/EditorPage/EditorPage";
 
+import { AuthProvider } from "./context/AuthContext";
+
 function App() {
   return (
-    <Router>
-      <div className="App flex flex-col min-h-screen h-screen">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Main />} />
-          <Route path="/editorpage" element={<EditorPage />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/templates" element={<Templates />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-        <Footer />
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="App flex flex-col min-h-screen h-screen">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Main />} />
+            <Route path="/editorpage" element={<EditorPage />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/templates" element={<Templates />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Routes>
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
   )
 }
 
