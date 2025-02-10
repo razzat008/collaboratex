@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Main() {
   return (
     <main className="flex-grow container mx-auto mt-12 p-8">
@@ -48,12 +50,19 @@ function Main() {
           Dive into the world of LaTeX with Collaboratex today. Experience the power of professional document creation and real-time collaboration. Whether you're drafting a research paper or collaborating on a project, Collaboratex will streamline your workflow and make the process smooth and efficient.
         </p>
         <div className="flex justify-center space-x-8">
+
+          <Link to="/login">
           <button className="bg-blue-600 text-white py-3 px-8 rounded-lg text-xl shadow-lg transform transition duration-300 hover:bg-blue-700 hover:scale-105 focus:outline-none">
-            Start Writing Now
+          Start Writing Now
           </button>
-          <button className="bg-transparent bg-blue-950 text-white border-2 border-blue-950 py-3 px-8 rounded-lg text-xl shadow-lg transform transition duration-300 hover:bg-blue-950 hover:text-white hover:scale-105 focus:outline-none">
-            Explore Features
+          </Link>
+          
+          <Link to="/features">
+          <button className="bg-blue-950 text-white border-2 border-blue-950 py-3 px-8 rounded-lg text-xl shadow-lg transform transition duration-300 hover:bg-blue-950 hover:text-white hover:scale-105 focus:outline-none">
+          Explore Features
           </button>
+          </Link>
+            
         </div>
       </section>
     </main>
