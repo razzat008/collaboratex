@@ -1,17 +1,33 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-const Navbar = () => {
+function Navbar() {
 
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, username, profilePic, checkAuth } = useAuth();
+  const navigate = useNavigate(); 
+
+  const handleLogout = () => {
+    // Clear the Authorization cookie by setting an expired date
+    document.cookie = "Authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // Re-run authentication check
+    checkAuth();
+    navigate('/');
+  };
 
   return (
     <nav className="bg-gray-800 p-4">
       <div className="container mx-auto flex justify-between items-center">
         <div className="text-white font-bold text-xl"><a href="/"> Collaboratex</a></div>
         <div className="flex items-center space-x-4">
-          <a href="/features" className="text-gray-300 hover:text-white">Features and Benefits</a>
+
+          {!isAuthenticated ? (
+            <a href="/features" className="text-gray-300 hover:text-white">Features and Benefits</a>
+          ) : null}
+
+          
           <a href="/templates" className="text-gray-300 hover:text-white">Templates</a>
 
           {isAuthenticated ? (
@@ -24,9 +40,18 @@ const Navbar = () => {
 
 
           {isAuthenticated ? (
-            <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+            <div className="flex items-center space-x-3">
+            <img
+              src="src/assets/avataaars.png"
+              alt="Profile"
+              className="w-10 h-11"
+            />
+              <span className="text-gray-300 hover:text-white">{username}</span>
+          
+            <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded" onClick={handleLogout}>
               Sign Out
-            </button>
+              </button>
+              </div>
           ) : (
             <>
               <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2">
@@ -41,6 +66,6 @@ const Navbar = () => {
       </div>
     </nav>
   );
-};
+}
 
 export default Navbar;
