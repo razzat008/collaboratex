@@ -2,12 +2,14 @@ import { useState } from 'react';
 import axios from 'axios';
 import validateEmail from './email_validate.js';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { checkAuth } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +29,7 @@ function Login() {
       });
 
       console.log('Login successful:', response.data);
+      checkAuth();
       navigate('/dashboard');
     } catch (err) {
       setError(
@@ -36,7 +39,7 @@ function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center h-full bg-gray-100">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
         <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Log In</h2>
         <form onSubmit={handleSubmit}>
