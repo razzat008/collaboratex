@@ -58,7 +58,7 @@ function Main() {
           </Link>
           
           <Link to="/features">
-          <button className="bg-blue-950 text-white border-2 border-blue-950 py-3 px-8 rounded-lg text-xl shadow-lg transform transition duration-300 hover:bg-blue-950 hover:text-white hover:scale-105 focus:outline-none">
+          <button className="bg-blue-950 text-white py-3 px-8 rounded-lg text-xl shadow-lg transform transition duration-300 hover:bg-blue-950 hover:text-white hover:scale-105 focus:outline-none">
           Explore Features
           </button>
           </Link>
