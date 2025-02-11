@@ -1,12 +1,15 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function Navbar() {
 
 
   const { isAuthenticated, username, profilePic, checkAuth } = useAuth();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // if(location.pathname === "/editorpage") return null;
 
   const handleLogout = () => {
     // Clear the Authorization cookie by setting an expired date
