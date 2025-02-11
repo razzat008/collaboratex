@@ -2,8 +2,8 @@ import React from "react";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
-import Main from "./components/Main/Main";
 
+import Main from "./pages/Main/Main";
 import NotFound from "./pages/NotFound";
 import Features from "./pages/Features";
 import Templates from "./pages/Templates";
