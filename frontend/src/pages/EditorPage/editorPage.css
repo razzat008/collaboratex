@@ -1,3 +1,20 @@
+.editorPage{
+  height: 100vh;
+}
+.topBar{
+  height: 6vh;  
+  align-items: center;
+}
+.paneContainer{
+  height: calc(100vh - 6vh);
+}
+
+.file-sidebar {
+  background-color: #f4f4f4;
+  height: 100%;
+  overflow-y: auto;
+}
+
 .Resizer {
   background: #000;
   opacity: 0.2;

@@ -9,7 +9,7 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // if(location.pathname === "/editorpage") return null;
+  if(location.pathname === "/editorpage") return null;
 
   const handleLogout = () => {
     // Clear the Authorization cookie by setting an expired date
