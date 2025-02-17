@@ -4,9 +4,15 @@ import FileSidebar from "../../components/FileSidebar/FileSidebar";
 import SplitPane from "react-split-pane";
 import './editorPage.css';
 import { Home } from 'lucide-react'
+import { useNavigate } from "react-router-dom"
 
 
 export default function EditorPage() {
+  const navigate = useNavigate();
+  const gotoHome = () => {
+    navigate("/dashboard");
+  };
+
   const [currentFile, setCurrentFile] = useState("main.tex");
   const [files, setFiles] = useState([
     { name: "main.tex" },
@@ -17,11 +23,11 @@ export default function EditorPage() {
   return (
     <div className="editorPage h-screen bg-white-700">
       <div className="topBar text-white bg-gray-900 flex justify-center">
-        <div className="flex mx-5 items-center">
+        <button className="flex mx-5 items-center" onClick={gotoHome} >
           <Home className="" size={20} />
           <h6 className="px-1">Home</h6>
-        </div>
-        <button className="bg-green-700 rounded text-sm mr-10 p-1 px-2">Compile</button>
+        </button>
+        <button className="bg-green-700 rounded text-sm p-1 px-2">Compile</button>
 
         </div>
       
