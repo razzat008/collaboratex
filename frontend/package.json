@@ -10,12 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-pdf-viewer/core": "^3.12.0",
+    "@react-pdf-viewer/default-layout": "^3.12.0",
     "@tanstack/react-table": "^8.20.6",
     "axios": "^1.7.9",
     "codemirror": "^5.65.18",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.469.0",
     "next.js": "^1.0.3",
+    "pdfjs-dist": "^4.10.38",
     "react": "^18.3.1",
     "react-codemirror2": "^8.0.0",
     "react-dom": "^18.3.1",
