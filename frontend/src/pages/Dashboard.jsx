@@ -12,10 +12,30 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
     file: null
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (type === "upload" && formData.file) {
+      const fileData = new FormData();
+      fileData.append("file", formData.file);
+
+      try {
+        const response = await fetch("http://localhost:5000/upload/upload", {
+          method: "POST",
+          body: fileData,
+        });
+
+        if (!response.ok) throw new Error("Failed to upload file");
+
+        alert("File uploaded successfully!");
+      } catch (error) {
+        console.error("Upload error:", error);
+        alert("File upload failed.");
+      }
+    }
+
     onSubmit({ type, ...formData });
-    setFormData({ projectName: '', githubUrl: '', file: null });
+    setFormData({ projectName: "", githubUrl: "", file: null });
     onClose();
   };
 
@@ -179,7 +199,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
 // Updated NewProjectDropdown component
 const NewProjectDropdown = ({ isOpen, setIsOpen, onSelectOption }) => {
   const dropdownRef = useRef(null);
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -213,7 +233,7 @@ const NewProjectDropdown = ({ isOpen, setIsOpen, onSelectOption }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       ref={dropdownRef}
       className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg z-50 border border-gray-200"
     >
@@ -288,7 +308,7 @@ const ProjectDashboard = () => {
       lastModified: 'Just now by You'
     };
     setData([newProject, ...data]);
-    
+
     // Handle different project types
     switch (projectData.type) {
       case 'github':
@@ -331,9 +351,9 @@ const ProjectDashboard = () => {
       { header: 'Title', accessorKey: 'title' },
       { header: 'Owner', accessorKey: 'owner' },
       { header: 'Last Modified', accessorKey: 'lastModified' },
-      { 
-        header: 'Actions', 
-        accessorKey: 'actions', 
+      {
+        header: 'Actions',
+        accessorKey: 'actions',
         cell: ({ row }) => (
           <div className="flex space-x-2">
             <button className="text-blue-500 hover:text-blue-700" onClick={() => handleCopyProject(row.original)}>
@@ -352,7 +372,7 @@ const ProjectDashboard = () => {
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
-        ) 
+        )
       },
     ],
     []
@@ -375,7 +395,7 @@ const ProjectDashboard = () => {
           >
             New Project
           </button>
-          <NewProjectDropdown 
+          <NewProjectDropdown
             isOpen={isDropdownOpen}
             setIsOpen={setIsDropdownOpen}
             onSelectOption={(type) => setModalType(type)}
