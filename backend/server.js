@@ -6,6 +6,8 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import userRoutes from './routes/user_routes.js';
+import templateRoutes from './routes/template_routes.js';
+import uploadRoutes from './routes/upload.js';
 
 dotenv.config();
 
@@ -20,6 +22,8 @@ app.use(cors({
 }));
 
 app.use("/", userRoutes);
+app.use("/api/templates", templateRoutes); // routes for fetching templates
+app.use("/api/templates", uploadRoutes); // routes for fetching templates
 
 const server = http.createServer(app);
 const io = new Server(server, {
