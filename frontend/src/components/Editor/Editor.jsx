@@ -13,8 +13,8 @@ export default function Editor({ displayName }) {
   useSocket();
 
   return (
-    <div className="editor h-full p-2 bg-gray-800">
-      <div className="editor-title text-white mb-2.5">
+    <div className="editor h-full p-2 bg-gray-600">
+      <div className="editor-title text-white mb-3 pl-2">
         {displayName}
       </div>
       <div>

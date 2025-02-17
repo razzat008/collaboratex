@@ -2,10 +2,12 @@ import { useState } from 'react';
 import axios from 'axios';
 import validateEmail from './email_validate.js';
 import { useNavigate } from 'react-router-dom';
+import { Mail, Lock, User, UserCircle, Eye, EyeOff } from "lucide-react";
 
 function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
@@ -53,58 +55,77 @@ function SignUp() {
             <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
               Full Name
             </label>
+            <div className='relative mt-4'>
+            <User className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
               type="text"
               id="name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your full name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-            />
+              />
+            </div>
           </div>
           <div className="mb-5">
             <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
               Username
             </label>
+            <div className='relative mt-4'>
+              <UserCircle className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
               type="text"
               id="username"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-            />
+              />
+              </div>
           </div>
           <div className="mb-6">
             <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
               Email Address
             </label>
+            <div className="relative mt-4">
+              <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
               type="email"
               id="email"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+            </div>
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           </div>
           <div className="mb-7">
             <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
               Password
             </label>
+            <div className="relative mt-4">
+              <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-10 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-            />
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
           <button
             type="submit"

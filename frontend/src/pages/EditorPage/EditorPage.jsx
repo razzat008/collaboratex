@@ -8,16 +8,12 @@ export default function EditorPage() {
     <div className="editorPage h-full bg-white-700">
       <SplitPane
         className="h-full"
-        style={{ height: "83%" }}
         split="vertical"
         defaultSize={"55%"}
         minSize={55}
         pane1Style={{
           marginRight: 5,
           paddingRight: 0,
-          paddingLeft: 13,
-          paddingTop: 13,
-          paddingBottom: 13
         }}
         pane2Style={{
           "margin-left": 5,
