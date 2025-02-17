@@ -20,7 +20,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
       fileData.append("file", formData.file);
 
       try {
-        const response = await fetch("http://localhost:5000/upload/upload", {
+        const response = await fetch("http://localhost:5000/api/templates/upload", {
           method: "POST",
           body: fileData,
         });
