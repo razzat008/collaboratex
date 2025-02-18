@@ -5,6 +5,7 @@ import SplitPane from "react-split-pane";
 import './editorPage.css';
 import { Home } from 'lucide-react'
 import { useNavigate } from "react-router-dom"
+import PDFViewer from "../../components/PDFViewer/PDFViewer";
 
 
 export default function EditorPage() {
@@ -57,13 +58,7 @@ export default function EditorPage() {
           >
             <Editor/>
             <div className="pdf-placeholder">
-              <object
-                data="/sample1.pdf"
-                type="application/pdf"
-                width="100%"
-                height="1000px"
-              >
-              </object>
+              <PDFViewer filePath="/sample1.pdf" />
             </div>
           </SplitPane>
         </SplitPane>
