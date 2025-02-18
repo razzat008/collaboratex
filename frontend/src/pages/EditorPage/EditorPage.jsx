@@ -44,7 +44,6 @@ export default function EditorPage() {
             display: "flex",
           }}
           allowResize={false}
-          step={5}
         >
           <FileSidebar files={files} setCurrentFile={setCurrentFile} />
           <SplitPane
@@ -55,11 +54,11 @@ export default function EditorPage() {
             // maxSize={1050}
             pane1Style={{}}
             pane2Style={{}}
+            step={5}
           >
-            <Editor/>
-            <div className="pdf-placeholder">
-              <PDFViewer filePath="/sample1.pdf" />
-            </div>
+            <Editor />
+            <PDFViewer filePath="/sample1.pdf" />
+            
           </SplitPane>
         </SplitPane>
       </div>
