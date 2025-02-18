@@ -53,14 +53,17 @@ export default function EditorPage() {
             minSize={500}
             // maxSize={1050}
             pane1Style={{}}
-            pane2Style={{
-              padding: "10px",
-            }}
+            pane2Style={{}}
           >
             <Editor/>
             <div className="pdf-placeholder">
-              <h1>PDF Renderer Placeholder</h1>
-              {/* Integrate PDF rendering logic here */}
+              <object
+                data="/sample1.pdf"
+                type="application/pdf"
+                width="100%"
+                height="1000px"
+              >
+              </object>
             </div>
           </SplitPane>
         </SplitPane>
