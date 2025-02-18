@@ -17,42 +17,6 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // if (type === "upload" && formData.file) {
-    //   const fileData = new FormData();
-    //   fileData.append("file", formData.file);
-    //
-    //
-    //   try {
-    //     const response = await axios.post("http://localhost:5000/api/templates/", fileData, {
-    //       withCredentials: true,
-    //     });
-    //
-    //     try {
-    //       const response = await axios.post("http://localhost:5000/api/projects/createProject", {
-    //         userName: username,
-    //         projectName: formData.projectName,
-    //         createdAt: Date.now(),
-    //       }, {
-    //         withCredentials: true,
-    //         headers: {
-    //           "Content-Type": "application/json",
-    //         },
-    //       });
-    //
-    //       alert("Project created successfully!");
-    //       console.log("Project created successfully!");
-    //     } catch (error) {
-    //       console.error("Project creation error:", error);
-    //       alert("Failed to create project.");
-    //     }
-    //
-    //     alert("File uploaded successfully!");
-    //   } catch (error) {
-    //     console.error("Upload error:", error);
-    //     alert("File upload failed.");
-    //   }
-    // }
     if (type === "upload" && formData.file) {
       const fileData = new FormData();
       fileData.append("file", formData.file);
