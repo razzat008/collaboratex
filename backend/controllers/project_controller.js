@@ -22,3 +22,13 @@ export const createProject = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 }
+
+export const deleteProject = async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    const project = await Project.findByIdAndDelete(projectId);
+    res.status(201).json({ sucess: true, message: "Deleted project sucessfully." });
+  } catch (error) {
+    res.status(500).json({ error: "Couldn't delete the project" });
+  }
+}
