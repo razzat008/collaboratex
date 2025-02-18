@@ -14,3 +14,19 @@ export const fetchFilesInDirectory = async (directoryPath) => {
     throw error; // Rethrow the error for handling in the calling function
   }
 };
+
+
+export const fetchFileContent = async (projectId, fileName) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/getfilecontent/${projectId}/${fileName}`, {
+      headers: { 'Content-Type': 'application/json' },
+      withCredentials: true, // Include credentials if needed
+    });
+
+    // Return the content from the response
+    return response.data.content; // Adjust based on your API response structure
+  } catch (error) {
+    console.error("Error fetching file content:", error);
+    throw new Error('Failed to fetch file content'); // Rethrow the error for handling in the calling function
+  }
+};

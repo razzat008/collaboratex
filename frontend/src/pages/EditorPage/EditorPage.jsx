@@ -7,6 +7,8 @@ import './editorPage.css';
 import { Home } from 'lucide-react';
 import PDFViewer from "../../components/PDFViewer/PDFViewer";
 import { fetchFilesInDirectory } from '../../api/fileHelper'; // Adjust the import path
+import { fetchFileContent } from '../../api/fileHelper'; // Import the function to fetch file content
+import { compileLatex } from '../../api/compile'; // Import the function to fetch file content
 
 export default function EditorPage() {
   const { projectId } = useParams(); // Get the project ID from the URL
@@ -17,14 +19,13 @@ export default function EditorPage() {
 
   const [currentFile, setCurrentFile] = useState("main.tex");
   const [files, setFiles] = useState([]);
+  const [fileContent, setFileContent] = useState(""); // State to hold the content of the current file
 
   useEffect(() => {
     const loadFiles = async () => {
       try {
-        // Construct the directory path on the backend
         const directoryPath = `tmp/${projectId}`; // Adjust this path as needed
         const filesList = await fetchFilesInDirectory(directoryPath); // Call the API with the directory path
-        // console.log("Files List:", filesList); // Log the files list
         setFiles(filesList.map(file => ({ name: file }))); // Map to the expected format
       } catch (error) {
         console.error("Failed to load files:", error);
@@ -34,6 +35,42 @@ export default function EditorPage() {
 
     loadFiles();
   }, [projectId]); // Add projectId as a dependency
+
+  useEffect(() => {
+    const loadFileContent = async () => {
+      if (currentFile) {
+        try {
+          console.log("Fetching content for:", currentFile); // Log the current file being fetched
+          const content = await fetchFileContent(projectId, currentFile); // Fetch the content of the selected file
+          setFileContent(content); // Set the content in state
+        } catch (error) {
+          console.error("Failed to load file content:", error);
+          setFileContent(""); // Reset content in case of error
+        }
+      }
+    };
+
+    loadFileContent();
+  }, [currentFile, projectId]); // Fetch content whenever currentFile changes
+  // const handleCompile = async () => {
+  //
+  //   try {
+  //
+  //     const result = await compileLatex(projectId); // Call the compile function
+  //
+  //     console.log("PDF generated successfully:", result);
+  //
+  //     // You can handle the result here, e.g., show a success message or open the PDF
+  //
+  //   } catch (error) {
+  //
+  //     console.error("Compilation failed:", error);
+  //
+  //     // Handle the error (e.g., show an error message to the user)
+  //
+  //   }
+  //
+  // };
 
   return (
     <div className="editorPage h-screen bg-white-700">
@@ -68,7 +105,7 @@ export default function EditorPage() {
             pane2Style={{}}
             step={5}
           >
-            <Editor />
+            <Editor value={fileContent} /> {/* Pass the file content to the Editor */}
             <PDFViewer filePath="/sample1.pdf" />
           </SplitPane>
         </SplitPane>
