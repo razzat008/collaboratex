@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Copy, Download, Archive, Trash2, MoreHorizontal, X, Github } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 
-import { useAuth } from '../context/AuthContext';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 // Generic Modal Component with different forms based on type
 const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
+  const { username } = useAuth();
   const [formData, setFormData] = useState({
     projectName: '',
     githubUrl: '',
@@ -19,13 +21,29 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
       const fileData = new FormData();
       fileData.append("file", formData.file);
 
+
       try {
-        const response = await fetch("http://localhost:5000/api/templates/upload", {
-          method: "POST",
-          body: fileData,
+        const response = await axios.post("http://localhost:5000/api/templates/", fileData, {
+          withCredentials: true,
         });
 
-        if (!response.ok) throw new Error("Failed to upload file");
+        try {
+          const response = await axios.post("http://localhost:5000/api/projects/", {
+            userName: username,
+            projectName: formData.projectName,
+            createdAt: Date.now(),
+          }, {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          alert("Project created successfully!");
+        } catch (error) {
+          console.error("Project creation error:", error);
+          alert("Failed to create project.");
+        }
 
         alert("File uploaded successfully!");
       } catch (error) {
