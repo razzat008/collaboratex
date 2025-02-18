@@ -12,7 +12,19 @@ const useSocket = () => {
     };
   }, []);
 
-  return socket;
+  const joinRoom = (roomId) => {
+    socket.emit("join-room", roomId);
+  };
+
+  const sendCursorPosition = (roomId, cursorPosition) => {
+    socket.emit("cursor-position", { roomId, cursorPosition });
+  };
+
+  const onCursorPosition = (callback) => {
+    socket.on("cursor-position", callback);
+  };
+
+  return { socket, joinRoom, sendCursorPosition, onCursorPosition };
 };
 
 export default useSocket;
