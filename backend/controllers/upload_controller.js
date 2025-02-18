@@ -5,6 +5,7 @@ import fs from 'fs/promises'; // Use promises for async operations
 import AdmZip from 'adm-zip';
 import { fileURLToPath } from 'url'; // Import fileURLToPath
 import { dirname } from 'path'; // Import dirname
+import Project from '../model/project.js';
 
 const router = express.Router();
 
@@ -46,27 +47,41 @@ const upload = multer({
   },
 });
 
-// API endpoint to handle ZIP file upload
+// API endpoint to handle ZIP file upload and project creation
 router.post('/', upload.single('file'), async (req, res) => {
+  const { projectName, userName } = req.body; // Get project name and user name from the request body
+
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
   try {
-    const zipPath = req.file.path;
-    const extractPath = path.join(tmpDir, path.basename(zipPath, '.zip'));
+    // Create a new project entry in the database
+    const newProject = new Project({
+      userName,
+      projectName,
+      createdAt: Date.now(),
+    });
 
-    // Extract ZIP file
+    const savedProject = await newProject.save(); // Save the project to the database
+    const projectId = savedProject._id; // Get the generated project ID
+
+    // Create a directory for the project using the project ID
+    const projectDir = path.join(tmpDir, projectId.toString());
+    await fs.mkdir(projectDir, { recursive: true });
+
+    // Extract ZIP file to the project directory
+    const zipPath = req.file.path;
     const zip = new AdmZip(zipPath);
-    zip.extractAllTo(extractPath, true);
+    zip.extractAllTo(projectDir, true);
 
     // Delete the uploaded ZIP file after extraction
     await fs.unlink(zipPath);
 
-    res.json({ message: 'File uploaded and extracted', path: extractPath });
+    res.json({ message: 'File uploaded and extracted', path: projectDir });
   } catch (error) {
-    console.error('Error extracting ZIP:', error);
-    res.status(500).json({ error: 'Failed to extract ZIP' });
+    console.error('Error processing upload:', error);
+    res.status(500).json({ error: 'Failed to process upload' });
   }
 });
 
