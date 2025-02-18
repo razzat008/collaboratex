@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Copy, Download, Archive, Trash2, MoreHorizontal, X, Github } from 'lucide-react';
+import { Copy, Download, Archive, Trash2, MoreHorizontal, X, Github, Edit } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 
 import { AuthProvider, useAuth } from '../context/AuthContext';
@@ -28,7 +28,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
         });
 
         try {
-          const response = await axios.post("http://localhost:5000/api/projects/", {
+          const response = await axios.post("http://localhost:5000/api/projects/createProject", {
             userName: username,
             projectName: formData.projectName,
             createdAt: Date.now(),
@@ -40,6 +40,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
           });
 
           alert("Project created successfully!");
+          console.log("Project created successfully!");
         } catch (error) {
           console.error("Project creation error:", error);
           alert("Failed to create project.");
@@ -230,22 +231,22 @@ const NewProjectDropdown = ({ isOpen, setIsOpen, onSelectOption }) => {
   }, [setIsOpen]);
 
   const projectOptions = [
-    { name: 'Blank Project', type: 'blank' },
-    { name: 'Example Project', type: 'example' },
+    // { name: 'Blank Project', type: 'blank' },
+    // { name: 'Example Project', type: 'example' },
     { name: 'Upload Project', type: 'upload' },
-    { name: 'Import from GitHub', type: 'github' }
+    // { name: 'Import from GitHub', type: 'github' }
   ];
 
   const templateOptions = [
-    'Journal articles',
-    'Books',
-    'Formal letters',
-    'Assignments',
-    'Posters',
-    'Presentations',
-    'Reports',
-    'CVs and résumés',
-    'Theses'
+    //   'Journal articles',
+    //   'Books',
+    //   'Formal letters',
+    //   'Assignments',
+    //   'Posters',
+    //   'Presentations',
+    //   'Reports',
+    //   'CVs and résumés',
+    //   'Theses'
   ];
 
   if (!isOpen) return null;
@@ -308,15 +309,26 @@ const ProjectDashboard = () => {
   const { isAuthenticated, token } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
-  const [data, setData] = useState([
-    // { 
-    //   title: 'collaboratex', 
-    //   owner: 'Suraj Thapa', 
-    //   lastModified: 'a month ago by Dragon Law',
-    //   id: 1 
-    // },
-    // // ... other data
-  ]);
+  const [data, setData] = useState('');
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/projects/findProject", {
+          withCredentials: true,
+        });
+        setData(response.data.map(proj => ({
+          id: proj._id,
+          title: proj.projectName,
+          owner: "You",
+          lastModified: new Date(proj.createdAt).toLocaleString(),
+        })));
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const handleCreateProject = (projectData) => {
     const newProject = {
@@ -340,13 +352,35 @@ const ProjectDashboard = () => {
     }
   };
 
-  const handleDeleteProject = (projectId) => {
+  const handleDeleteProject = async (projectId) => {
+    const isConfirmed = window.confirm("Do you want to delete?");
+    if (!isConfirmed) {
+      return
+    }
+    try {
+      const response = await axios.post("http://localhost:5000/api/projects/deleteProject", {
+        projectId: projectId,
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true,
+      });
+      if (response) {
+        console.log("Delete project:", response);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
     setData(data.filter(project => project.id !== projectId));
   };
 
   const handleCopyProject = (project) => {
     console.log('Copy project:', project);
     // Implement copy functionality here
+  };
+
+  const handleEditProject = (project) => {
+    console.log('Edit project:', project);
+    // Implement edit functionality here
   };
 
   const handleDownloadProject = (project) => {
@@ -379,6 +413,9 @@ const ProjectDashboard = () => {
             </button>
             <button className="text-green-500 hover:text-green-700" onClick={() => handleDownloadProject(row.original)}>
               <Download className="w-5 h-5" />
+            </button>
+            <button className="text-black hover:text-green-700" onClick={() => handleEditProject(row.original)}>
+              <Edit className="w-5 h-5" />
             </button>
             <button className="text-yellow-500 hover:text-yellow-700" onClick={() => handleArchiveProject(row.original)}>
               <Archive className="w-5 h-5" />
