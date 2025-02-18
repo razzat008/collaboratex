@@ -5,10 +5,9 @@ import "codemirror/mode/stex/stex";
 
 import './editor.css';
 import useSocket from "../../hooks/useSocket";
-
 import { UnControlled as CodeMirror } from "react-codemirror2";
 
-export default function Editor({ displayName }) {
+export default function Editor({ value }) { // Accept value as a prop
 
   useSocket();
 
@@ -18,6 +17,7 @@ export default function Editor({ displayName }) {
         className="code-mirror-wrapper h-full"
         autoCursor={true}
         autoScroll={true}
+        value={value} // Set the value prop to the CodeMirror component
         options={{
           lineWrapping: true,
           lint: false,
