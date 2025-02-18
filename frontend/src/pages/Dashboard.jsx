@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Copy, Download, Archive, Trash2, MoreHorizontal, X, Github, Edit } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
+import { useNavigate } from 'react-router-dom';
 
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -17,42 +18,58 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // if (type === "upload" && formData.file) {
+    //   const fileData = new FormData();
+    //   fileData.append("file", formData.file);
+    //
+    //
+    //   try {
+    //     const response = await axios.post("http://localhost:5000/api/templates/", fileData, {
+    //       withCredentials: true,
+    //     });
+    //
+    //     try {
+    //       const response = await axios.post("http://localhost:5000/api/projects/createProject", {
+    //         userName: username,
+    //         projectName: formData.projectName,
+    //         createdAt: Date.now(),
+    //       }, {
+    //         withCredentials: true,
+    //         headers: {
+    //           "Content-Type": "application/json",
+    //         },
+    //       });
+    //
+    //       alert("Project created successfully!");
+    //       console.log("Project created successfully!");
+    //     } catch (error) {
+    //       console.error("Project creation error:", error);
+    //       alert("Failed to create project.");
+    //     }
+    //
+    //     alert("File uploaded successfully!");
+    //   } catch (error) {
+    //     console.error("Upload error:", error);
+    //     alert("File upload failed.");
+    //   }
+    // }
     if (type === "upload" && formData.file) {
       const fileData = new FormData();
       fileData.append("file", formData.file);
-
+      fileData.append("projectName", formData.projectName); // Add project name to the form data
+      fileData.append("userName", username); // Add user name to the form data
 
       try {
         const response = await axios.post("http://localhost:5000/api/templates/", fileData, {
           withCredentials: true,
         });
 
-        try {
-          const response = await axios.post("http://localhost:5000/api/projects/createProject", {
-            userName: username,
-            projectName: formData.projectName,
-            createdAt: Date.now(),
-          }, {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-
-          alert("Project created successfully!");
-          console.log("Project created successfully!");
-        } catch (error) {
-          console.error("Project creation error:", error);
-          alert("Failed to create project.");
-        }
-
-        alert("File uploaded successfully!");
+        alert("File uploaded and project created successfully!");
       } catch (error) {
         console.error("Upload error:", error);
         alert("File upload failed.");
       }
     }
-
     onSubmit({ type, ...formData });
     setFormData({ projectName: "", githubUrl: "", file: null });
     onClose();
@@ -306,6 +323,7 @@ const NewProjectDropdown = ({ isOpen, setIsOpen, onSelectOption }) => {
 };
 
 const ProjectDashboard = () => {
+  const navigate = useNavigate();
   const { isAuthenticated, token } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
@@ -378,9 +396,8 @@ const ProjectDashboard = () => {
     // Implement copy functionality here
   };
 
-  const handleEditProject = (project) => {
-    console.log('Edit project:', project);
-    // Implement edit functionality here
+  const handleEditProject = async (projectId) => {
+    navigate(`/editorpage/${projectId}`) // navigation to the editorpage
   };
 
   const handleDownloadProject = (project) => {
@@ -414,7 +431,7 @@ const ProjectDashboard = () => {
             <button className="text-green-500 hover:text-green-700" onClick={() => handleDownloadProject(row.original)}>
               <Download className="w-5 h-5" />
             </button>
-            <button className="text-black hover:text-green-700" onClick={() => handleEditProject(row.original)}>
+            <button className="text-black hover:text-green-700" onClick={() => handleEditProject(row.original.id)}>
               <Edit className="w-5 h-5" />
             </button>
             <button className="text-yellow-500 hover:text-yellow-700" onClick={() => handleArchiveProject(row.original)}>
