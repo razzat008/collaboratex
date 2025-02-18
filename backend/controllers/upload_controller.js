@@ -47,7 +47,7 @@ const upload = multer({
 });
 
 // API endpoint to handle ZIP file upload
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
