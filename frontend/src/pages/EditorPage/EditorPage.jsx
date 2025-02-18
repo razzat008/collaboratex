@@ -5,6 +5,7 @@ import SplitPane from "react-split-pane";
 import './editorPage.css';
 import { Home } from 'lucide-react'
 import { useNavigate } from "react-router-dom"
+import PDFViewer from "../../components/PDFViewer/PDFViewer";
 
 
 export default function EditorPage() {
@@ -43,7 +44,6 @@ export default function EditorPage() {
             display: "flex",
           }}
           allowResize={false}
-          step={5}
         >
           <FileSidebar files={files} setCurrentFile={setCurrentFile} />
           <SplitPane
@@ -53,15 +53,12 @@ export default function EditorPage() {
             minSize={500}
             // maxSize={1050}
             pane1Style={{}}
-            pane2Style={{
-              padding: "10px",
-            }}
+            pane2Style={{}}
+            step={5}
           >
-            <Editor/>
-            <div className="pdf-placeholder">
-              <h1>PDF Renderer Placeholder</h1>
-              {/* Integrate PDF rendering logic here */}
-            </div>
+            <Editor />
+            <PDFViewer filePath="/sample1.pdf" />
+            
           </SplitPane>
         </SplitPane>
       </div>
