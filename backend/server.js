@@ -9,6 +9,7 @@ import userRoutes from './routes/user_routes.js';
 // import templateRoutes from './routes/template_routes.js';
 import uploadRoutes from './controllers/upload_controller.js';
 import projectRoutes from './routes/project_routes.js'
+import fileRoutes from './routes/file_routes.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/", userRoutes);
 // app.use("/api/templates", templateRoutes); // routses for fetching templates
 app.use("/api/templates", uploadRoutes); // routes for fetching templates
 app.use("/api/projects", projectRoutes);
+app.use("/api", fileRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
