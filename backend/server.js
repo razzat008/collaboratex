@@ -6,11 +6,9 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import userRoutes from './routes/user_routes.js';
-// import templateRoutes from './routes/template_routes.js';
 import uploadRoutes from './controllers/upload_controller.js';
 import projectRoutes from './routes/project_routes.js'
 import fileRoutes from './routes/file_routes.js';
-import { pdf_gen } from './_helpers/pdf_gen.js';
 
 dotenv.config();
 
@@ -25,11 +23,9 @@ app.use(cors({
 }));
 
 app.use("/", userRoutes);
-// app.use("/api/templates", templateRoutes); // routses for fetching templates
-app.use("/api/templates", uploadRoutes); // routes for fetching templates
-app.use("/api/projects", projectRoutes);
+app.use("/api/templates", uploadRoutes); // routes for fetching uploads
+app.use("/api/projects", projectRoutes);  // CRUD in dashboard
 app.use("/api", fileRoutes);
-app.use("/",pdf_gen)
 
 const server = http.createServer(app);
 const io = new Server(server, {

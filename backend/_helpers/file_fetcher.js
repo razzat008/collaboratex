@@ -28,7 +28,7 @@ export const fetchFileContent = async (req, res) => {
     const filePath = path.join(directory, fileName); // Construct the full file path
     // console.log(filePath)
     const content = await fs.readFile(filePath, 'utf-8'); // Read the file content
-    console.log(content);
+    // console.log(content);
     res.json({ content }); // Send the file content as a response
 
   } catch (error) {
