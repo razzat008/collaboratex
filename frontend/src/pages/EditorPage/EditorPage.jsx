@@ -51,26 +51,25 @@ export default function EditorPage() {
     };
 
     loadFileContent();
-  }, [currentFile, projectId]); // Fetch content whenever currentFile changes
-  // const handleCompile = async () => {
-  //
-  //   try {
-  //
-  //     const result = await compileLatex(projectId); // Call the compile function
-  //
-  //     console.log("PDF generated successfully:", result);
-  //
-  //     // You can handle the result here, e.g., show a success message or open the PDF
-  //
-  //   } catch (error) {
-  //
-  //     console.error("Compilation failed:", error);
-  //
-  //     // Handle the error (e.g., show an error message to the user)
-  //
-  //   }
-  //
-  // };
+  }, [currentFile, projectId]);
+
+  const handleCompile = async () => {
+
+    try {
+      const result = await compileLatex(projectId); 
+      if (!result) {
+        console.error("PDF generation failed.")
+        
+      }
+      console.log("PDF generated successfully:", result);
+
+    } catch (error) {
+
+      console.error("Compilation failed:", error);
+
+    }
+
+  };
 
   return (
     <div className="editorPage h-screen bg-white-700">
@@ -79,7 +78,7 @@ export default function EditorPage() {
           <Home className="" size={20} />
           <h6 className="px-1">Home</h6>
         </button>
-        <button className="bg-green-700 rounded text-sm p-1 px-2">Compile</button>
+        <button className="bg-green-700 rounded text-sm p-1 px-2" onClick={handleCompile}>Compile</button>
       </div>
 
       <div className="paneContainer">
@@ -105,8 +104,8 @@ export default function EditorPage() {
             pane2Style={{}}
             step={5}
           >
-            <Editor value={fileContent} /> {/* Pass the file content to the Editor */}
-            <PDFViewer filePath="/sample1.pdf" />
+            <Editor value={fileContent} /> 
+            <PDFViewer filePath="/main.pdf" />
           </SplitPane>
         </SplitPane>
       </div>
