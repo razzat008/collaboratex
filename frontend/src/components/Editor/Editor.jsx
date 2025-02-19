@@ -12,7 +12,7 @@ export default function Editor({ value }) { // Accept value as a prop
   useSocket();
 
   return (
-    <div className="editor h-full p-2 bg-gray-500">
+    <div className="editor  h-[850px] h-full p-2 bg-gray-500">
       <CodeMirror
         className="code-mirror-wrapper h-full"
         autoCursor={true}
