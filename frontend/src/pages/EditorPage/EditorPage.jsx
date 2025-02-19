@@ -1,52 +1,56 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext"; // Added authentication context
 import Editor from "../../components/Editor/Editor";
 import FileSidebar from "../../components/FileSidebar/FileSidebar";
 import SplitPane from "react-split-pane";
-import './editorPage.css';
-import { Home } from 'lucide-react';
+import "./editorPage.css";
+import { Home } from "lucide-react";
 import PDFViewer from "../../components/PDFViewer/PDFViewer";
-import { fetchFilesInDirectory } from '../../api/fileHelper'; // Adjust the import path
-import { fetchFileContent } from '../../api/fileHelper'; // Import the function to fetch file content
-import { compileLatex } from '../../api/compile'; // Import the function to fetch file content
+import { fetchFilesInDirectory, fetchFileContent } from "../../api/fileHelper";
+import { compileLatex } from "../../api/compile";
 
 export default function EditorPage() {
-  const { projectId } = useParams(); // Get the project ID from the URL
+  const { projectId } = useParams();
+  const { username } = useAuth(); // Get username from AuthContext
   const navigate = useNavigate();
+  
   const gotoHome = () => {
     navigate("/dashboard");
   };
 
   const [currentFile, setCurrentFile] = useState("main.tex");
   const [files, setFiles] = useState([]);
-  const [fileContent, setFileContent] = useState(""); // State to hold the content of the current file
+  const [fileContent, setFileContent] = useState("");
 
   useEffect(() => {
+    if (!projectId) return;
+
     const loadFiles = async () => {
       try {
-        const directoryPath = `tmp/${projectId}`; // Adjust this path as needed
-        const filesList = await fetchFilesInDirectory(directoryPath); // Call the API with the directory path
-        setFiles(filesList.map(file => ({ name: file }))); // Map to the expected format
+        const directoryPath = `tmp/${projectId}`;
+        const filesList = await fetchFilesInDirectory(directoryPath);
+        setFiles(filesList.map(file => ({ name: file })));
       } catch (error) {
         console.error("Failed to load files:", error);
-        setFiles([]); // Set files to an empty array in case of error
+        setFiles([]);
       }
     };
 
     loadFiles();
-  }, [projectId]); // Add projectId as a dependency
+  }, [projectId]);
 
   useEffect(() => {
     const loadFileContent = async () => {
-      if (currentFile) {
-        try {
-          console.log("Fetching content for:", currentFile); // Log the current file being fetched
-          const content = await fetchFileContent(projectId, currentFile); // Fetch the content of the selected file
-          setFileContent(content); // Set the content in state
-        } catch (error) {
-          console.error("Failed to load file content:", error);
-          setFileContent(""); // Reset content in case of error
-        }
+      if (!currentFile) return;
+      
+      try {
+        console.log("Fetching content for:", currentFile);
+        const content = await fetchFileContent(projectId, currentFile);
+        setFileContent(content);
+      } catch (error) {
+        console.error("Failed to load file content:", error);
+        setFileContent("");
       }
     };
 
@@ -54,57 +58,39 @@ export default function EditorPage() {
   }, [currentFile, projectId]);
 
   const handleCompile = async () => {
-
     try {
-      const result = await compileLatex(projectId); 
+      const result = await compileLatex(projectId);
       if (!result) {
-        console.error("PDF generation failed.")
-        
+        console.error("PDF generation failed.");
       }
       console.log("PDF generated successfully:", result);
-
     } catch (error) {
-
       console.error("Compilation failed:", error);
-
     }
-
   };
 
   return (
     <div className="editorPage h-screen bg-white-700">
       <div className="topBar text-white bg-gray-900 flex justify-center">
         <button className="flex mx-5 items-center" onClick={gotoHome}>
-          <Home className="" size={20} />
+          <Home size={20} />
           <h6 className="px-1">Home</h6>
         </button>
-        <button className="bg-green-700 rounded text-sm p-1 px-2" onClick={handleCompile}>Compile</button>
+        <button className="bg-green-700 rounded text-sm p-1 px-2" onClick={handleCompile}>
+          Compile
+        </button>
       </div>
 
       <div className="paneContainer">
-        <SplitPane
-          className="h-full"
-          split="vertical"
-          defaultSize={"13.5%"}
-          pane1Style={{}}
-          pane2Style={{}}
-          paneStyle={{
-            margin: 0,
-            display: "flex",
-          }}
-          allowResize={false}
-        >
+        <SplitPane className="h-full" split="vertical" defaultSize={"13.5%"} allowResize={false}>
           <FileSidebar files={files} setCurrentFile={setCurrentFile} />
-          <SplitPane
-            className="h-full"
-            split="vertical"
-            defaultSize={"58%"}
-            minSize={500}
-            pane1Style={{}}
-            pane2Style={{}}
-            step={5}
-          >
-            <Editor value={fileContent} /> 
+          <SplitPane className="h-full" split="vertical" defaultSize={"58%"} minSize={500} step={5}>
+            <Editor 
+              displayName={username || "User X"} 
+              roomId={projectId} 
+              fileId={currentFile} 
+              value={fileContent} 
+            />
             <PDFViewer filePath="/main.pdf" />
           </SplitPane>
         </SplitPane>
@@ -112,3 +98,4 @@ export default function EditorPage() {
     </div>
   );
 }
+

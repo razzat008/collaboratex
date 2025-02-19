@@ -492,7 +492,6 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-
   '@react-pdf-viewer/attachment@3.12.0':
     resolution: {integrity: sha512-mhwrYJSIpCvHdERpLUotqhMgSjhtF+BTY1Yb9Fnzpcq3gLZP+Twp5Rynq21tCrVdDizPaVY7SKu400GkgdMfZw==}
     peerDependencies:
@@ -602,9 +601,8 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
-  '@rollup/rollup-android-arm-eabi@4.28.1':
-    resolution: {integrity: sha512-2aZp8AES04KI2dy3Ss6/MDjXbwBzj+i0GqKtWXgw2/Ma6E4jJvujryO6gJAghIRVz7Vwr9Gtl/8na3nDUKpraQ==}
-
+  '@rollup/rollup-android-arm-eabi@4.34.6':
+    resolution: {integrity: sha512-+GcCXtOQoWuC7hhX1P00LqjjIiS/iOouHXhMdiDSnq/1DGTox4SpUvO52Xm+div6+106r+TcvOeo/cxvyEyTgg==}
     cpu: [arm]
     os: [android]
 
@@ -2376,7 +2374,6 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-
   '@react-pdf-viewer/attachment@3.12.0(pdfjs-dist@4.10.38)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@react-pdf-viewer/core': 3.12.0(pdfjs-dist@4.10.38)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -2535,8 +2532,7 @@ snapshots:
     transitivePeerDependencies:
       - pdfjs-dist
 
-  '@rollup/rollup-android-arm-eabi@4.28.1':
-
+  '@rollup/rollup-android-arm-eabi@4.34.6':
     optional: true
 
   '@rollup/rollup-android-arm64@4.34.6':
