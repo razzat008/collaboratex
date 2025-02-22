@@ -23,7 +23,7 @@ app.use(cors({
 }));
 
 app.use("/", userRoutes);
-app.use("/api/templates", uploadRoutes); // routes for fetching uploads
+app.use("/api/newproject", uploadRoutes); // routes for fetching uploads
 app.use("/api/projects", projectRoutes);  // CRUD in dashboard
 app.use("/api", fileRoutes);
 

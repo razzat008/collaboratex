@@ -34,10 +34,7 @@ export default function EditorPage() {
     };
 
     loadFiles();
-  }, [projectId]);
-
-  // document.addEventListener()
-
+  }, [projectId,fileContent]);
 
   useEffect(() => {
     const loadFileContent = async () => {
@@ -45,7 +42,6 @@ export default function EditorPage() {
         try {
           console.log("Fetching content for:", currentFile);
           const content = await fetchFileContent(projectId, currentFile);
-          // console.log("Loaded content:", content); // Debugging
           setFileContent(content);
         } catch (error) {
           console.error("Failed to load file content:", error);
@@ -77,9 +73,9 @@ export default function EditorPage() {
 
   const handleSave = async () => {
     try {
-      console.log("Saving content:", fileContent); // Debugging
+      // console.log("Saving content:", fileContent); // Debugging
       const result = await saveLatexContent(projectId, currentFile, fileContent);
-      console.log("Save successful:", result.message);
+      console.log("Save successful.");
     } catch (error) {
       console.error("Error saving LaTeX content:", error);
       // alert("Error saving LaTeX content: " + (error.message || "An unknown error occurred."));

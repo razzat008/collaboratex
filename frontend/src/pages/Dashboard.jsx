@@ -24,7 +24,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, type }) => {
       fileData.append("userName", username); // Add user name to the form data
 
       try {
-        const response = await axios.post("http://localhost:5000/api/templates/", fileData, {
+        const response = await axios.post("http://localhost:5000/api/newproject/", fileData, {
           withCredentials: true,
         });
 
@@ -219,15 +219,15 @@ const NewProjectDropdown = ({ isOpen, setIsOpen, onSelectOption }) => {
   ];
 
   const templateOptions = [
-    //   'Journal articles',
-    //   'Books',
-    //   'Formal letters',
-    //   'Assignments',
-    //   'Posters',
-    //   'Presentations',
-    //   'Reports',
-    //   'CVs and résumés',
-    //   'Theses'
+    // 'Journal articles',
+    // 'Books',
+    // 'Formal letters',
+    // 'Assignments',
+    // 'Posters',
+    // 'Presentations',
+    // 'Reports',
+    // 'CVs and résumés',
+    // 'Theses'
   ];
 
   if (!isOpen) return null;
@@ -288,29 +288,10 @@ const NewProjectDropdown = ({ isOpen, setIsOpen, onSelectOption }) => {
 
 const ProjectDashboard = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuth();
+  // const { isAuthenticated, token } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [data, setData] = useState('');
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/projects/findProject", {
-          withCredentials: true,
-        });
-        setData(response.data.map(proj => ({
-          id: proj._id,
-          title: proj.projectName,
-          owner: "You",
-          lastModified: new Date(proj.createdAt).toLocaleString(),
-        })));
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      }
-    };
-
-    fetchProjects();
-  }, []);
 
   const handleCreateProject = (projectData) => {
     const newProject = {
@@ -334,25 +315,57 @@ const ProjectDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/projects/findProject", {
+          withCredentials: true,
+        });
+        setData(response.data.map(proj => ({
+          id: proj._id,
+          title: proj.projectName,
+          owner: proj.userName,
+          lastModified: new Date(proj.lastModified).toLocaleString(),
+        })));
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
+
+    fetchProjects();
+  }, [data.length]);
+
   const handleDeleteProject = async (projectId) => {
-    const isConfirmed = window.confirm("Do you want to delete?");
+    const isConfirmed = window.confirm("Are you sure you want to delete this project?");
     if (!isConfirmed) {
-      return
+      return;
     }
     try {
-      const response = await axios.post("http://localhost:5000/api/projects/deleteProject", {
-        projectId: projectId,
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true,
-      });
-      if (response) {
-        console.log("Delete project:", response);
+      const response = await axios.delete(
+        "http://localhost:5000/api/projects/deleteProject",
+        {
+          data: { projectId }, // delete method in axios needs to be sent in a request body
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true,
+        }
+      );
+      if (response.data.success) {
+        console.log("Delete project:", response.data.message);
+        setData((prevData) => prevData.filter((project) => project.id !== projectId));
+      } else {
+        console.error("Failed to delete project:", response.data.message);
+        alert("Failed to delete the project. Please try again.");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error deleting project:", error);
+      if (error.response) {
+        alert(`Error: ${error.response.data.message || "Failed to delete the project."}`);
+      } else if (error.request) {
+        alert("Network error. Please check your connection.");
+      } else {
+        alert("An unexpected error occurred. Please try again.");
+      }
     }
-    setData(data.filter(project => project.id !== projectId));
   };
 
   const handleCopyProject = (project) => {
@@ -361,7 +374,7 @@ const ProjectDashboard = () => {
   };
 
   const handleEditProject = async (projectId) => {
-    navigate(`/editorpage/${projectId}`) // navigation to the editorpage
+    navigate(`/project/${projectId}`) // navigation to the editorpage
   };
 
   const handleDownloadProject = (project) => {
