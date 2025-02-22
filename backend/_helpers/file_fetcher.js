@@ -22,17 +22,36 @@ export const fetchFiles = async (req, res) => {
 export const fetchFileContent = async (req, res) => {
 
   try {
-    const { projectId, fileName } = req.params; // Get projectId and fileName from the request parameters
+    const { projectId, fileName } = req.params; 
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const directory = path.join(__dirname, '../tmp', projectId); // Construct the directory path
-    const filePath = path.join(directory, fileName); // Construct the full file path
+    const directory = path.join(__dirname, '../tmp', projectId); 
+    const filePath = path.join(directory, fileName); 
     // console.log(filePath)
-    const content = await fs.readFile(filePath, 'utf-8'); // Read the file content
+    const content = await fs.readFile(filePath, 'utf-8'); 
     // console.log(content);
-    res.json({ content }); // Send the file content as a response
+    res.json({ content }); 
 
   } catch (error) {
     console.error('Error reading file:', error);
     res.status(500).json({ error: 'Failed to read file content' }); // Handle errors
   }
+};
+
+export const saveLatexContent = async (req, res) => {
+  try {
+    const { projectId, fileName, content } = req.body;
+    if (!projectId || !fileName || !content) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const filePath = path.join(__dirname, "..", "tmp", projectId, fileName);
+
+    fs.writeFile(filePath, content, "utf8");
+    res.json({ message: "File saved successfully" });
+  } catch (error) {
+    console.error("Error saving file:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+
 };
