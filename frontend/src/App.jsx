@@ -22,7 +22,7 @@ function App() {
           <Navbar />
           <Routes>
             <Route path="/" element={<Main />} />
-            <Route path="/editorpage/:projectId" element={<EditorPage />} />
+            <Route path="/project/:projectId" element={<EditorPage />} />
             <Route path="/features" element={<Features />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/login" element={<Login />} />
