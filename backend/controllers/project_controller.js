@@ -9,7 +9,6 @@ export const findProject = async (req, res) => {
   }
 };
 
-
 export const createProject = async (req, res) => {
   try {
     const { projectName, userName, createdAt } = req.body;
@@ -26,8 +25,27 @@ export const createProject = async (req, res) => {
 export const deleteProject = async (req, res) => {
   try {
     const { projectId } = req.body;
-    const project = await Project.findByIdAndDelete(projectId);
-    res.status(201).json({ sucess: true, message: "Deleted project sucessfully." });
+    if (!projectId) {
+      return res.status(400).json({ success: false, message: "Project ID is required." });
+    }
+    const deletedProject = await Project.findByIdAndDelete(projectId);
+    if (!deletedProject) {
+      return res.status(404).json({ success: false, message: "Project not found." });
+    }
+    res.status(200).json({ success: true, message: "Project deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    res.status(500).json({ success: false, message: "Failed to delete the project.", error: error.message });
+  }
+};
+
+export const updateProject = async (req, res) => {
+  try {
+    const { projectId, modified_time } = req.body;
+    const project = await Project.findByIdAndUpdate(projectId, {
+      lastModified: modified_time,
+    }, { new: true });
+    res.status(201).json({ success: true, message: "Deleted project sucessfully." });
   } catch (error) {
     res.status(500).json({ error: "Couldn't delete the project" });
   }
