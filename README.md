@@ -1,3 +1,5 @@
+# ARCHIVED
+I plan to continue this project on nextjs(probably) in future.
 
 # Collaboratex
 
