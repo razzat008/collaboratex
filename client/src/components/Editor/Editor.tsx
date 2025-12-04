@@ -1,6 +1,7 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { latex } from "codemirror-lang-latex";
 import { scrollPastEnd, EditorView } from "@codemirror/view";
+import { oneDark } from "@codemirror/theme-one-dark";
 //import { vim } from "@replit/codemirror-vim" --> new feature
 
 interface EditorProps {
@@ -10,13 +11,11 @@ interface EditorProps {
 
 //Setting up editor theme
 const EditorTheme = EditorView.theme({
-	".cm-content": {
-		fontSize: "16px",
+  ".cm-content": {
+    fontSize: "16px",
     fontWeight: "bold",
-	},
+  },
 });
-
-
 
 export default function Editor({ value, onChange }: EditorProps) {
   return (
@@ -24,11 +23,11 @@ export default function Editor({ value, onChange }: EditorProps) {
       <CodeMirror
         value={value}
         height="100%"
-        theme="light"
+        theme={oneDark}
         extensions={[
           latex(),
-  				EditorView.lineWrapping,
-					EditorTheme,
+          EditorView.lineWrapping,
+          EditorTheme,
           scrollPastEnd(),
         ]}
         onChange={(value) => onChange(value)}

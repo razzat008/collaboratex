@@ -1,0 +1,128 @@
+gollaboratex/client/src/styles/global.css :root {
+    --primary: #4b9cd3;
+    --sidebar-bg: #f5f5f5;
+    --preview-bg: #fff;
+    --topbar-bg: #222;
+    --topbar-text: #fff;
+    --border-color: #ddd;
+    --bottom-bar-bg: #222;
+    --bottom-bar-text: #fff;
+}
+
+body,
+html,
+#root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
+    background: #fafbfc;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.main-split-pane {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.file-tree-pane {
+    width: 20%;
+    min-width: 180px;
+    max-width: 300px;
+    border-right: 1px solid var(--border-color);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-pane {
+    width: 40%;
+    min-width: 300px;
+    max-width: 80vw;
+    border-right: 1px solid var(--border-color);
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    resize: horizontal;
+    overflow: auto;
+}
+
+.pdf-preview-pane {
+    width: 40%;
+    min-width: 300px;
+    background: var(--preview-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+.top-bar {
+    height: 48px;
+    background: var(--topbar-bg);
+    color: var(--topbar-text);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.top-bar__project-name {
+    flex: 1;
+}
+
+.top-bar__actions {
+    margin-right: 24px;
+}
+
+.top-bar__compile-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.top-bar__compile-btn:hover {
+    background: #357ab8;
+}
+
+.top-bar__user {
+    margin-left: 24px;
+}
+
+.bottombar,
+.bottom-bar {
+    height: 32px;
+    background: var(--bottom-bar-bg);
+    color: var(--bottom-bar-text);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 0.95rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.cm-editor {
+    height: 100%;
+    font-size: 1rem;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: #eee;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
