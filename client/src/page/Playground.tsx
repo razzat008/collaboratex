@@ -24,6 +24,7 @@ import SidebarIcons from "../components/Sidebar/SidebarIcons";
 import SidebarPanel from "../components/Sidebar/SidebarPanel";
 import SplitView from "../components/Splitview/Splitview";
 import TopBar from "../components/Topbar/Topbar";
+import FormattingToolbar from "../components/Topbar/FormattingToolbar";
 
 export default function Playground() {
   return (
@@ -32,6 +33,7 @@ export default function Playground() {
 
         {/* Full width top bar */}
         <TopBar />
+				<FormattingToolbar />
 
         {/* Layout area below top bar */}
         <div className="flex flex-1">
