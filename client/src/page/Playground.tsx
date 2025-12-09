@@ -24,24 +24,20 @@ import SidebarIcons from "../components/Sidebar/SidebarIcons";
 import SidebarPanel from "../components/Sidebar/SidebarPanel";
 import SplitView from "../components/Splitview/Splitview";
 import TopBar from "../components/Topbar/Topbar";
-import FormattingToolbar from "../components/Topbar/FormattingToolbar";
 
 export default function Playground() {
   return (
     <SidebarProvider>
       <div className="flex flex-col h-screen w-screen">
-
         {/* Full width top bar */}
         <TopBar />
-				<FormattingToolbar />
-
+        {/*// formatting toolbar lies in splitview*/}
         {/* Layout area below top bar */}
         <div className="flex flex-1">
           <SidebarIcons />
           <SidebarPanel />
           <SplitView />
         </div>
-
       </div>
     </SidebarProvider>
   );

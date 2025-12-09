@@ -49,35 +49,7 @@ export default function Topbar() {
 
         {/* Right */}
         <div className="flex items-center gap-2">
-          {/* Undo */}
-          <Button variant="outline" size="icon">
-            ↩️
-          </Button>
-
-          {/* Zoom group */}
-          <div className="flex items-center border rounded-lg overflow-hidden">
-            <Button variant="ghost" size="sm">
-              −
-            </Button>
-            <div className="px-2">84%</div>
-            <Button variant="ghost" size="sm">
-              ＋
-            </Button>
-          </div>
-
-          {/* Share */}
-          <Button>Share</Button>
-
-          {/* Export Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">⤓</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Export PDF</DropdownMenuItem>
-              <DropdownMenuItem>Export Project</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Need to add more component */}
         </div>
       </header>
     </>

@@ -2,6 +2,12 @@
 
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function FormattingToolbar() {
   return (
