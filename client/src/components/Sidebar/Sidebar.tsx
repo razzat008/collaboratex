@@ -35,12 +35,13 @@ export default function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {" "}
               {/* Logo */}
               <SidebarMenuItem>
-                <div className="flex items-center justify-center h-12 w-12 text-3xl font-extrabold text-teal-400">
-                  G
-                </div>
+                <SidebarMenuButton className="justify-center h-12">
+                  <span className="text-4xl font-extrabold text-teal-400">
+                    G
+                  </span>
+                </SidebarMenuButton>
               </SidebarMenuItem>
               {/* Menu Items */}
               <SidebarMenuItem>

@@ -38,11 +38,6 @@ export default function Topbar() {
       <header className="w-full h-12 bg-gray-200 flex items-center justify-between px-4">
         {/* Left section */}
         <div className="flex items-start"></div>
-        <Menubar className="w-auto bg-transparent underline">
-          <MenubarMenu>
-            <MenubarTrigger>File</MenubarTrigger>
-          </MenubarMenu>
-        </Menubar>
         {/* Center */}
         <div className="text-sm text-muted-foreground">
           Gollaboratex Playground
