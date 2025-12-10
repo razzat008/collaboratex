@@ -8,7 +8,21 @@
 // }
 //
 "use client";
-
+import {
+  Menubar,
+  MenubarCheckboxItem,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarRadioGroup,
+  MenubarRadioItem,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,17 +37,12 @@ export default function Topbar() {
     <>
       <header className="w-full h-12 bg-gray-200 flex items-center justify-between px-4">
         {/* Left section */}
-        <div className="flex items-center gap-6">
-          {/* Menu list */}
-          <nav className="flex items-center gap-4 text-sm font-medium">
-            <button className="hover:underline">Gollaboratex</button>
-            <button className="hover:underline">File</button>
-            <button className="hover:underline">Edit</button>
-            <button className="hover:underline">View</button>
-            <button className="hover:underline">Help</button>
-          </nav>
-        </div>
-
+        <div className="flex items-start"></div>
+        <Menubar className="w-auto bg-transparent underline">
+          <MenubarMenu>
+            <MenubarTrigger>File</MenubarTrigger>
+          </MenubarMenu>
+        </Menubar>
         {/* Center */}
         <div className="text-sm text-muted-foreground">
           Gollaboratex Playground

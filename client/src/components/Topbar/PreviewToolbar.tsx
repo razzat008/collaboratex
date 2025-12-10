@@ -11,10 +11,9 @@ import {
 export default function FormattingToolbar() {
   return (
     <>
-      <header className="w-full h-12 bg-gray-200 flex items-center justify-between px-4">
-        {/* Right */}
+      <header className="w-full h-10 bg-gray-200 flex items-center justify-between px-4">
+        {/* LEFT SIDE — Zoom Controls */}
         <div className="flex items-center gap-2">
-          {/* Zoom group */}
           <div className="flex items-center border rounded-lg overflow-hidden">
             <Button variant="outline" size="sm">
               −
@@ -24,14 +23,19 @@ export default function FormattingToolbar() {
               +
             </Button>
           </div>
+        </div>
 
-          {/* Share */}
-          <Button>Share</Button>
+        {/* RIGHT SIDE — Compile + Export */}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            compile
+          </Button>
 
-          {/* Export Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">⤓</Button>
+              <Button variant="outline" size="sm">
+                ⤓
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem>Export PDF</DropdownMenuItem>

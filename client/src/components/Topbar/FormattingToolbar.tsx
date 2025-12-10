@@ -3,11 +3,24 @@
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import {
+  ListOrdered,
+  Code,
+  List,
+  MessageSquareCode,
+  Sigma,
+} from "lucide-react";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ButtonGroup } from "../ui/button-group";
 
 export default function FormattingToolbar() {
   return (
@@ -17,54 +30,105 @@ export default function FormattingToolbar() {
         Ag
       </Button>
 
-      {/* Text style group */}
-      <div className="flex items-center border rounded-md overflow-hidden">
-        <Button size="sm" variant="ghost" className="font-bold">
-          B
-        </Button>
-        <Separator orientation="vertical" />
-        <Button size="sm" variant="ghost" className="italic">
-          I
-        </Button>
-        <Separator orientation="vertical" />
-        <Button size="sm" variant="ghost" className="underline">
-          U
-        </Button>
-      </div>
+      {/* Button Group for Bold, Italics and Underline */}
+      <ButtonGroup>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline" className="font-bold">
+              B
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Bold</TooltipContent>
+        </Tooltip>
 
-      {/* Heading */}
-      <Button size="sm" variant="outline">
-        H
-      </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline" className="italic">
+              I
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Italic</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline" className="underline">
+              U
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Underline</TooltipContent>
+        </Tooltip>
+      </ButtonGroup>
 
-      {/* List group */}
-      <div className="flex items-center border rounded-md overflow-hidden">
-        <Button size="sm" variant="ghost">
-          •
-        </Button>
-        <Separator orientation="vertical" />
-        <Button size="sm" variant="ghost">
-          1.
-        </Button>
-      </div>
+      {/* Heading Button Group Is empty*/}
+      <ButtonGroup>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline">
+              H
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Heading</TooltipContent>
+        </Tooltip>
+      </ButtonGroup>
 
-      {/* Math */}
-      <Button size="sm" variant="outline">
-        ∑
-      </Button>
+      {/* Ordered and Unordered List group*/}
+      <ButtonGroup>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline">
+              <List />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Unordered List</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline">
+              <ListOrdered />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Ordered List</TooltipContent>
+        </Tooltip>
+      </ButtonGroup>
 
-      {/* Inline code */}
-      <Button size="sm" variant="outline">{`</>`}</Button>
-
-      {/* Mention */}
-      <Button size="sm" variant="outline">
-        @
-      </Button>
-
-      {/* Comment */}
-      <Button size="sm" variant="outline">
-        💬
-      </Button>
+      <ButtonGroup>
+        {/* Math */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline">
+              <Sigma />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Math</TooltipContent>
+        </Tooltip>
+        {/* Inline code */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline">
+              <Code />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Code Blocks</TooltipContent>
+        </Tooltip>
+        {/* Mention */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline">
+              @
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Symbols</TooltipContent>
+        </Tooltip>
+        {/* Comment */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="outline">
+              <MessageSquareCode />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Comments</TooltipContent>
+        </Tooltip>
+      </ButtonGroup>
 
       {/* Right side spacer so zoom/actions stay aligned */}
       <div className="flex-1" />
