@@ -6,6 +6,8 @@
 //   );
 // }
 //
+"use client";
+
 import {
   Sidebar,
   SidebarHeader,
@@ -17,52 +19,54 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenu,
-} from "@/components/ui/sidebar";
+} from "../ui/sidebar";
 
 import { File, Save, Search, Settings, HelpCircle } from "lucide-react";
 
 export default function AppSidebar() {
   return (
-    <Sidebar>
-      <SidebarHeader>
-        {/* This is optional branding area */}
-      </SidebarHeader>
+    <Sidebar className="border-r">
+      {/* Optional top branding area */}
+      <SidebarHeader />
 
       <SidebarContent>
-        {/* First grouping — your icons */}
         <SidebarGroup>
           <SidebarGroupLabel>Tools</SidebarGroupLabel>
 
           <SidebarGroupContent>
             <SidebarMenu>
+              {" "}
+              {/* Logo */}
+              <SidebarMenuItem>
+                <div className="flex items-center justify-center h-12 w-12 text-3xl font-extrabold text-teal-400">
+                  G
+                </div>
+              </SidebarMenuItem>
+              {/* Menu Items */}
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <File className="w-4 h-4" />
                   New File
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <Save className="w-4 h-4" />
                   Save
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <Search className="w-4 h-4" />
                   Search
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <Settings className="w-4 h-4" />
                   Settings
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <HelpCircle className="w-4 h-4" />
@@ -74,9 +78,7 @@ export default function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        {/* anything you want at bottom */}
-      </SidebarFooter>
+      <SidebarFooter />
     </Sidebar>
   );
 }

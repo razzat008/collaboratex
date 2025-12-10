@@ -11,7 +11,7 @@ import {
 export default function FormattingToolbar() {
   return (
     <>
-      <header className="w-full h-12 bg-muted/30 flex items-center justify-between px-4">
+      <header className="w-full h-12 bg-gray-200 flex items-center justify-between px-4">
         {/* Right */}
         <div className="flex items-center gap-2">
           {/* Zoom group */}

@@ -21,17 +21,9 @@ import { Separator } from "@/components/ui/separator";
 export default function Topbar() {
   return (
     <>
-      <header className="w-full h-12 bg-muted/30 flex items-center justify-between px-4">
+      <header className="w-full h-12 bg-gray-200 flex items-center justify-between px-4">
         {/* Left section */}
         <div className="flex items-center gap-6">
-          {/* Logo */}
-          <span
-            className="text-2xl font-bold text-teal-400"
-            aria-label="Gollaboratex logo"
-          >
-            G
-          </span>
-
           {/* Menu list */}
           <nav className="flex items-center gap-4 text-sm font-medium">
             <button className="hover:underline">Gollaboratex</button>

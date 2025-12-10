@@ -11,7 +11,7 @@ import {
 
 export default function FormattingToolbar() {
   return (
-    <div className="w-full h-10 border-b bg-muted/20 px-2 flex items-center gap-2">
+    <div className="w-full h-10 border-b bg-gray-200 px-2 flex items-center gap-2">
       {/* Font group */}
       <Button size="sm" variant="outline">
         Ag

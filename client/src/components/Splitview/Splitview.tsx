@@ -36,7 +36,7 @@ export default function SplitView() {
         </ResizablePanel>
 
         {/*<ResizableHandle withHandle />*/}
-        <ResizableHandle withHandle className="w-3" />
+        <ResizableHandle withHandle className="w-3 bg-gray-200" />
 
         {/* RIGHT PANEL (Preview) */}
         <ResizablePanel

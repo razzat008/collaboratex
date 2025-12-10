@@ -12,7 +12,7 @@ export default function SidebarPanel() {
   if (!activePanel) return null;
 
   return (
-    <div className="w-30 border-r bg-white h-full p-4">
+    <div className="w-64  border-r-12  bg-white h-full p-4">
       {panels[activePanel]}
     </div>
   );
