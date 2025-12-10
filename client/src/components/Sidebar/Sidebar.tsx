@@ -21,7 +21,7 @@ import {
   SidebarMenu,
 } from "../ui/sidebar";
 
-import { File, Save, Search, Settings, HelpCircle } from "lucide-react";
+import { File, Save, Search, Settings } from "lucide-react";
 
 export default function AppSidebar() {
   return (
