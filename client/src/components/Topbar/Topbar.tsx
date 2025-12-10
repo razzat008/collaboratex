@@ -460,28 +460,10 @@ export default function Topbar() {
         Gollaboratex Playground
       </div>
 
-      <div className="flex items-center gap-3">
-        <button
-          className="text-xs text-gray-600 px-2 py-0.5 rounded hover:bg-gray-200"
-          onClick={() => setShowSidebar((s) => !s)}
-        >
-          {showSidebar ? "Sidebar: On" : "Sidebar: Off"}
-        </button>
-
+      <div className="flex items-center gap-3 text-gray-500">
+        {"Have a nice day!"}
         <div className="flex items-center gap-2 text-xs text-gray-600">
-          <span>Theme:</span>
-          <select
-            value={theme}
-            onChange={(e) =>
-              setTheme(e.target.value as "light" | "dark" | "system")
-            }
-            className="text-xs bg-white border rounded px-1 py-0.5"
-            aria-label="Theme select"
-          >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="system">System</option>
-          </select>
+          {""}
         </div>
       </div>
     </header>
