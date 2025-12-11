@@ -2,13 +2,10 @@ import React from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { latex } from "codemirror-lang-latex";
 import {
-  scrollPastEnd,
   highlightActiveLine,
   EditorView,
 } from "@codemirror/view";
-import { indentWithTab } from "@codemirror/commands";
 import { ScrollArea } from "../ui/scroll-area";
-import { LockKeyholeOpenIcon } from "lucide-react";
 
 interface EditorProps {
   value: string;
