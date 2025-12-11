@@ -140,7 +140,6 @@ export default function Topbar() {
 
   // keep simple UI state
   const [showSidebar, setShowSidebar] = useState(true);
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
   // measure button rect in viewport coords
   const computeViewportAnchor = (k: Exclude<MenuKey, null>) => {
