@@ -19,16 +19,16 @@
 // 	);
 // }
 //
-import { SidebarProvider } from "../components/Sidebar/SidebarContext";
-import SidebarIcons from "../components/Sidebar/SidebarIcons";
-import SidebarPanel from "../components/Sidebar/SidebarPanel";
+import { SidebarProvider } from "../components/Preview/Sidebar/SidebarContext";
+import SidebarIcons from "../components/Preview/Sidebar/SidebarIcons";
+import SidebarPanel from "../components/Preview/Sidebar/SidebarPanel";
 import SplitView from "../components/Splitview/Splitview";
 import TopBar from "../components/Topbar/Topbar";
 
 export default function Playground() {
   return (
     <SidebarProvider>
-      <div className="flex flex-col h-screen w-screen">
+      <div className="flex flex-col h-screen w-screen overflow-clip">
         {/* Full width top bar */}
         <TopBar />
         {/*// formatting toolbar lies in splitview*/}

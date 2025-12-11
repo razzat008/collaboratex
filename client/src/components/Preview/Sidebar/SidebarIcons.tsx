@@ -1,7 +1,7 @@
 import React from "react";
 import { Search, File, Settings, HelpCircle } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 
 /**
  * Minimal Sidebar icons component.

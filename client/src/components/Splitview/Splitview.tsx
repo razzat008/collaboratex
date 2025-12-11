@@ -14,7 +14,7 @@ export default function SplitView() {
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
 
   return (
-    <div className="flex flex-1 h-full">
+    <div className="flex  h-screen w-screen overflow-hidden">
       <ResizablePanelGroup direction="horizontal" handle={<ResizableHandle />}>
         {/* LEFT PANEL (Editor) */}
         <ResizablePanel
@@ -28,10 +28,12 @@ export default function SplitView() {
             else setEditorCollapsed(false);
           }}
         >
-          <div className="bg-white h-full">
-            {!editorCollapsed && <FormattingToolbar />}{" "}
-            {/*  <- Hide when collapsed */}
-            <EditorPane />
+          <div className="bg-white h-full flex flex-col">
+            {!editorCollapsed && <FormattingToolbar />}
+
+            <div className="flex-1 min-h-0 overflow-auto">
+              <EditorPane />
+            </div>
           </div>
         </ResizablePanel>
 

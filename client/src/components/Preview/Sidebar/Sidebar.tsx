@@ -19,7 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenu,
-} from "../ui/sidebar";
+} from "../../ui/sidebar";
 
 import { File, Save, Search, Settings } from "lucide-react";
 
