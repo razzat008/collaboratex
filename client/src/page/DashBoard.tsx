@@ -15,7 +15,7 @@ export default function DashboardSkeleton() {
         {/* Creating New Button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="m-4 w-60 rounded-4xl bg-teal-700">
+            <Button className="m-4 w-60 rounded-full bg-teal-700">
               + Create New Project
             </Button>
           </DropdownMenuTrigger>
