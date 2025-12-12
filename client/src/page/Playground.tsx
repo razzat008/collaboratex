@@ -1,27 +1,6 @@
-// import Sidebar from "../components/Sidebar/Sidebar";
-// import TopBar from "../components/Topbar/Topbar";
-// import SplitView from "../components/Splitview/Splitview";
-//
-// export default function Playground() {
-// 	return (
-// 		<div className="flex h-screen w-screen">
-// 		{/* Toolbar */}
-// 		<TopBar />
-// 		{/* Full Workspace Area */}
-// 		<div className="flex flex-col flex-1">
-// 			{/* Left sidebar */}
-// 			<Sidebar />
-//
-// 		{/* Editor + Preview */}
-// 		<SplitView />
-// 		</div>
-// 		</div>
-// 	);
-// }
-//
-import { SidebarProvider } from "../components/Preview/Sidebar/SidebarContext";
-import SidebarIcons from "../components/Preview/Sidebar/SidebarIcons";
-import SidebarPanel from "../components/Preview/Sidebar/SidebarPanel";
+import { SidebarProvider } from "../components/Preview/SidebarPlayground/SidebarContext";
+import SidebarIcons from "../components/Preview/SidebarPlayground/SidebarIcons";
+import SidebarPanel from "../components/Preview/SidebarPlayground/SidebarPanel";
 import SplitView from "../components/Splitview/Splitview";
 import TopBar from "../components/Topbar/Topbar";
 
