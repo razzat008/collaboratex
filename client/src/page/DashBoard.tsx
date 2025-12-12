@@ -1,11 +1,37 @@
 import EmptyDashBoard from "../components/DashBoard/EmptyProject";
+import { Button } from "../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function DashboardSkeleton() {
   return (
     <div className="h-screen w-screen flex">
       {/* ---- Sidebar ---- */}
-      <aside className="w-60 border-r border-gray-300 bg-gray-200">
-        {/* Sidebar content */}
+      <aside className="w-80 border-r border-gray-300 bg-gray-200">
+        {/* Creating New Button */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="m-4 w-60 rounded-4xl bg-teal-700">
+              + Create New Project
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-60 mt-2">
+            <DropdownMenuItem>Create a blank Project</DropdownMenuItem>
+            <DropdownMenuItem>Import a project</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </aside>
 
       {/* ---- Main Area ---- */}

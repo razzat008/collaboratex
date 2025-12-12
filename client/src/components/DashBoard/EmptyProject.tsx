@@ -26,7 +26,7 @@ export default function EmptyDashBoard() {
       </EmptyHeader>
       <EmptyContent>
         <div className="flex gap-2">
-          <Button>Create Project</Button>
+          <Button className="bg-teal-700">Create Project</Button>
           <Button variant="outline">Import Project</Button>
         </div>
       </EmptyContent>
