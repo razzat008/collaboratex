@@ -1,11 +1,6 @@
-import React from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { latex } from "codemirror-lang-latex";
-import {
-  highlightActiveLine,
-  EditorView,
-} from "@codemirror/view";
-import { ScrollArea } from "../ui/scroll-area";
+import { highlightActiveLine, EditorView } from "@codemirror/view";
 
 interface EditorProps {
   value: string;
@@ -14,10 +9,8 @@ interface EditorProps {
 
 const keepCursorVisible = EditorView.updateListener.of((update) => {
   if (update.docChanged) {
-    const head = update.state.selection.main.head;
-    update.view.scrollIntoView(head, {
-      y: "nearest", // ensures cursor is visible vertically
-      x: "nearest",
+    update.view.scrollIntoView(update.state.selection.main.head, {
+      y: "nearest",
     });
   }
 });
@@ -30,7 +23,7 @@ const customScrollPad = EditorView.theme({
 
 export default function Editor({ value, onChange }: EditorProps) {
   return (
-    <ScrollArea className="h-full overflow-clip">
+    <div className="h-[95%] overflow-auto">
       <CodeMirror
         value={value}
         height="100%"
@@ -41,6 +34,10 @@ export default function Editor({ value, onChange }: EditorProps) {
           highlightActiveLine(),
           EditorView.lineWrapping,
           customScrollPad,
+
+          EditorView.theme({
+            ".cm-scroller": { overflow: "auto" },
+          }),
         ]}
         onChange={(value) => onChange(value)}
         basicSetup={{
@@ -48,6 +45,6 @@ export default function Editor({ value, onChange }: EditorProps) {
           autocompletion: true,
         }}
       />
-    </ScrollArea>
+    </div>
   );
 }
