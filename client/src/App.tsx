@@ -1,7 +1,9 @@
-import Playground from "./page/Playground";
+import { Outlet, Link } from "react-router-dom";
 
-function App() {
-  return <Playground />;
+export default function App() {
+  return (
+    <div>
+      <Outlet />
+    </div>
+  );
 }
-
-export default App;

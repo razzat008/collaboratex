@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
 import {
   ListOrdered,
   Code,
@@ -9,17 +8,6 @@ import {
   MessageSquareCode,
   Sigma,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ButtonGroup } from "../ui/button-group";
 
 export default function FormattingToolbar() {
@@ -32,102 +20,57 @@ export default function FormattingToolbar() {
 
       {/* Button Group for Bold, Italics and Underline */}
       <ButtonGroup>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline" className="font-bold">
-              B
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Bold</TooltipContent>
-        </Tooltip>
+        <Button size="sm" variant="outline" className="font-bold" title="Bold">
+          B
+        </Button>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline" className="italic">
-              I
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Italic</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline" className="underline">
-              U
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Underline</TooltipContent>
-        </Tooltip>
+        <Button size="sm" variant="outline" className="italic" title="Italic">
+          I
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="underline"
+          title="Underline"
+        >
+          U
+        </Button>
       </ButtonGroup>
 
       {/* Heading Button Group Is empty*/}
       <ButtonGroup>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline">
-              H
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Heading</TooltipContent>
-        </Tooltip>
+        <Button size="sm" variant="outline" title="Heading">
+          H
+        </Button>
       </ButtonGroup>
 
       {/* Ordered and Unordered List group*/}
       <ButtonGroup>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline">
-              <List />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Unordered List</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline">
-              <ListOrdered />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Ordered List</TooltipContent>
-        </Tooltip>
+        <Button size="sm" variant="outline" title="List">
+          <List />
+        </Button>
+        <Button size="sm" variant="outline" title="Ordered List">
+          <ListOrdered />
+        </Button>
       </ButtonGroup>
 
       <ButtonGroup>
         {/* Math */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline">
-              <Sigma />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Math</TooltipContent>
-        </Tooltip>
+        <Button size="sm" variant="outline" title="Math">
+          <Sigma />
+        </Button>
         {/* Inline code */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline">
-              <Code />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Code Blocks</TooltipContent>
-        </Tooltip>
-        {/* Mention */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline">
-              @
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Symbols</TooltipContent>
-        </Tooltip>
+        <Button size="sm" variant="outline" title="Inline Code">
+          <Code />
+        </Button>
+        {/* Symbols */}
+        <Button size="sm" variant="outline" title="Symbols">
+          @
+        </Button>
         {/* Comment */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button size="sm" variant="outline">
-              <MessageSquareCode />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Comments</TooltipContent>
-        </Tooltip>
+        <Button size="sm" variant="outline" title="Comment">
+          <MessageSquareCode />
+        </Button>
       </ButtonGroup>
 
       {/* Right side spacer so zoom/actions stay aligned */}

@@ -38,23 +38,18 @@ export default function SidebarIcons() {
         {ICONS.map(({ id, Icon, label }) => {
           const isActive = activePanel === id;
           return (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setActivePanel(isActive ? null : id)}
-                  aria-pressed={isActive}
-                  // title={label}
-                  className={`p-2 rounded-md transition-colors ${
-                    isActive ? "bg-gray-300" : "hover:bg-gray-300"
-                  }`}
-                >
-                  <Icon className="w-6 h-6 text-gray-700" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{label}</TooltipContent>
-            </Tooltip>
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActivePanel(isActive ? null : id)}
+              aria-pressed={isActive}
+              title={label}
+              className={`p-2 rounded-md transition-colors ${
+                isActive ? "bg-gray-300" : "hover:bg-gray-300"
+              }`}
+            >
+              <Icon className="w-6 h-6 text-gray-700" />
+            </button>
           );
         })}
       </nav>
