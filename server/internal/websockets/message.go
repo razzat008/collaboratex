@@ -1,3 +1,3 @@
 package websockets
 
-type Message struct {}
+type Document struct {}

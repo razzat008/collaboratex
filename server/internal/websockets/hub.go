@@ -1,3 +1,8 @@
+package websockets
+
+import( 
+	"sync"
+)
 /* 
 What this file actually contains: 
 - A project has a hub where multiple clients resides. 
@@ -5,7 +10,12 @@ What this file actually contains:
 - This hub is responsible for relaying changes or client joins
 */
 
-package websockets
+/* Hub manager manages all the hubs */
+/* Todo It needs modification as it might store on db probably */
+type HubManager struct { 
+	hubs map [string]*Hub
+	mu   sync.RWMutex
+}
 
 /* 
 Hub indicates a single project responsible for giving clients 
@@ -25,5 +35,16 @@ type Hub struct{
 	unregister chan *Client
 
 	//broadcast incoming messages
-	broadcast chan Message
+	broadcast chan Document 
+}
+
+// Initializes a new hub
+func NewHub() *Hub{ 
+	return &Hub { 
+		clients: make(map[*Client]bool),
+		roomId:  "", //Need to make a sharing link to generate roomId
+		register: make(chan *Client, 100), //buffered channel to prevent deadlock
+		unregister: make(chan *Client, 5),
+		broadcast:  make(chan Document, 10), //Need to lookinto it
+	}
 }
