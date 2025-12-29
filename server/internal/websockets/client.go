@@ -61,4 +61,56 @@ func (c *Client)Read(){
 
 /* writes the output from server to client (i.e server -> client) */
 func (c *Client)Write(){ 
+	ticker := time.NewTicker(pingPeriod)
+	defer func(){ 
+		ticker.Stop()
+		c.connection.Close()
+	}()
+
+	for { 
+		select { 
+			case document, ok := <-c.send: 
+			_ = c.connection.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok { 
+				_ = c.connection.WriteMessage(websocket.CloseMessage, []byte{})
+				log.Printf("send channel closed for user")
+				return
+			}
+			// Todo: need to change this part also
+			w, err := c.connection.NextWriter(websocket.TextMessage)
+			if err != nil { 
+				log.Printf("err:","error while creating next writer", err)
+				return
+			}
+
+			// writing into next writer
+			if _, err := w.Write(document); err != nil { 
+				log.Printf("err:","while writing from the connection", err)
+				_=w.Close()
+				return 
+			}
+
+			//writing queued messages from the connection
+			n := len(c.send)
+			for i:=0; i<n; i++ { 
+				nextMsg := <-c.send
+				if _, err := w.Write(nextMsg); err != nil { 
+					log.Printf("err:","error while writing big message")
+					break	
+				}
+			}
+
+			//closing connection
+			if err := w.Close(); err != nil {
+				return
+			}
+
+		case <-ticker.C:
+			_ = c.connection.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.connection.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				log.Printf("error:","error while writing pingMessage", err)
+				return
+			}
+		}
+	}
 }
