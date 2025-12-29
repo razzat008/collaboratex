@@ -51,5 +51,15 @@ func NewHub() *Hub{
 
 /* This is the main loop of the running Hub */
 func (h *Hub) Run (){
-
+	for {
+		select { 
+		case c := <-h.register:
+			h.clients[c] = true
+			/* Todo: if new clients arrives we might have to 
+			broadcast this info */
+		case c := <-h.unregister:
+			h.clients[c] = false
+			/* Todo: broadcast the client leaving */
+		}
+	}
 }
