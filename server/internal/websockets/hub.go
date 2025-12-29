@@ -48,3 +48,8 @@ func NewHub() *Hub{
 		broadcast:  make(chan Document, 10), //Need to lookinto it
 	}
 }
+
+/* This is the main loop of the running Hub */
+func (h *Hub) Run (){
+
+}
