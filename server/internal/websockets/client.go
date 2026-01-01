@@ -1,16 +1,16 @@
-/* 
+/*
 Defines the expected behaviour of the client
 */
 package websockets
 
-import(
-	"time"
+import (
 	"log"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-//For heartbeat 
+//For heartbeat
 const ( 
 	writeWait  = 10*time.Second
 	pongWait 	 = 60*time.Second
@@ -32,6 +32,7 @@ func (c *Client)Read(){
 	defer func(){ 
 		c.hub.unregister <- c 	
 		c.connection.Close()
+		log.Println("closing client.Read")
 	}()	
 
 	//setting the connection's read limit to 4kb
@@ -47,24 +48,31 @@ func (c *Client)Read(){
 		//reading data from client's websocket
 		_, data, err := c.connection.ReadMessage()
 		if err != nil{ 
-			log.Printf("err:","while reading from connection")	
+			log.Println("err:","while reading from connection",err)	
+			break
 		}
 
-		var document Document
 		// Todo: define The format of document and operation needs to be performed
 		//eg: for json we have to 
+		document := Document{
+			Content: data,
+			sender: c.id,
+		}
 
-		//Todo: broadcast
+
+		log.Println("data recieved from client:", string(document.Content))
+		c.hub.broadcast <- document
 	}
 }
 
 
 /* writes the output from server to client (i.e server -> client) */
-func (c *Client)Write(){ 
+func (c *Client) Write(){ 
 	ticker := time.NewTicker(pingPeriod)
 	defer func(){ 
 		ticker.Stop()
 		c.connection.Close()
+		log.Println("closing client.write")
 	}()
 
 	for { 
@@ -79,13 +87,13 @@ func (c *Client)Write(){
 			// Todo: need to change this part also
 			w, err := c.connection.NextWriter(websocket.TextMessage)
 			if err != nil { 
-				log.Printf("err:","error while creating next writer", err)
+				log.Println("err:","error while creating next writer", err)
 				return
 			}
 
 			// writing into next writer
 			if _, err := w.Write(document); err != nil { 
-				log.Printf("err:","while writing from the connection", err)
+				log.Println("err:","while writing from the connection", err)
 				_=w.Close()
 				return 
 			}
@@ -95,7 +103,7 @@ func (c *Client)Write(){
 			for i:=0; i<n; i++ { 
 				nextMsg := <-c.send
 				if _, err := w.Write(nextMsg); err != nil { 
-					log.Printf("err:","error while writing big message")
+					log.Println("err:","error while writing big message")
 					break	
 				}
 			}
@@ -108,7 +116,7 @@ func (c *Client)Write(){
 		case <-ticker.C:
 			_ = c.connection.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.connection.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Printf("error:","error while writing pingMessage", err)
+				log.Println("error:","error while writing pingMessage", err)
 				return
 			}
 		}
