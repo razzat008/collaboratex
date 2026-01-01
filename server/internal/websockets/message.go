@@ -1,3 +1,6 @@
 package websockets
 
-type Document struct {}
+type Document struct {
+	Content []byte
+	sender 	string
+} 

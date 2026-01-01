@@ -2,6 +2,9 @@ package websockets
 
 import( 
 	"sync"
+	"log"
+	"crypto/rand"
+	"encoding/hex"
 )
 /* 
 What this file actually contains: 
@@ -38,11 +41,18 @@ type Hub struct{
 	broadcast chan Document 
 }
 
+//Generate a roomId 
+func GenerateRoomID() string { 
+	data := make([]byte, 16)
+	rand.Read(data)
+	return hex.EncodeToString(data)
+}
+
 // Initializes a new hub
 func NewHub() *Hub{ 
 	return &Hub { 
 		clients: make(map[*Client]bool),
-		roomId:  "", //Need to make a sharing link to generate roomId
+		roomId:  "1234", //Need to make a sharing link to generate roomId
 		register: make(chan *Client, 100), //buffered channel to prevent deadlock
 		unregister: make(chan *Client, 5),
 		broadcast:  make(chan Document, 10), //Need to lookinto it
@@ -60,6 +70,12 @@ func (h *Hub) Run (){
 		case c := <-h.unregister:
 			h.clients[c] = false
 			/* Todo: broadcast the client leaving */
+		case document := <- h.broadcast:
+			for client := range h.clients{ 
+				if client.id == document.sender { continue }
+				client.send <- []byte(document.Content) //most shittiest code
+				log.Println("broadcasting:",string(document.Content))
+			}
 		}
 	}
 }
