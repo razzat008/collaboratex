@@ -3,6 +3,7 @@ package websockets
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/sessions"
 	"github.com/gorilla/websocket"
 )
 
@@ -22,7 +23,7 @@ var upgrader = &websocket.Upgrader{
 /* websocket handler that is used to initiate the websocket connection */
 //api eg: ws://localhost:8080/ws?action=join&room_id=abcd1234
 //api eg: ws://localhost:8080/ws?action=create
-func AuthenticatedWSHandler(hub *Hub) gin.HandlerFunc {
+func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 	return func(ctx *gin.Context){ 
 		//Todo: only provide entry to validated user
 
@@ -31,6 +32,17 @@ func AuthenticatedWSHandler(hub *Hub) gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest,gin.H{"error":"Expected websocket upgrade"})
 			return
 		}
+
+		//Names are taken after auth sessions
+		name := ""
+		if name == nil || name == ""{
+			name = "Someone"
+		}
+		
+		// Assign a unique Id when user is created(auth job)
+		//and get id from the auth session but for testing purpose
+		id := GenerateRoomID()
+
 
 		//upgrading the websocket connection
 		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
@@ -43,9 +55,9 @@ func AuthenticatedWSHandler(hub *Hub) gin.HandlerFunc {
 
 		/* This is just a default test client and hub*/
 		client := &Client{
-			id : GenerateRoomID(), 	//just generate id
-			name : "someone",
-			hub : hub,
+			id : id,//just generate id
+			name : name,
+			hub : , 
 			connection :conn,
 			send 	:make(chan []byte, 256),
 			ready: true, 

@@ -10,15 +10,16 @@ func main() {
 
 	r := gin.Default()
 
-		hub := websockets.NewHub()
-		go hub.Run()
-
+	//Initializing new hub manager
+	hm := websockets.NewHubManager()
+	
+	//current routes
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"test": "ok",
 		})
 	})
-	r.GET("/ws", websockets.AuthenticatedWSHandler(hub))
+	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
 
 	r.Run()
 

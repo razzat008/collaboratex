@@ -16,7 +16,7 @@ What this file actually contains:
 /* Hub manager manages all the hubs */
 /* Todo It needs modification as it might store on db probably */
 type HubManager struct { 
-	hubs map [string]*Hub
+	hubs map [string]*Hub //Unique id associated with a hub
 	mu   sync.RWMutex
 }
 
@@ -39,6 +39,9 @@ type Hub struct{
 
 	//broadcast incoming messages
 	broadcast chan Document 
+
+	//Hub manager
+	hubManager *HubManager
 }
 
 //Generate a roomId 
@@ -48,11 +51,18 @@ func GenerateRoomID() string {
 	return hex.EncodeToString(data)
 }
 
+// Initializes a new hub manager
+func NewHubManager() *HubManager{ 
+	return &HubManager{
+		hubs: make(map[string]*Hub),
+	}
+}
+
 // Initializes a new hub
 func NewHub() *Hub{ 
 	return &Hub { 
 		clients: make(map[*Client]bool),
-		roomId:  "1234", //Need to make a sharing link to generate roomId
+		roomId:  "", //Need to make a sharing link to generate roomId
 		register: make(chan *Client, 100), //buffered channel to prevent deadlock
 		unregister: make(chan *Client, 5),
 		broadcast:  make(chan Document, 10), //Need to lookinto it
