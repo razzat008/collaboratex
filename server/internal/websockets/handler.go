@@ -42,8 +42,10 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 		//and get id from the auth session but for testing purpose
 		id := GenerateRoomID() //Todo: remove this (just for testing)
 
+		//query is done from URL
 		action := Action(ctx.Query("action"))
-		hub, err := hm.GetExistingHubOrNewHub(action)
+		roomId := ctx.Query("room_id")
+		hub, err := hm.GetExistingHubOrNewHub(action, roomId)
 		if err != nil { return /*Todo */ }
 
 
@@ -71,7 +73,6 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 
 		go client.Read()
 		go client.Write()
-		//Retrieving project id and so on from the url
 	}
 }
 

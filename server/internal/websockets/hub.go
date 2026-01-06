@@ -91,13 +91,52 @@ func (h *Hub) Run (){
 	}
 }
 
-func (hm *HubManager)GetExistingHubOrNewHub(action Action) (*Hub, error) {
-	var h *Hub
+func (hm *HubManager)GetExistingHubOrNewHub(action Action, roomId string) (*Hub, error) {
+	h := NewHub()
 	switch action { 
-	case JoinAction:
 	case CreateAction:
+		/* todo: might be a better way to achieve it */
+		for {
+			roomId := GenerateRoomID()
+			if _, ok := hm.hubs[roomId]; !ok{ 
+				h = hm.CreateNewHub(roomId)
+				break
+			}
+		}
+
+	case JoinAction:
+		if hub, ok := hm.hubs[roomId]; ok { 
+			h = hub
+		}else { 
+			return nil, errors.New("The Given roomId dosen't exists") 
+		}
+	case DeleteAction:
+		/*
+			DeleteAction can only be performed by the owner which should 
+			be added in the hub so to remove unnecessary complexities for 
+			now I am leaving it
+		*/
+
 	default:
 		return nil, errors.New("Invalid action type in the query string")
 	}
 	return h, nil
+}
+
+
+//Creating new hub
+func (hm *HubManager)CreateNewHub(roomId string) *Hub {
+	hm.mu.Lock()
+	defer hm.mu.Unlock()
+
+	//creating new hub
+	newHub := NewHub()
+	newHub.roomId = roomId
+	newHub.hubManager = hm
+
+	//associating new hub with hubmanager
+	hm.hubs[newHub.roomId] = newHub
+	go newHub.Run()
+
+	return newHub
 }
