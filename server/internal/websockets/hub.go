@@ -63,7 +63,7 @@ func NewHubManager() *HubManager{
 func NewHub() *Hub{ 
 	return &Hub { 
 		clients: make(map[*Client]bool),
-		roomId:  "", //Need to make a sharing link to generate roomId
+		roomId:  "", 
 		register: make(chan *Client, 100), //buffered channel to prevent deadlock
 		unregister: make(chan *Client, 5),
 		broadcast:  make(chan Document, 10), //Need to lookinto it
@@ -124,7 +124,7 @@ func (hm *HubManager)GetExistingHubOrNewHub(action Action, roomId string) (*Hub,
 }
 
 
-//Creating new hub
+//This sets up hub and sends new goroutine to run main hub loop
 func (hm *HubManager)CreateNewHub(roomId string) *Hub {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()

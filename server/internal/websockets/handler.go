@@ -42,7 +42,7 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 		//and get id from the auth session but for testing purpose
 		id := GenerateRoomID() //Todo: remove this (just for testing)
 
-		//query is done from URL
+		//query is taken from URL
 		action := Action(ctx.Query("action"))
 		roomId := ctx.Query("room_id")
 		hub, err := hm.GetExistingHubOrNewHub(action, roomId)
