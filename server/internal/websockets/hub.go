@@ -2,7 +2,6 @@ package websockets
 
 import( 
 	"sync"
-	"log"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -39,7 +38,7 @@ type Hub struct{
 	unregister chan *Client
 
 	//broadcast incoming messages
-	broadcast chan Document 
+	broadcast chan Message 
 
 	//Hub manager
 	hubManager *HubManager
@@ -66,7 +65,7 @@ func NewHub() *Hub{
 		roomId:  "", 
 		register: make(chan *Client, 100), //buffered channel to prevent deadlock
 		unregister: make(chan *Client, 5),
-		broadcast:  make(chan Document, 10), //Need to lookinto it
+		broadcast:  make(chan Message, 10), //Need to lookinto it
 	}
 }
 
@@ -81,12 +80,6 @@ func (h *Hub) Run (){
 		case c := <-h.unregister:
 			h.clients[c] = false
 			/* Todo: broadcast the client leaving */
-		case document := <- h.broadcast:
-			for client := range h.clients{ 
-				if client.id == document.sender { continue }
-				client.send <- []byte(document.Content) //most shittiest code
-				log.Println("broadcasting:",string(document.Content))
-			}
 		}
 	}
 }

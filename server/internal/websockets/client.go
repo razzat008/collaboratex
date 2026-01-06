@@ -4,6 +4,7 @@ Defines the expected behaviour of the client
 package websockets
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
@@ -52,16 +53,13 @@ func (c *Client)Read(){
 			break
 		}
 
-		// Todo: define The format of document and operation needs to be performed
-		//eg: for json we have to 
-		document := Document{
-			Content: data,
-			sender: c.id,
+		var message Message
+		if err := json.Unmarshal(data, &message); err != nil{ 
+			log.Println("err","Error occured while unmarshaling",err)
+			continue
 		}
 
-
-		log.Println("data recieved from client:", string(document.Content))
-		c.hub.broadcast <- document
+		c.hub.broadcast <- message 
 	}
 }
 
@@ -77,7 +75,7 @@ func (c *Client) Write(){
 
 	for { 
 		select { 
-			case document, ok := <-c.send: 
+			case message, ok := <-c.send: 
 			_ = c.connection.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok { 
 				_ = c.connection.WriteMessage(websocket.CloseMessage, []byte{})
@@ -92,7 +90,7 @@ func (c *Client) Write(){
 			}
 
 			// writing into next writer
-			if _, err := w.Write(document); err != nil { 
+			if _, err := w.Write(message); err != nil { 
 				log.Println("err:","while writing from the connection", err)
 				_=w.Close()
 				return 
