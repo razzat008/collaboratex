@@ -5,6 +5,7 @@ import(
 	"log"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 )
 /* 
 What this file actually contains: 
@@ -88,4 +89,15 @@ func (h *Hub) Run (){
 			}
 		}
 	}
+}
+
+func (hm *HubManager)GetExistingHubOrNewHub(action Action) (*Hub, error) {
+	var h *Hub
+	switch action { 
+	case JoinAction:
+	case CreateAction:
+	default:
+		return nil, errors.New("Invalid action type in the query string")
+	}
+	return h, nil
 }

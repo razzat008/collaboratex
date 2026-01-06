@@ -3,7 +3,6 @@ package websockets
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/sessions"
 	"github.com/gorilla/websocket"
 )
 
@@ -35,13 +34,17 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 
 		//Names are taken after auth sessions
 		name := ""
-		if name == nil || name == ""{
+		if  name == ""{
 			name = "Someone"
 		}
 		
 		// Assign a unique Id when user is created(auth job)
 		//and get id from the auth session but for testing purpose
-		id := GenerateRoomID()
+		id := GenerateRoomID() //Todo: remove this (just for testing)
+
+		action := Action(ctx.Query("action"))
+		hub, err := hm.GetExistingHubOrNewHub(action)
+		if err != nil { return /*Todo */ }
 
 
 		//upgrading the websocket connection
@@ -57,7 +60,7 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 		client := &Client{
 			id : id,//just generate id
 			name : name,
-			hub : , 
+			hub : hub, 
 			connection :conn,
 			send 	:make(chan []byte, 256),
 			ready: true, 
@@ -71,3 +74,4 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 		//Retrieving project id and so on from the url
 	}
 }
+
