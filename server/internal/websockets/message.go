@@ -16,3 +16,21 @@ type DocumentState struct{
 	Version int
 	History []ClientUpdate
 }
+
+
+func HandleMessage(msg Message, h *Hub){ 
+	switch msg.Type{
+	case "getDocument":
+		HandleGetDocument()	
+	case "pullUpdates":
+		HandlePullUpdates()
+	case "pushUpdates":
+		HandlePushUpdates()
+	default:
+		//invalid type
+	}
+}
+
+func HandleGetDocument(){}
+func HandlePullUpdates(){}
+func HandlePushUpdates(){}

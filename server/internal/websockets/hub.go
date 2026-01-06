@@ -80,6 +80,8 @@ func (h *Hub) Run (){
 		case c := <-h.unregister:
 			h.clients[c] = false
 			/* Todo: broadcast the client leaving */
+		case message := <- h.broadcast:
+			HandleMessage(message, h)
 		}
 	}
 }
