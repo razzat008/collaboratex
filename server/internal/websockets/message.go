@@ -66,7 +66,27 @@ func HandleGetDocument(msg Message, h *Hub){
 	msg.Client.send <- jsonRespStr
 }
 
-func HandlePullUpdates(msg Message, h *Hub) {}
+func HandlePullUpdates(msg Message, h *Hub) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	//while pulling version should not be greater
+	if msg.Version > h.DocState.Version {
+		return
+	}
+
+	missing := h.DocState.History[msg.Version:]
+
+	resp := Message{
+		Type:    "updates",
+		Updates: missing,
+	}
+
+	jsonStr, err := IntoJson(resp)
+	if err != nil { /* Handle error */ }
+
+	msg.Client.send <- jsonStr
+}
 
 func HandlePushUpdates(msg Message, h *Hub){
 	h.mu.Lock()
@@ -108,3 +128,7 @@ func IntoJson(resp Message) ([]byte, error){
 	}
 	return jsonString, nil
 }
+
+
+/* Todo : just stare at the implementation and think about the correctness the code */
+// this is one of the core part of the code so no errors or race condition allowed
