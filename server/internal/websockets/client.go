@@ -54,6 +54,7 @@ func (c *Client)Read(){
 		}
 
 		var message Message
+		message.Client = c
 		if err := json.Unmarshal(data, &message); err != nil{ 
 			log.Println("err","Error occured while unmarshaling",err)
 			continue
@@ -82,7 +83,7 @@ func (c *Client) Write(){
 				log.Printf("send channel closed for user")
 				return
 			}
-			// Todo: need to change this part also
+
 			w, err := c.connection.NextWriter(websocket.TextMessage)
 			if err != nil { 
 				log.Println("err:","error while creating next writer", err)
@@ -96,7 +97,8 @@ func (c *Client) Write(){
 				return 
 			}
 
-			//writing queued messages from the connection
+			//writing queued messages from the connection 
+			//debug: if necessary
 			n := len(c.send)
 			for i:=0; i<n; i++ { 
 				nextMsg := <-c.send

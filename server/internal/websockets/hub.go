@@ -42,6 +42,12 @@ type Hub struct{
 
 	//Hub manager
 	hubManager *HubManager
+
+	//Current document state
+	DocState DocumentState
+
+	//Needs while getting and transfering messages
+	mu   sync.RWMutex
 }
 
 //Generate a roomId 
@@ -78,7 +84,7 @@ func (h *Hub) Run (){
 			/* Todo: if new clients arrives we might have to 
 			broadcast this info */
 		case c := <-h.unregister:
-			h.clients[c] = false
+			delete(h.clients, c)
 			/* Todo: broadcast the client leaving */
 		case message := <- h.broadcast:
 			HandleMessage(message, h)
@@ -124,10 +130,14 @@ func (hm *HubManager)CreateNewHub(roomId string) *Hub {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
 
+	//creating new doc
+	newDoc := NewDoc()
+
 	//creating new hub
 	newHub := NewHub()
 	newHub.roomId = roomId
 	newHub.hubManager = hm
+	newHub.DocState = newDoc
 
 	//associating new hub with hubmanager
 	hm.hubs[newHub.roomId] = newHub
