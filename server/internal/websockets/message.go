@@ -2,7 +2,6 @@ package websockets
 
 import (
 	"encoding/json"
-	"json"
 )
 
 type Message struct {
@@ -59,12 +58,53 @@ func HandleGetDocument(msg Message, h *Hub){
 		Text: doc.Text,
 	}
 
-	jsonRespStr, err := json.Marshal(resp)
-	if err != nil {
-		//handle the error
+	jsonRespStr, err := IntoJson(resp)
+	if err !=nil {
+		//handle error
 	}
+
 	msg.Client.send <- jsonRespStr
 }
 
 func HandlePullUpdates(msg Message, h *Hub) {}
-func HandlePushUpdates(msg Message, h *Hub){}
+
+func HandlePushUpdates(msg Message, h *Hub){
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	// because we cannot make invalid incomplete changes
+	if msg.Version != h.DocState.Version{
+		return
+	}
+
+	for _, update := range msg.Updates{
+		// Apply change (placeholder)
+		h.DocState.Text += update.Changes // you’ll replace this later
+		h.DocState.History = append(h.DocState.History, update)
+		h.DocState.Version++
+	}
+
+	out := Message{
+		Type: "updates", 
+		Updates: msg.Updates,
+	}
+
+	//broadcast the changes to everyone except sender
+	for client ,_ := range h.clients{
+		if msg.Client.id == client.id { continue }
+
+		jsonStr, err := IntoJson(out)
+		if err != nil { /* handle the error */ }
+
+		client.send <- jsonStr
+	}
+}
+
+//helper function to marshal the given struct into json
+func IntoJson(resp Message) ([]byte, error){
+	jsonString, err := json.Marshal(resp)
+	if err != nil {
+		return nil, err
+	}
+	return jsonString, nil
+}
