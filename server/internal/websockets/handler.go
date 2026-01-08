@@ -1,20 +1,40 @@
-package websockets 
+package websockets
 
 import (
 	"net/http"
+	"net/url"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
 /* upgrader upgrades our http connection to weboskcet connection */
 var upgrader = &websocket.Upgrader{
-	// Make origins stronglater
+	// Allow common development origins and localhost variants.
+	// In production, make this strict and whitelist only your real origins.
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		//add frontend or prod domain here
-		if origin == "http://localhost:5173" || origin == "http://localhost:8080" {
-		return true 
+
+		// Allow explicit local dev origins often used by frontend tooling
+		if origin == "http://localhost:5173" || origin == "http://localhost:8080" ||
+			origin == "http://127.0.0.1:5173" || origin == "http://127.0.0.1:8080" {
+			return true
 		}
+
+		// Allow empty origin (non-browser clients, some dev tools)
+		if origin == "" {
+			return true
+		}
+
+		// Fallback: parse origin and allow when hostname is localhost or loopback
+		if u, err := url.Parse(origin); err == nil {
+			host := u.Hostname()
+			if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+				return true
+			}
+		}
+
+		// otherwise reject
 		return false
 	},
 }
