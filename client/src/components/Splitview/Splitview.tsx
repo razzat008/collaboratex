@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import EditorPane from "../Editor/Editor";
+import EditorPane from "../Editor/Collaboration";
 import PreviewPane from "../Preview/PreviewPane";
 import FormattingToolbar from "../Topbar/FormattingToolbar";
 import PreviewToolbar from "../Topbar/PreviewToolbar";
