@@ -38,13 +38,10 @@ type Hub struct{
 	unregister chan *Client
 
 	//broadcast incoming messages
-	broadcast chan Message 
+	broadcast chan []byte
 
 	//Hub manager
 	hubManager *HubManager
-
-	//Current document state
-	DocState DocumentState
 
 	//Needs while getting and transfering messages
 	mu   sync.RWMutex
@@ -71,7 +68,7 @@ func NewHub() *Hub{
 		roomId:  "", 
 		register: make(chan *Client, 100), //buffered channel to prevent deadlock
 		unregister: make(chan *Client, 5),
-		broadcast:  make(chan Message, 10), //Need to lookinto it
+		broadcast:  make(chan []byte, 10),
 	}
 }
 
@@ -85,9 +82,13 @@ func (h *Hub) Run (){
 			broadcast this info */
 		case c := <-h.unregister:
 			delete(h.clients, c)
+			close(c.send)
 			/* Todo: broadcast the client leaving */
 		case message := <- h.broadcast:
-			HandleMessage(message, h)
+			for client, _ := range h.clients{
+				//todo: the broadcasting is going to the client that sent itself too
+				client.send <- message
+			}
 		}
 	}
 }
@@ -96,7 +97,6 @@ func (hm *HubManager)GetExistingHubOrNewHub(action Action, roomId string) (*Hub,
 	h := NewHub()
 	switch action { 
 	case CreateAction:
-		/* todo: might be a better way to achieve it */
 		for {
 			roomId := GenerateRoomID()
 			if _, ok := hm.hubs[roomId]; !ok{ 
@@ -104,7 +104,6 @@ func (hm *HubManager)GetExistingHubOrNewHub(action Action, roomId string) (*Hub,
 				break
 			}
 		}
-
 	case JoinAction:
 		if hub, ok := hm.hubs[roomId]; ok { 
 			h = hub
@@ -130,14 +129,10 @@ func (hm *HubManager)CreateNewHub(roomId string) *Hub {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
 
-	//creating new doc
-	newDoc := NewDoc()
-
 	//creating new hub
 	newHub := NewHub()
 	newHub.roomId = roomId
 	newHub.hubManager = hm
-	newHub.DocState = newDoc
 
 	//associating new hub with hubmanager
 	hm.hubs[newHub.roomId] = newHub
