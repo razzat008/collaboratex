@@ -4,7 +4,6 @@ Defines the expected behaviour of the client
 package websockets
 
 import (
-	"encoding/json"
 	"log"
 	"time"
 
@@ -47,20 +46,15 @@ func (c *Client)Read(){
 
 	for { 
 		//reading data from client's websocket
-		_, data, err := c.connection.ReadMessage()
+		msgtype, data, err := c.connection.ReadMessage()
 		if err != nil{ 
 			log.Println("err:","while reading from connection",err)	
 			break
 		}
 
-		var message Message
-		message.Client = c
-		if err := json.Unmarshal(data, &message); err != nil{ 
-			log.Println("err","Error occured while unmarshaling",err)
-			continue
+		if msgtype == websocket.BinaryMessage {
+			c.hub.broadcast <- data
 		}
-
-		c.hub.broadcast <- message 
 	}
 }
 
@@ -84,7 +78,7 @@ func (c *Client) Write(){
 				return
 			}
 
-			w, err := c.connection.NextWriter(websocket.TextMessage)
+			w, err := c.connection.NextWriter(websocket.BinaryMessage)
 			if err != nil { 
 				log.Println("err:","error while creating next writer", err)
 				return
