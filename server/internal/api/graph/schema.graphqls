@@ -1,0 +1,130 @@
+# ---------------------------------------
+# Core Types
+# ---------------------------------------
+
+type Project {
+  id: ID!
+  createdDate: String!
+  lastEdited: String!
+  projectName: String!
+  ownedBy: User!
+  collaborators: [User!]!
+  rootFile: File!
+  files: [File!]!
+  versions: [Version!]!
+}
+
+type User {
+  id: ID!
+  email: String!
+  userName: String!
+  projects: [Project!]!
+  collaborations: [Project!]!
+}
+
+# ---------------------------------------
+# Files
+# ---------------------------------------
+
+type File {
+  id: ID!
+  name: String!
+  type: FileType!
+  content: String!
+  project: Project!
+  createdAt: String!
+  updatedAt: String!
+}
+
+enum FileType {
+  TEX
+  BIB
+  IMAGE
+  CLS
+  STY
+  OTHER
+}
+
+# ---------------------------------------
+# Versioning
+# ---------------------------------------
+
+type Version {
+  id: ID!
+  project: Project!
+  createdAt: String!
+  message: String
+  files: [VersionFile!]!
+}
+
+type VersionFile {
+  id: ID!
+  name: String!
+  content: String!
+}
+
+# ---------------------------------------
+# Queries
+# ---------------------------------------
+
+type Query {
+  projects: [Project!]!
+  project(id: ID!): Project
+  user(id: ID!): User
+  file(id: ID!): File
+  version(id: ID!): Version
+}
+
+# ---------------------------------------
+# Inputs
+# ---------------------------------------
+
+input NewProject {
+  projectName: String!
+  ownedBy: ID!
+}
+
+input NewUser {
+  email: String!
+  userName: String!
+}
+
+input NewFile {
+  projectId: ID!
+  name: String!
+  type: FileType!
+}
+
+# ---------------------------------------
+# Mutations
+# ---------------------------------------
+
+type Mutation {
+  # Users
+  createUser(input: NewUser!): User!
+
+  # Projects
+  createProject(input: NewProject!): Project!
+  deleteProject(projectId: ID!): Boolean!
+  addCollaborator(projectId: ID!, userId: ID!): Project!
+  removeCollaborator(projectId: ID!, userId: ID!): Project!
+
+  # Files
+  createFile(input: NewFile!): File!
+  updateFile(fileId: ID!, content: String!): File!
+  renameFile(fileId: ID!, name: String!): File!
+  deleteFile(fileId: ID!): Boolean!
+
+  # Versioning
+  createVersion(projectId: ID!, message: String): Version!
+  restoreVersion(versionId: ID!): Project!
+}
+
+# ---------------------------------------
+# Subscriptions (optional)
+# ---------------------------------------
+
+type Subscription {
+  fileUpdated(projectId: ID!): File!
+  projectUpdated(projectId: ID!): Project!
+}
