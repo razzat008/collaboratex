@@ -9,45 +9,44 @@ import (
 	"strconv"
 )
 
+type CreateVersionInput struct {
+	ProjectID string  `json:"projectId"`
+	Message   *string `json:"message,omitempty"`
+}
+
 type File struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Type      FileType `json:"type"`
-	Content   string   `json:"content"`
-	Project   *Project `json:"project"`
-	CreatedAt string   `json:"createdAt"`
-	UpdatedAt string   `json:"updatedAt"`
+	ID          string       `json:"id"`
+	ProjectID   string       `json:"projectId"`
+	Name        string       `json:"name"`
+	Type        FileType     `json:"type"`
+	CreatedAt   string       `json:"createdAt"`
+	UpdatedAt   string       `json:"updatedAt"`
+	WorkingFile *WorkingFile `json:"workingFile"`
 }
 
 type Mutation struct {
 }
 
-type NewFile struct {
+type NewFileInput struct {
 	ProjectID string   `json:"projectId"`
 	Name      string   `json:"name"`
 	Type      FileType `json:"type"`
 }
 
-type NewProject struct {
+type NewProjectInput struct {
 	ProjectName string `json:"projectName"`
-	OwnedBy     string `json:"ownedBy"`
-}
-
-type NewUser struct {
-	Email    string `json:"email"`
-	UserName string `json:"userName"`
 }
 
 type Project struct {
-	ID            string     `json:"id"`
-	CreatedDate   string     `json:"createdDate"`
-	LastEdited    string     `json:"lastEdited"`
-	ProjectName   string     `json:"projectName"`
-	OwnedBy       *User      `json:"ownedBy"`
-	Collaborators []*User    `json:"collaborators"`
-	RootFile      *File      `json:"rootFile"`
-	Files         []*File    `json:"files"`
-	Versions      []*Version `json:"versions"`
+	ID              string     `json:"id"`
+	ProjectName     string     `json:"projectName"`
+	CreatedAt       string     `json:"createdAt"`
+	LastEditedAt    string     `json:"lastEditedAt"`
+	OwnerID         string     `json:"ownerId"`
+	CollaboratorIds []string   `json:"collaboratorIds"`
+	RootFileID      string     `json:"rootFileId"`
+	Files           []*File    `json:"files"`
+	Versions        []*Version `json:"versions"`
 }
 
 type Query struct {
@@ -56,26 +55,40 @@ type Query struct {
 type Subscription struct {
 }
 
+type UpdateWorkingFileInput struct {
+	FileID  string `json:"fileId"`
+	Content string `json:"content"`
+}
+
 type User struct {
-	ID             string     `json:"id"`
-	Email          string     `json:"email"`
-	UserName       string     `json:"userName"`
-	Projects       []*Project `json:"projects"`
-	Collaborations []*Project `json:"collaborations"`
+	ID          string `json:"id"`
+	ClerkUserID string `json:"clerkUserId"`
+	CreatedAt   string `json:"createdAt"`
 }
 
 type Version struct {
 	ID        string         `json:"id"`
-	Project   *Project       `json:"project"`
+	ProjectID string         `json:"projectId"`
 	CreatedAt string         `json:"createdAt"`
 	Message   *string        `json:"message,omitempty"`
 	Files     []*VersionFile `json:"files"`
 }
 
 type VersionFile struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	ID        string   `json:"id"`
+	VersionID string   `json:"versionId"`
+	FileID    string   `json:"fileId"`
+	Name      string   `json:"name"`
+	Type      FileType `json:"type"`
+	Content   string   `json:"content"`
+}
+
+type WorkingFile struct {
+	ID        string `json:"id"`
+	FileID    string `json:"fileId"`
+	ProjectID string `json:"projectId"`
+	Content   string `json:"content"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 type FileType string

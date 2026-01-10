@@ -49,60 +49,57 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	File struct {
-		Content   func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Name      func(childComplexity int) int
-		Project   func(childComplexity int) int
-		Type      func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		ProjectID   func(childComplexity int) int
+		Type        func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		WorkingFile func(childComplexity int) int
 	}
 
 	Mutation struct {
 		AddCollaborator    func(childComplexity int, projectID string, userID string) int
-		CreateFile         func(childComplexity int, input model.NewFile) int
-		CreateProject      func(childComplexity int, input model.NewProject) int
-		CreateUser         func(childComplexity int, input model.NewUser) int
-		CreateVersion      func(childComplexity int, projectID string, message *string) int
+		CreateFile         func(childComplexity int, input model.NewFileInput) int
+		CreateProject      func(childComplexity int, input model.NewProjectInput) int
+		CreateVersion      func(childComplexity int, input model.CreateVersionInput) int
 		DeleteFile         func(childComplexity int, fileID string) int
 		DeleteProject      func(childComplexity int, projectID string) int
 		RemoveCollaborator func(childComplexity int, projectID string, userID string) int
 		RenameFile         func(childComplexity int, fileID string, name string) int
 		RestoreVersion     func(childComplexity int, versionID string) int
-		UpdateFile         func(childComplexity int, fileID string, content string) int
+		UpdateWorkingFile  func(childComplexity int, input model.UpdateWorkingFileInput) int
 	}
 
 	Project struct {
-		Collaborators func(childComplexity int) int
-		CreatedDate   func(childComplexity int) int
-		Files         func(childComplexity int) int
-		ID            func(childComplexity int) int
-		LastEdited    func(childComplexity int) int
-		OwnedBy       func(childComplexity int) int
-		ProjectName   func(childComplexity int) int
-		RootFile      func(childComplexity int) int
-		Versions      func(childComplexity int) int
+		CollaboratorIds func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		Files           func(childComplexity int) int
+		ID              func(childComplexity int) int
+		LastEditedAt    func(childComplexity int) int
+		OwnerID         func(childComplexity int) int
+		ProjectName     func(childComplexity int) int
+		RootFileID      func(childComplexity int) int
+		Versions        func(childComplexity int) int
 	}
 
 	Query struct {
-		File     func(childComplexity int, id string) int
-		Project  func(childComplexity int, id string) int
-		Projects func(childComplexity int) int
-		User     func(childComplexity int, id string) int
-		Version  func(childComplexity int, id string) int
+		File        func(childComplexity int, id string) int
+		Project     func(childComplexity int, id string) int
+		Projects    func(childComplexity int) int
+		Version     func(childComplexity int, id string) int
+		WorkingFile func(childComplexity int, fileID string) int
 	}
 
 	Subscription struct {
-		FileUpdated    func(childComplexity int, projectID string) int
-		ProjectUpdated func(childComplexity int, projectID string) int
+		ProjectUpdated     func(childComplexity int, projectID string) int
+		WorkingFileUpdated func(childComplexity int, projectID string) int
 	}
 
 	User struct {
-		Collaborations func(childComplexity int) int
-		Email          func(childComplexity int) int
-		ID             func(childComplexity int) int
-		Projects       func(childComplexity int) int
-		UserName       func(childComplexity int) int
+		ClerkUserID func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		ID          func(childComplexity int) int
 	}
 
 	Version struct {
@@ -110,38 +107,48 @@ type ComplexityRoot struct {
 		Files     func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Message   func(childComplexity int) int
-		Project   func(childComplexity int) int
+		ProjectID func(childComplexity int) int
 	}
 
 	VersionFile struct {
-		Content func(childComplexity int) int
-		ID      func(childComplexity int) int
-		Name    func(childComplexity int) int
+		Content   func(childComplexity int) int
+		FileID    func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Type      func(childComplexity int) int
+		VersionID func(childComplexity int) int
+	}
+
+	WorkingFile struct {
+		Content   func(childComplexity int) int
+		FileID    func(childComplexity int) int
+		ID        func(childComplexity int) int
+		ProjectID func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
-	CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error)
+	CreateProject(ctx context.Context, input model.NewProjectInput) (*model.Project, error)
 	DeleteProject(ctx context.Context, projectID string) (bool, error)
 	AddCollaborator(ctx context.Context, projectID string, userID string) (*model.Project, error)
 	RemoveCollaborator(ctx context.Context, projectID string, userID string) (*model.Project, error)
-	CreateFile(ctx context.Context, input model.NewFile) (*model.File, error)
-	UpdateFile(ctx context.Context, fileID string, content string) (*model.File, error)
+	CreateFile(ctx context.Context, input model.NewFileInput) (*model.File, error)
 	RenameFile(ctx context.Context, fileID string, name string) (*model.File, error)
 	DeleteFile(ctx context.Context, fileID string) (bool, error)
-	CreateVersion(ctx context.Context, projectID string, message *string) (*model.Version, error)
+	UpdateWorkingFile(ctx context.Context, input model.UpdateWorkingFileInput) (*model.WorkingFile, error)
+	CreateVersion(ctx context.Context, input model.CreateVersionInput) (*model.Version, error)
 	RestoreVersion(ctx context.Context, versionID string) (*model.Project, error)
 }
 type QueryResolver interface {
 	Projects(ctx context.Context) ([]*model.Project, error)
 	Project(ctx context.Context, id string) (*model.Project, error)
-	User(ctx context.Context, id string) (*model.User, error)
 	File(ctx context.Context, id string) (*model.File, error)
+	WorkingFile(ctx context.Context, fileID string) (*model.WorkingFile, error)
 	Version(ctx context.Context, id string) (*model.Version, error)
 }
 type SubscriptionResolver interface {
-	FileUpdated(ctx context.Context, projectID string) (<-chan *model.File, error)
+	WorkingFileUpdated(ctx context.Context, projectID string) (<-chan *model.WorkingFile, error)
 	ProjectUpdated(ctx context.Context, projectID string) (<-chan *model.Project, error)
 }
 
@@ -164,12 +171,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
-	case "File.content":
-		if e.complexity.File.Content == nil {
-			break
-		}
-
-		return e.complexity.File.Content(childComplexity), true
 	case "File.createdAt":
 		if e.complexity.File.CreatedAt == nil {
 			break
@@ -188,12 +189,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.File.Name(childComplexity), true
-	case "File.project":
-		if e.complexity.File.Project == nil {
+	case "File.projectId":
+		if e.complexity.File.ProjectID == nil {
 			break
 		}
 
-		return e.complexity.File.Project(childComplexity), true
+		return e.complexity.File.ProjectID(childComplexity), true
 	case "File.type":
 		if e.complexity.File.Type == nil {
 			break
@@ -206,6 +207,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.File.UpdatedAt(childComplexity), true
+	case "File.workingFile":
+		if e.complexity.File.WorkingFile == nil {
+			break
+		}
+
+		return e.complexity.File.WorkingFile(childComplexity), true
 
 	case "Mutation.addCollaborator":
 		if e.complexity.Mutation.AddCollaborator == nil {
@@ -228,7 +235,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateFile(childComplexity, args["input"].(model.NewFile)), true
+		return e.complexity.Mutation.CreateFile(childComplexity, args["input"].(model.NewFileInput)), true
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
 			break
@@ -239,18 +246,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProject(childComplexity, args["input"].(model.NewProject)), true
-	case "Mutation.createUser":
-		if e.complexity.Mutation.CreateUser == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createUser_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.NewUser)), true
+		return e.complexity.Mutation.CreateProject(childComplexity, args["input"].(model.NewProjectInput)), true
 	case "Mutation.createVersion":
 		if e.complexity.Mutation.CreateVersion == nil {
 			break
@@ -261,7 +257,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateVersion(childComplexity, args["projectId"].(string), args["message"].(*string)), true
+		return e.complexity.Mutation.CreateVersion(childComplexity, args["input"].(model.CreateVersionInput)), true
 	case "Mutation.deleteFile":
 		if e.complexity.Mutation.DeleteFile == nil {
 			break
@@ -317,30 +313,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.RestoreVersion(childComplexity, args["versionId"].(string)), true
-	case "Mutation.updateFile":
-		if e.complexity.Mutation.UpdateFile == nil {
+	case "Mutation.updateWorkingFile":
+		if e.complexity.Mutation.UpdateWorkingFile == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateFile_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_updateWorkingFile_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateFile(childComplexity, args["fileId"].(string), args["content"].(string)), true
+		return e.complexity.Mutation.UpdateWorkingFile(childComplexity, args["input"].(model.UpdateWorkingFileInput)), true
 
-	case "Project.collaborators":
-		if e.complexity.Project.Collaborators == nil {
+	case "Project.collaboratorIds":
+		if e.complexity.Project.CollaboratorIds == nil {
 			break
 		}
 
-		return e.complexity.Project.Collaborators(childComplexity), true
-	case "Project.createdDate":
-		if e.complexity.Project.CreatedDate == nil {
+		return e.complexity.Project.CollaboratorIds(childComplexity), true
+	case "Project.createdAt":
+		if e.complexity.Project.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Project.CreatedDate(childComplexity), true
+		return e.complexity.Project.CreatedAt(childComplexity), true
 	case "Project.files":
 		if e.complexity.Project.Files == nil {
 			break
@@ -353,30 +349,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Project.ID(childComplexity), true
-	case "Project.lastEdited":
-		if e.complexity.Project.LastEdited == nil {
+	case "Project.lastEditedAt":
+		if e.complexity.Project.LastEditedAt == nil {
 			break
 		}
 
-		return e.complexity.Project.LastEdited(childComplexity), true
-	case "Project.ownedBy":
-		if e.complexity.Project.OwnedBy == nil {
+		return e.complexity.Project.LastEditedAt(childComplexity), true
+	case "Project.ownerId":
+		if e.complexity.Project.OwnerID == nil {
 			break
 		}
 
-		return e.complexity.Project.OwnedBy(childComplexity), true
+		return e.complexity.Project.OwnerID(childComplexity), true
 	case "Project.projectName":
 		if e.complexity.Project.ProjectName == nil {
 			break
 		}
 
 		return e.complexity.Project.ProjectName(childComplexity), true
-	case "Project.rootFile":
-		if e.complexity.Project.RootFile == nil {
+	case "Project.rootFileId":
+		if e.complexity.Project.RootFileID == nil {
 			break
 		}
 
-		return e.complexity.Project.RootFile(childComplexity), true
+		return e.complexity.Project.RootFileID(childComplexity), true
 	case "Project.versions":
 		if e.complexity.Project.Versions == nil {
 			break
@@ -412,17 +408,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Projects(childComplexity), true
-	case "Query.user":
-		if e.complexity.Query.User == nil {
-			break
-		}
-
-		args, err := ec.field_Query_user_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.User(childComplexity, args["id"].(string)), true
 	case "Query.version":
 		if e.complexity.Query.Version == nil {
 			break
@@ -434,18 +419,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Version(childComplexity, args["id"].(string)), true
-
-	case "Subscription.fileUpdated":
-		if e.complexity.Subscription.FileUpdated == nil {
+	case "Query.workingFile":
+		if e.complexity.Query.WorkingFile == nil {
 			break
 		}
 
-		args, err := ec.field_Subscription_fileUpdated_args(ctx, rawArgs)
+		args, err := ec.field_Query_workingFile_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Subscription.FileUpdated(childComplexity, args["projectId"].(string)), true
+		return e.complexity.Query.WorkingFile(childComplexity, args["fileId"].(string)), true
+
 	case "Subscription.projectUpdated":
 		if e.complexity.Subscription.ProjectUpdated == nil {
 			break
@@ -457,37 +442,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Subscription.ProjectUpdated(childComplexity, args["projectId"].(string)), true
-
-	case "User.collaborations":
-		if e.complexity.User.Collaborations == nil {
+	case "Subscription.workingFileUpdated":
+		if e.complexity.Subscription.WorkingFileUpdated == nil {
 			break
 		}
 
-		return e.complexity.User.Collaborations(childComplexity), true
-	case "User.email":
-		if e.complexity.User.Email == nil {
+		args, err := ec.field_Subscription_workingFileUpdated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.WorkingFileUpdated(childComplexity, args["projectId"].(string)), true
+
+	case "User.clerkUserId":
+		if e.complexity.User.ClerkUserID == nil {
 			break
 		}
 
-		return e.complexity.User.Email(childComplexity), true
+		return e.complexity.User.ClerkUserID(childComplexity), true
+	case "User.createdAt":
+		if e.complexity.User.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.User.CreatedAt(childComplexity), true
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
 		}
 
 		return e.complexity.User.ID(childComplexity), true
-	case "User.projects":
-		if e.complexity.User.Projects == nil {
-			break
-		}
-
-		return e.complexity.User.Projects(childComplexity), true
-	case "User.userName":
-		if e.complexity.User.UserName == nil {
-			break
-		}
-
-		return e.complexity.User.UserName(childComplexity), true
 
 	case "Version.createdAt":
 		if e.complexity.Version.CreatedAt == nil {
@@ -513,12 +497,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Version.Message(childComplexity), true
-	case "Version.project":
-		if e.complexity.Version.Project == nil {
+	case "Version.projectId":
+		if e.complexity.Version.ProjectID == nil {
 			break
 		}
 
-		return e.complexity.Version.Project(childComplexity), true
+		return e.complexity.Version.ProjectID(childComplexity), true
 
 	case "VersionFile.content":
 		if e.complexity.VersionFile.Content == nil {
@@ -526,6 +510,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VersionFile.Content(childComplexity), true
+	case "VersionFile.fileId":
+		if e.complexity.VersionFile.FileID == nil {
+			break
+		}
+
+		return e.complexity.VersionFile.FileID(childComplexity), true
 	case "VersionFile.id":
 		if e.complexity.VersionFile.ID == nil {
 			break
@@ -538,6 +528,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VersionFile.Name(childComplexity), true
+	case "VersionFile.type":
+		if e.complexity.VersionFile.Type == nil {
+			break
+		}
+
+		return e.complexity.VersionFile.Type(childComplexity), true
+	case "VersionFile.versionId":
+		if e.complexity.VersionFile.VersionID == nil {
+			break
+		}
+
+		return e.complexity.VersionFile.VersionID(childComplexity), true
+
+	case "WorkingFile.content":
+		if e.complexity.WorkingFile.Content == nil {
+			break
+		}
+
+		return e.complexity.WorkingFile.Content(childComplexity), true
+	case "WorkingFile.fileId":
+		if e.complexity.WorkingFile.FileID == nil {
+			break
+		}
+
+		return e.complexity.WorkingFile.FileID(childComplexity), true
+	case "WorkingFile.id":
+		if e.complexity.WorkingFile.ID == nil {
+			break
+		}
+
+		return e.complexity.WorkingFile.ID(childComplexity), true
+	case "WorkingFile.projectId":
+		if e.complexity.WorkingFile.ProjectID == nil {
+			break
+		}
+
+		return e.complexity.WorkingFile.ProjectID(childComplexity), true
+	case "WorkingFile.updatedAt":
+		if e.complexity.WorkingFile.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.WorkingFile.UpdatedAt(childComplexity), true
 
 	}
 	return 0, false
@@ -547,9 +580,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputNewFile,
-		ec.unmarshalInputNewProject,
-		ec.unmarshalInputNewUser,
+		ec.unmarshalInputCreateVersionInput,
+		ec.unmarshalInputNewFileInput,
+		ec.unmarshalInputNewProjectInput,
+		ec.unmarshalInputUpdateWorkingFileInput,
 	)
 	first := true
 
@@ -702,7 +736,7 @@ func (ec *executionContext) field_Mutation_addCollaborator_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_createFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNNewFile2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewFile)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNNewFileInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewFileInput)
 	if err != nil {
 		return nil, err
 	}
@@ -713,18 +747,7 @@ func (ec *executionContext) field_Mutation_createFile_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_createProject_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNNewProject2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewProject)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNNewUser2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewUser)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNNewProjectInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewProjectInput)
 	if err != nil {
 		return nil, err
 	}
@@ -735,16 +758,11 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_createVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "projectId", ec.unmarshalNID2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateVersionInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐCreateVersionInput)
 	if err != nil {
 		return nil, err
 	}
-	args["projectId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "message", ec.unmarshalOString2ᚖstring)
-	if err != nil {
-		return nil, err
-	}
-	args["message"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -813,19 +831,14 @@ func (ec *executionContext) field_Mutation_restoreVersion_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_updateWorkingFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "fileId", ec.unmarshalNID2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateWorkingFileInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUpdateWorkingFileInput)
 	if err != nil {
 		return nil, err
 	}
-	args["fileId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "content", ec.unmarshalNString2string)
-	if err != nil {
-		return nil, err
-	}
-	args["content"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -862,17 +875,6 @@ func (ec *executionContext) field_Query_project_args(ctx context.Context, rawArg
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_version_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -884,7 +886,18 @@ func (ec *executionContext) field_Query_version_args(ctx context.Context, rawArg
 	return args, nil
 }
 
-func (ec *executionContext) field_Subscription_fileUpdated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Query_workingFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "fileId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["fileId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_projectUpdated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "projectId", ec.unmarshalNID2string)
@@ -895,7 +908,7 @@ func (ec *executionContext) field_Subscription_fileUpdated_args(ctx context.Cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Subscription_projectUpdated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Subscription_workingFileUpdated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "projectId", ec.unmarshalNID2string)
@@ -987,6 +1000,35 @@ func (ec *executionContext) fieldContext_File_id(_ context.Context, field graphq
 	return fc, nil
 }
 
+func (ec *executionContext) _File_projectId(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_File_projectId,
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_File_projectId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "File",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1040,84 +1082,6 @@ func (ec *executionContext) fieldContext_File_type(_ context.Context, field grap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type FileType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _File_content(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_File_content,
-		func(ctx context.Context) (any, error) {
-			return obj.Content, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_File_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "File",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _File_project(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_File_project,
-		func(ctx context.Context) (any, error) {
-			return obj.Project, nil
-		},
-		nil,
-		ec.marshalNProject2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐProject,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_File_project(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "File",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
-			case "projectName":
-				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
-			case "files":
-				return ec.fieldContext_Project_files(ctx, field)
-			case "versions":
-				return ec.fieldContext_Project_versions(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
 		},
 	}
 	return fc, nil
@@ -1181,55 +1145,43 @@ func (ec *executionContext) fieldContext_File_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_workingFile(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_createUser,
+		ec.fieldContext_File_workingFile,
 		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateUser(ctx, fc.Args["input"].(model.NewUser))
+			return obj.WorkingFile, nil
 		},
 		nil,
-		ec.marshalNUser2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUser,
+		ec.marshalNWorkingFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_File_workingFile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mutation",
+		Object:     "File",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "userName":
-				return ec.fieldContext_User_userName(ctx, field)
-			case "projects":
-				return ec.fieldContext_User_projects(ctx, field)
-			case "collaborations":
-				return ec.fieldContext_User_collaborations(ctx, field)
+				return ec.fieldContext_WorkingFile_id(ctx, field)
+			case "fileId":
+				return ec.fieldContext_WorkingFile_fileId(ctx, field)
+			case "projectId":
+				return ec.fieldContext_WorkingFile_projectId(ctx, field)
+			case "content":
+				return ec.fieldContext_WorkingFile_content(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_WorkingFile_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type WorkingFile", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -1242,7 +1194,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 		ec.fieldContext_Mutation_createProject,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateProject(ctx, fc.Args["input"].(model.NewProject))
+			return ec.resolvers.Mutation().CreateProject(ctx, fc.Args["input"].(model.NewProjectInput))
 		},
 		nil,
 		ec.marshalNProject2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐProject,
@@ -1261,18 +1213,18 @@ func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
 			case "projectName":
 				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "lastEditedAt":
+				return ec.fieldContext_Project_lastEditedAt(ctx, field)
+			case "ownerId":
+				return ec.fieldContext_Project_ownerId(ctx, field)
+			case "collaboratorIds":
+				return ec.fieldContext_Project_collaboratorIds(ctx, field)
+			case "rootFileId":
+				return ec.fieldContext_Project_rootFileId(ctx, field)
 			case "files":
 				return ec.fieldContext_Project_files(ctx, field)
 			case "versions":
@@ -1363,18 +1315,18 @@ func (ec *executionContext) fieldContext_Mutation_addCollaborator(ctx context.Co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
 			case "projectName":
 				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "lastEditedAt":
+				return ec.fieldContext_Project_lastEditedAt(ctx, field)
+			case "ownerId":
+				return ec.fieldContext_Project_ownerId(ctx, field)
+			case "collaboratorIds":
+				return ec.fieldContext_Project_collaboratorIds(ctx, field)
+			case "rootFileId":
+				return ec.fieldContext_Project_rootFileId(ctx, field)
 			case "files":
 				return ec.fieldContext_Project_files(ctx, field)
 			case "versions":
@@ -1424,18 +1376,18 @@ func (ec *executionContext) fieldContext_Mutation_removeCollaborator(ctx context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
 			case "projectName":
 				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "lastEditedAt":
+				return ec.fieldContext_Project_lastEditedAt(ctx, field)
+			case "ownerId":
+				return ec.fieldContext_Project_ownerId(ctx, field)
+			case "collaboratorIds":
+				return ec.fieldContext_Project_collaboratorIds(ctx, field)
+			case "rootFileId":
+				return ec.fieldContext_Project_rootFileId(ctx, field)
 			case "files":
 				return ec.fieldContext_Project_files(ctx, field)
 			case "versions":
@@ -1466,7 +1418,7 @@ func (ec *executionContext) _Mutation_createFile(ctx context.Context, field grap
 		ec.fieldContext_Mutation_createFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateFile(ctx, fc.Args["input"].(model.NewFile))
+			return ec.resolvers.Mutation().CreateFile(ctx, fc.Args["input"].(model.NewFileInput))
 		},
 		nil,
 		ec.marshalNFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐFile,
@@ -1485,18 +1437,18 @@ func (ec *executionContext) fieldContext_Mutation_createFile(ctx context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_File_id(ctx, field)
+			case "projectId":
+				return ec.fieldContext_File_projectId(ctx, field)
 			case "name":
 				return ec.fieldContext_File_name(ctx, field)
 			case "type":
 				return ec.fieldContext_File_type(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
-			case "project":
-				return ec.fieldContext_File_project(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_File_updatedAt(ctx, field)
+			case "workingFile":
+				return ec.fieldContext_File_workingFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
@@ -1509,63 +1461,6 @@ func (ec *executionContext) fieldContext_Mutation_createFile(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateFile,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateFile(ctx, fc.Args["fileId"].(string), fc.Args["content"].(string))
-		},
-		nil,
-		ec.marshalNFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐFile,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_File_id(ctx, field)
-			case "name":
-				return ec.fieldContext_File_name(ctx, field)
-			case "type":
-				return ec.fieldContext_File_type(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
-			case "project":
-				return ec.fieldContext_File_project(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_File_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_File_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1599,18 +1494,18 @@ func (ec *executionContext) fieldContext_Mutation_renameFile(ctx context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_File_id(ctx, field)
+			case "projectId":
+				return ec.fieldContext_File_projectId(ctx, field)
 			case "name":
 				return ec.fieldContext_File_name(ctx, field)
 			case "type":
 				return ec.fieldContext_File_type(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
-			case "project":
-				return ec.fieldContext_File_project(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_File_updatedAt(ctx, field)
+			case "workingFile":
+				return ec.fieldContext_File_workingFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
@@ -1670,6 +1565,59 @@ func (ec *executionContext) fieldContext_Mutation_deleteFile(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateWorkingFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateWorkingFile,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateWorkingFile(ctx, fc.Args["input"].(model.UpdateWorkingFileInput))
+		},
+		nil,
+		ec.marshalNWorkingFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateWorkingFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_WorkingFile_id(ctx, field)
+			case "fileId":
+				return ec.fieldContext_WorkingFile_fileId(ctx, field)
+			case "projectId":
+				return ec.fieldContext_WorkingFile_projectId(ctx, field)
+			case "content":
+				return ec.fieldContext_WorkingFile_content(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_WorkingFile_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type WorkingFile", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateWorkingFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1678,7 +1626,7 @@ func (ec *executionContext) _Mutation_createVersion(ctx context.Context, field g
 		ec.fieldContext_Mutation_createVersion,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateVersion(ctx, fc.Args["projectId"].(string), fc.Args["message"].(*string))
+			return ec.resolvers.Mutation().CreateVersion(ctx, fc.Args["input"].(model.CreateVersionInput))
 		},
 		nil,
 		ec.marshalNVersion2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐVersion,
@@ -1697,8 +1645,8 @@ func (ec *executionContext) fieldContext_Mutation_createVersion(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Version_id(ctx, field)
-			case "project":
-				return ec.fieldContext_Version_project(ctx, field)
+			case "projectId":
+				return ec.fieldContext_Version_projectId(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Version_createdAt(ctx, field)
 			case "message":
@@ -1750,18 +1698,18 @@ func (ec *executionContext) fieldContext_Mutation_restoreVersion(ctx context.Con
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
 			case "projectName":
 				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "lastEditedAt":
+				return ec.fieldContext_Project_lastEditedAt(ctx, field)
+			case "ownerId":
+				return ec.fieldContext_Project_ownerId(ctx, field)
+			case "collaboratorIds":
+				return ec.fieldContext_Project_collaboratorIds(ctx, field)
+			case "rootFileId":
+				return ec.fieldContext_Project_rootFileId(ctx, field)
 			case "files":
 				return ec.fieldContext_Project_files(ctx, field)
 			case "versions":
@@ -1813,64 +1761,6 @@ func (ec *executionContext) fieldContext_Project_id(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Project_createdDate(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Project_createdDate,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedDate, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Project_createdDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Project",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Project_lastEdited(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Project_lastEdited,
-		func(ctx context.Context) (any, error) {
-			return obj.LastEdited, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Project_lastEdited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Project",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Project_projectName(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1900,128 +1790,146 @@ func (ec *executionContext) fieldContext_Project_projectName(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Project_ownedBy(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+func (ec *executionContext) _Project_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Project_ownedBy,
+		ec.fieldContext_Project_createdAt,
 		func(ctx context.Context) (any, error) {
-			return obj.OwnedBy, nil
+			return obj.CreatedAt, nil
 		},
 		nil,
-		ec.marshalNUser2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUser,
+		ec.marshalNString2string,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Project_ownedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Project_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Project",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "userName":
-				return ec.fieldContext_User_userName(ctx, field)
-			case "projects":
-				return ec.fieldContext_User_projects(ctx, field)
-			case "collaborations":
-				return ec.fieldContext_User_collaborations(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Project_collaborators(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+func (ec *executionContext) _Project_lastEditedAt(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Project_collaborators,
+		ec.fieldContext_Project_lastEditedAt,
 		func(ctx context.Context) (any, error) {
-			return obj.Collaborators, nil
+			return obj.LastEditedAt, nil
 		},
 		nil,
-		ec.marshalNUser2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUserᚄ,
+		ec.marshalNString2string,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Project_collaborators(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Project_lastEditedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Project",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "userName":
-				return ec.fieldContext_User_userName(ctx, field)
-			case "projects":
-				return ec.fieldContext_User_projects(ctx, field)
-			case "collaborations":
-				return ec.fieldContext_User_collaborations(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Project_rootFile(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+func (ec *executionContext) _Project_ownerId(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Project_rootFile,
+		ec.fieldContext_Project_ownerId,
 		func(ctx context.Context) (any, error) {
-			return obj.RootFile, nil
+			return obj.OwnerID, nil
 		},
 		nil,
-		ec.marshalNFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐFile,
+		ec.marshalNID2string,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Project_rootFile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Project_ownerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Project",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_File_id(ctx, field)
-			case "name":
-				return ec.fieldContext_File_name(ctx, field)
-			case "type":
-				return ec.fieldContext_File_type(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
-			case "project":
-				return ec.fieldContext_File_project(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_File_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_File_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Project_collaboratorIds(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Project_collaboratorIds,
+		func(ctx context.Context) (any, error) {
+			return obj.CollaboratorIds, nil
+		},
+		nil,
+		ec.marshalNID2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Project_collaboratorIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Project_rootFileId(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Project_rootFileId,
+		func(ctx context.Context) (any, error) {
+			return obj.RootFileID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Project_rootFileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2053,18 +1961,18 @@ func (ec *executionContext) fieldContext_Project_files(_ context.Context, field 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_File_id(ctx, field)
+			case "projectId":
+				return ec.fieldContext_File_projectId(ctx, field)
 			case "name":
 				return ec.fieldContext_File_name(ctx, field)
 			case "type":
 				return ec.fieldContext_File_type(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
-			case "project":
-				return ec.fieldContext_File_project(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_File_updatedAt(ctx, field)
+			case "workingFile":
+				return ec.fieldContext_File_workingFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
@@ -2098,8 +2006,8 @@ func (ec *executionContext) fieldContext_Project_versions(_ context.Context, fie
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Version_id(ctx, field)
-			case "project":
-				return ec.fieldContext_Version_project(ctx, field)
+			case "projectId":
+				return ec.fieldContext_Version_projectId(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Version_createdAt(ctx, field)
 			case "message":
@@ -2139,18 +2047,18 @@ func (ec *executionContext) fieldContext_Query_projects(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
 			case "projectName":
 				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "lastEditedAt":
+				return ec.fieldContext_Project_lastEditedAt(ctx, field)
+			case "ownerId":
+				return ec.fieldContext_Project_ownerId(ctx, field)
+			case "collaboratorIds":
+				return ec.fieldContext_Project_collaboratorIds(ctx, field)
+			case "rootFileId":
+				return ec.fieldContext_Project_rootFileId(ctx, field)
 			case "files":
 				return ec.fieldContext_Project_files(ctx, field)
 			case "versions":
@@ -2189,18 +2097,18 @@ func (ec *executionContext) fieldContext_Query_project(ctx context.Context, fiel
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
 			case "projectName":
 				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "lastEditedAt":
+				return ec.fieldContext_Project_lastEditedAt(ctx, field)
+			case "ownerId":
+				return ec.fieldContext_Project_ownerId(ctx, field)
+			case "collaboratorIds":
+				return ec.fieldContext_Project_collaboratorIds(ctx, field)
+			case "rootFileId":
+				return ec.fieldContext_Project_rootFileId(ctx, field)
 			case "files":
 				return ec.fieldContext_Project_files(ctx, field)
 			case "versions":
@@ -2217,59 +2125,6 @@ func (ec *executionContext) fieldContext_Query_project(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_project_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_user,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().User(ctx, fc.Args["id"].(string))
-		},
-		nil,
-		ec.marshalOUser2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUser,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "userName":
-				return ec.fieldContext_User_userName(ctx, field)
-			case "projects":
-				return ec.fieldContext_User_projects(ctx, field)
-			case "collaborations":
-				return ec.fieldContext_User_collaborations(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_user_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2303,18 +2158,18 @@ func (ec *executionContext) fieldContext_Query_file(ctx context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_File_id(ctx, field)
+			case "projectId":
+				return ec.fieldContext_File_projectId(ctx, field)
 			case "name":
 				return ec.fieldContext_File_name(ctx, field)
 			case "type":
 				return ec.fieldContext_File_type(ctx, field)
-			case "content":
-				return ec.fieldContext_File_content(ctx, field)
-			case "project":
-				return ec.fieldContext_File_project(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_File_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_File_updatedAt(ctx, field)
+			case "workingFile":
+				return ec.fieldContext_File_workingFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
@@ -2327,6 +2182,59 @@ func (ec *executionContext) fieldContext_Query_file(ctx context.Context, field g
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_file_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_workingFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_workingFile,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().WorkingFile(ctx, fc.Args["fileId"].(string))
+		},
+		nil,
+		ec.marshalOWorkingFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_workingFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_WorkingFile_id(ctx, field)
+			case "fileId":
+				return ec.fieldContext_WorkingFile_fileId(ctx, field)
+			case "projectId":
+				return ec.fieldContext_WorkingFile_projectId(ctx, field)
+			case "content":
+				return ec.fieldContext_WorkingFile_content(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_WorkingFile_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type WorkingFile", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_workingFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2360,8 +2268,8 @@ func (ec *executionContext) fieldContext_Query_version(ctx context.Context, fiel
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Version_id(ctx, field)
-			case "project":
-				return ec.fieldContext_Version_project(ctx, field)
+			case "projectId":
+				return ec.fieldContext_Version_projectId(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Version_createdAt(ctx, field)
 			case "message":
@@ -2494,24 +2402,24 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Subscription_fileUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+func (ec *executionContext) _Subscription_workingFileUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
 	return graphql.ResolveFieldStream(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Subscription_fileUpdated,
+		ec.fieldContext_Subscription_workingFileUpdated,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Subscription().FileUpdated(ctx, fc.Args["projectId"].(string))
+			return ec.resolvers.Subscription().WorkingFileUpdated(ctx, fc.Args["projectId"].(string))
 		},
 		nil,
-		ec.marshalNFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐFile,
+		ec.marshalNWorkingFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Subscription_fileUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_workingFileUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -2520,21 +2428,17 @@ func (ec *executionContext) fieldContext_Subscription_fileUpdated(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_File_id(ctx, field)
-			case "name":
-				return ec.fieldContext_File_name(ctx, field)
-			case "type":
-				return ec.fieldContext_File_type(ctx, field)
+				return ec.fieldContext_WorkingFile_id(ctx, field)
+			case "fileId":
+				return ec.fieldContext_WorkingFile_fileId(ctx, field)
+			case "projectId":
+				return ec.fieldContext_WorkingFile_projectId(ctx, field)
 			case "content":
-				return ec.fieldContext_File_content(ctx, field)
-			case "project":
-				return ec.fieldContext_File_project(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_File_createdAt(ctx, field)
+				return ec.fieldContext_WorkingFile_content(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_File_updatedAt(ctx, field)
+				return ec.fieldContext_WorkingFile_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type WorkingFile", field.Name)
 		},
 	}
 	defer func() {
@@ -2544,7 +2448,7 @@ func (ec *executionContext) fieldContext_Subscription_fileUpdated(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Subscription_fileUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Subscription_workingFileUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2578,18 +2482,18 @@ func (ec *executionContext) fieldContext_Subscription_projectUpdated(ctx context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
 			case "projectName":
 				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "lastEditedAt":
+				return ec.fieldContext_Project_lastEditedAt(ctx, field)
+			case "ownerId":
+				return ec.fieldContext_Project_ownerId(ctx, field)
+			case "collaboratorIds":
+				return ec.fieldContext_Project_collaboratorIds(ctx, field)
+			case "rootFileId":
+				return ec.fieldContext_Project_rootFileId(ctx, field)
 			case "files":
 				return ec.fieldContext_Project_files(ctx, field)
 			case "versions":
@@ -2641,14 +2545,14 @@ func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_clerkUserId(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_User_email,
+		ec.fieldContext_User_clerkUserId,
 		func(ctx context.Context) (any, error) {
-			return obj.Email, nil
+			return obj.ClerkUserID, nil
 		},
 		nil,
 		ec.marshalNString2string,
@@ -2657,7 +2561,7 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 	)
 }
 
-func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_clerkUserId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -2670,14 +2574,14 @@ func (ec *executionContext) fieldContext_User_email(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _User_userName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_User_userName,
+		ec.fieldContext_User_createdAt,
 		func(ctx context.Context) (any, error) {
-			return obj.UserName, nil
+			return obj.CreatedAt, nil
 		},
 		nil,
 		ec.marshalNString2string,
@@ -2686,7 +2590,7 @@ func (ec *executionContext) _User_userName(ctx context.Context, field graphql.Co
 	)
 }
 
-func (ec *executionContext) fieldContext_User_userName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -2694,104 +2598,6 @@ func (ec *executionContext) fieldContext_User_userName(_ context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_projects(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_projects,
-		func(ctx context.Context) (any, error) {
-			return obj.Projects, nil
-		},
-		nil,
-		ec.marshalNProject2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐProjectᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_projects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
-			case "projectName":
-				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
-			case "files":
-				return ec.fieldContext_Project_files(ctx, field)
-			case "versions":
-				return ec.fieldContext_Project_versions(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_collaborations(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_collaborations,
-		func(ctx context.Context) (any, error) {
-			return obj.Collaborations, nil
-		},
-		nil,
-		ec.marshalNProject2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐProjectᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_collaborations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
-			case "projectName":
-				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
-			case "files":
-				return ec.fieldContext_Project_files(ctx, field)
-			case "versions":
-				return ec.fieldContext_Project_versions(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
 		},
 	}
 	return fc, nil
@@ -2826,50 +2632,30 @@ func (ec *executionContext) fieldContext_Version_id(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Version_project(ctx context.Context, field graphql.CollectedField, obj *model.Version) (ret graphql.Marshaler) {
+func (ec *executionContext) _Version_projectId(ctx context.Context, field graphql.CollectedField, obj *model.Version) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Version_project,
+		ec.fieldContext_Version_projectId,
 		func(ctx context.Context) (any, error) {
-			return obj.Project, nil
+			return obj.ProjectID, nil
 		},
 		nil,
-		ec.marshalNProject2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐProject,
+		ec.marshalNID2string,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Version_project(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Version_projectId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Version",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Project_id(ctx, field)
-			case "createdDate":
-				return ec.fieldContext_Project_createdDate(ctx, field)
-			case "lastEdited":
-				return ec.fieldContext_Project_lastEdited(ctx, field)
-			case "projectName":
-				return ec.fieldContext_Project_projectName(ctx, field)
-			case "ownedBy":
-				return ec.fieldContext_Project_ownedBy(ctx, field)
-			case "collaborators":
-				return ec.fieldContext_Project_collaborators(ctx, field)
-			case "rootFile":
-				return ec.fieldContext_Project_rootFile(ctx, field)
-			case "files":
-				return ec.fieldContext_Project_files(ctx, field)
-			case "versions":
-				return ec.fieldContext_Project_versions(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2959,8 +2745,14 @@ func (ec *executionContext) fieldContext_Version_files(_ context.Context, field 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_VersionFile_id(ctx, field)
+			case "versionId":
+				return ec.fieldContext_VersionFile_versionId(ctx, field)
+			case "fileId":
+				return ec.fieldContext_VersionFile_fileId(ctx, field)
 			case "name":
 				return ec.fieldContext_VersionFile_name(ctx, field)
+			case "type":
+				return ec.fieldContext_VersionFile_type(ctx, field)
 			case "content":
 				return ec.fieldContext_VersionFile_content(ctx, field)
 			}
@@ -2987,6 +2779,64 @@ func (ec *executionContext) _VersionFile_id(ctx context.Context, field graphql.C
 }
 
 func (ec *executionContext) fieldContext_VersionFile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VersionFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VersionFile_versionId(ctx context.Context, field graphql.CollectedField, obj *model.VersionFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VersionFile_versionId,
+		func(ctx context.Context) (any, error) {
+			return obj.VersionID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VersionFile_versionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VersionFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VersionFile_fileId(ctx context.Context, field graphql.CollectedField, obj *model.VersionFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VersionFile_fileId,
+		func(ctx context.Context) (any, error) {
+			return obj.FileID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VersionFile_fileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VersionFile",
 		Field:      field,
@@ -3028,6 +2878,35 @@ func (ec *executionContext) fieldContext_VersionFile_name(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _VersionFile_type(ctx context.Context, field graphql.CollectedField, obj *model.VersionFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VersionFile_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalNFileType2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐFileType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VersionFile_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VersionFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type FileType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VersionFile_content(ctx context.Context, field graphql.CollectedField, obj *model.VersionFile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3047,6 +2926,151 @@ func (ec *executionContext) _VersionFile_content(ctx context.Context, field grap
 func (ec *executionContext) fieldContext_VersionFile_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VersionFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkingFile_id(ctx context.Context, field graphql.CollectedField, obj *model.WorkingFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WorkingFile_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WorkingFile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkingFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkingFile_fileId(ctx context.Context, field graphql.CollectedField, obj *model.WorkingFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WorkingFile_fileId,
+		func(ctx context.Context) (any, error) {
+			return obj.FileID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WorkingFile_fileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkingFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkingFile_projectId(ctx context.Context, field graphql.CollectedField, obj *model.WorkingFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WorkingFile_projectId,
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WorkingFile_projectId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkingFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkingFile_content(ctx context.Context, field graphql.CollectedField, obj *model.WorkingFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WorkingFile_content,
+		func(ctx context.Context) (any, error) {
+			return obj.Content, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WorkingFile_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkingFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkingFile_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.WorkingFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WorkingFile_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WorkingFile_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkingFile",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4503,8 +4527,42 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputNewFile(ctx context.Context, obj any) (model.NewFile, error) {
-	var it model.NewFile
+func (ec *executionContext) unmarshalInputCreateVersionInput(ctx context.Context, obj any) (model.CreateVersionInput, error) {
+	var it model.CreateVersionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"projectId", "message"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "projectId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProjectID = data
+		case "message":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Message = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNewFileInput(ctx context.Context, obj any) (model.NewFileInput, error) {
+	var it model.NewFileInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -4544,14 +4602,14 @@ func (ec *executionContext) unmarshalInputNewFile(ctx context.Context, obj any) 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputNewProject(ctx context.Context, obj any) (model.NewProject, error) {
-	var it model.NewProject
+func (ec *executionContext) unmarshalInputNewProjectInput(ctx context.Context, obj any) (model.NewProjectInput, error) {
+	var it model.NewProjectInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"projectName", "ownedBy"}
+	fieldsInOrder := [...]string{"projectName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4565,47 +4623,40 @@ func (ec *executionContext) unmarshalInputNewProject(ctx context.Context, obj an
 				return it, err
 			}
 			it.ProjectName = data
-		case "ownedBy":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownedBy"))
-			data, err := ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OwnedBy = data
 		}
 	}
 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj any) (model.NewUser, error) {
-	var it model.NewUser
+func (ec *executionContext) unmarshalInputUpdateWorkingFileInput(ctx context.Context, obj any) (model.UpdateWorkingFileInput, error) {
+	var it model.UpdateWorkingFileInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email", "userName"}
+	fieldsInOrder := [...]string{"fileId", "content"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		case "fileId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FileID = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Email = data
-		case "userName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UserName = data
+			it.Content = data
 		}
 	}
 
@@ -4636,6 +4687,11 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "projectId":
+			out.Values[i] = ec._File_projectId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "name":
 			out.Values[i] = ec._File_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4646,16 +4702,6 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "content":
-			out.Values[i] = ec._File_content(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "project":
-			out.Values[i] = ec._File_project(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "createdAt":
 			out.Values[i] = ec._File_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4663,6 +4709,11 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "updatedAt":
 			out.Values[i] = ec._File_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workingFile":
+			out.Values[i] = ec._File_workingFile(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4708,13 +4759,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createUser":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createUser(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "createProject":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createProject(ctx, field)
@@ -4750,13 +4794,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateFile":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateFile(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "renameFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_renameFile(ctx, field)
@@ -4767,6 +4804,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteFile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateWorkingFile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateWorkingFile(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4824,33 +4868,33 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createdDate":
-			out.Values[i] = ec._Project_createdDate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "lastEdited":
-			out.Values[i] = ec._Project_lastEdited(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "projectName":
 			out.Values[i] = ec._Project_projectName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "ownedBy":
-			out.Values[i] = ec._Project_ownedBy(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Project_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "collaborators":
-			out.Values[i] = ec._Project_collaborators(ctx, field, obj)
+		case "lastEditedAt":
+			out.Values[i] = ec._Project_lastEditedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "rootFile":
-			out.Values[i] = ec._Project_rootFile(ctx, field, obj)
+		case "ownerId":
+			out.Values[i] = ec._Project_ownerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "collaboratorIds":
+			out.Values[i] = ec._Project_collaboratorIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rootFileId":
+			out.Values[i] = ec._Project_rootFileId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4947,25 +4991,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "user":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_user(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "file":
 			field := field
 
@@ -4976,6 +5001,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_file(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "workingFile":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_workingFile(ctx, field)
 				return res
 			}
 
@@ -5048,8 +5092,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	}
 
 	switch fields[0].Name {
-	case "fileUpdated":
-		return ec._Subscription_fileUpdated(ctx, fields[0])
+	case "workingFileUpdated":
+		return ec._Subscription_workingFileUpdated(ctx, fields[0])
 	case "projectUpdated":
 		return ec._Subscription_projectUpdated(ctx, fields[0])
 	default:
@@ -5073,23 +5117,13 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "email":
-			out.Values[i] = ec._User_email(ctx, field, obj)
+		case "clerkUserId":
+			out.Values[i] = ec._User_clerkUserId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "userName":
-			out.Values[i] = ec._User_userName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "projects":
-			out.Values[i] = ec._User_projects(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "collaborations":
-			out.Values[i] = ec._User_collaborations(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._User_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5132,8 +5166,8 @@ func (ec *executionContext) _Version(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "project":
-			out.Values[i] = ec._Version_project(ctx, field, obj)
+		case "projectId":
+			out.Values[i] = ec._Version_projectId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5188,13 +5222,87 @@ func (ec *executionContext) _VersionFile(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "versionId":
+			out.Values[i] = ec._VersionFile_versionId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fileId":
+			out.Values[i] = ec._VersionFile_fileId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "name":
 			out.Values[i] = ec._VersionFile_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "type":
+			out.Values[i] = ec._VersionFile_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "content":
 			out.Values[i] = ec._VersionFile_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var workingFileImplementors = []string{"WorkingFile"}
+
+func (ec *executionContext) _WorkingFile(ctx context.Context, sel ast.SelectionSet, obj *model.WorkingFile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, workingFileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WorkingFile")
+		case "id":
+			out.Values[i] = ec._WorkingFile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fileId":
+			out.Values[i] = ec._WorkingFile_fileId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectId":
+			out.Values[i] = ec._WorkingFile_projectId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "content":
+			out.Values[i] = ec._WorkingFile_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._WorkingFile_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5572,6 +5680,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateVersionInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐCreateVersionInput(ctx context.Context, v any) (model.CreateVersionInput, error) {
+	res, err := ec.unmarshalInputCreateVersionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNFile2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v model.File) graphql.Marshaler {
 	return ec._File(ctx, sel, &v)
 }
@@ -5656,18 +5769,43 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNNewFile2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewFile(ctx context.Context, v any) (model.NewFile, error) {
-	res, err := ec.unmarshalInputNewFile(ctx, v)
+func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNNewFileInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewFileInput(ctx context.Context, v any) (model.NewFileInput, error) {
+	res, err := ec.unmarshalInputNewFileInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewProject2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewProject(ctx context.Context, v any) (model.NewProject, error) {
-	res, err := ec.unmarshalInputNewProject(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNNewUser2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewUser(ctx context.Context, v any) (model.NewUser, error) {
-	res, err := ec.unmarshalInputNewUser(ctx, v)
+func (ec *executionContext) unmarshalNNewProjectInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐNewProjectInput(ctx context.Context, v any) (model.NewProjectInput, error) {
+	res, err := ec.unmarshalInputNewProjectInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5745,62 +5883,9 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNUser2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
-	return ec._User(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUser2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUser2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNUser2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._User(ctx, sel, v)
+func (ec *executionContext) unmarshalNUpdateWorkingFileInput2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUpdateWorkingFileInput(ctx context.Context, v any) (model.UpdateWorkingFileInput, error) {
+	res, err := ec.unmarshalInputUpdateWorkingFileInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNVersion2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐVersion(ctx context.Context, sel ast.SelectionSet, v model.Version) graphql.Marshaler {
@@ -5913,6 +5998,20 @@ func (ec *executionContext) marshalNVersionFile2ᚖgollaboratexᚋserverᚋinter
 		return graphql.Null
 	}
 	return ec._VersionFile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNWorkingFile2gollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile(ctx context.Context, sel ast.SelectionSet, v model.WorkingFile) graphql.Marshaler {
+	return ec._WorkingFile(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWorkingFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile(ctx context.Context, sel ast.SelectionSet, v *model.WorkingFile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._WorkingFile(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -6230,18 +6329,18 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._User(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOVersion2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐVersion(ctx context.Context, sel ast.SelectionSet, v *model.Version) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Version(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOWorkingFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile(ctx context.Context, sel ast.SelectionSet, v *model.WorkingFile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._WorkingFile(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
