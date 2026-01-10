@@ -17,8 +17,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"gollaboratex/server/internal/db"
 	"github.com/joho/godotenv"
+	"gollaboratex/server/internal/db"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 		log.Println("No .env file found, using system environment variables")
 	}
 
-	clerkSecretKey := os.Getenv("VITE_CLERK_PUBLISHABLE_KEY")
+	clerkSecretKey := os.Getenv("CLERK_SECRET_KEY")
 	mongoURI := os.Getenv("MONGODB_URI")
 	port := os.Getenv("PORT")
 
@@ -76,8 +76,8 @@ func main() {
 
 	// Setup CORS middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173"}, // Add your frontend URLs
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URLs
+		AllowMethods:     []string{"GET", "POST", "OPTIONS", "DELETE", "PUT"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
