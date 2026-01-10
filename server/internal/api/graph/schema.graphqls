@@ -4,22 +4,23 @@
 
 type Project {
   id: ID!
-  createdDate: String!
-  lastEdited: String!
   projectName: String!
-  ownedBy: User!
-  collaborators: [User!]!
-  rootFile: File!
+  createdAt: String!
+  lastEditedAt: String!
+
+  ownerId: ID!
+  collaboratorIds: [ID!]!
+
+  rootFileId: ID!
+
   files: [File!]!
   versions: [Version!]!
 }
 
 type User {
   id: ID!
-  email: String!
-  userName: String!
-  projects: [Project!]!
-  collaborations: [Project!]!
+  clerkUserId: String!
+  createdAt: String!
 }
 
 # ---------------------------------------
@@ -28,13 +29,23 @@ type User {
 
 type File {
   id: ID!
+  projectId: ID!
   name: String!
   type: FileType!
-  content: String!
-  project: Project!
   createdAt: String!
   updatedAt: String!
+
+  workingFile: WorkingFile!
 }
+
+type WorkingFile {
+  id: ID!
+  fileId: ID!
+  projectId: ID!
+  content: String!
+  updatedAt: String!
+}
+
 
 enum FileType {
   TEX
@@ -51,7 +62,7 @@ enum FileType {
 
 type Version {
   id: ID!
-  project: Project!
+  projectId: ID!
   createdAt: String!
   message: String
   files: [VersionFile!]!
@@ -59,7 +70,10 @@ type Version {
 
 type VersionFile {
   id: ID!
+  versionId: ID!
+  fileId: ID!
   name: String!
+  type: FileType!
   content: String!
 }
 
@@ -68,31 +82,41 @@ type VersionFile {
 # ---------------------------------------
 
 type Query {
+  # Projects
   projects: [Project!]!
   project(id: ID!): Project
-  user(id: ID!): User
+
+  # Files
   file(id: ID!): File
+  workingFile(fileId: ID!): WorkingFile
+
+  # Versions
   version(id: ID!): Version
 }
+
 
 # ---------------------------------------
 # Inputs
 # ---------------------------------------
 
-input NewProject {
+input NewProjectInput {
   projectName: String!
-  ownedBy: ID!
 }
 
-input NewUser {
-  email: String!
-  userName: String!
-}
-
-input NewFile {
+input NewFileInput {
   projectId: ID!
   name: String!
   type: FileType!
+}
+
+input UpdateWorkingFileInput {
+  fileId: ID!
+  content: String!
+}
+
+input CreateVersionInput {
+  projectId: ID!
+  message: String
 }
 
 # ---------------------------------------
@@ -100,23 +124,23 @@ input NewFile {
 # ---------------------------------------
 
 type Mutation {
-  # Users
-  createUser(input: NewUser!): User!
-
   # Projects
-  createProject(input: NewProject!): Project!
+  createProject(input: NewProjectInput!): Project!
   deleteProject(projectId: ID!): Boolean!
+
   addCollaborator(projectId: ID!, userId: ID!): Project!
   removeCollaborator(projectId: ID!, userId: ID!): Project!
 
   # Files
-  createFile(input: NewFile!): File!
-  updateFile(fileId: ID!, content: String!): File!
+  createFile(input: NewFileInput!): File!
   renameFile(fileId: ID!, name: String!): File!
   deleteFile(fileId: ID!): Boolean!
 
+  # Working Tree
+  updateWorkingFile(input: UpdateWorkingFileInput!): WorkingFile!
+
   # Versioning
-  createVersion(projectId: ID!, message: String): Version!
+  createVersion(input: CreateVersionInput!): Version!
   restoreVersion(versionId: ID!): Project!
 }
 
@@ -125,6 +149,6 @@ type Mutation {
 # ---------------------------------------
 
 type Subscription {
-  fileUpdated(projectId: ID!): File!
+  workingFileUpdated(projectId: ID!): WorkingFile!
   projectUpdated(projectId: ID!): Project!
 }
