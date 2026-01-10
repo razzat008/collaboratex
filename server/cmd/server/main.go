@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"gollaboratex/server/internal/db"
+  "gollaboratex/server/internal/websockets"
 	"github.com/joho/godotenv"
 )
 
@@ -73,7 +75,6 @@ func main() {
 
 	// Initialize Gin router
 	r := gin.Default()
-
 	// Setup CORS middleware
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173"}, // Add your frontend URLs
@@ -95,8 +96,13 @@ func main() {
 		c.JSON(200, gin.H{
 			"status":   "ok",
 			"database": "connected",
-		})
-	})
+    })
+  }
+
+	hub := websockets.NewHub()
+	go hub.Run()
+
+	r.GET("/ws", websockets.AuthenticatedWSHandler(hub))
 
 	log.Printf("Server starting on http://localhost:%s/", port)
 	log.Printf("GraphQL Playground: http://localhost:%s/", port)
