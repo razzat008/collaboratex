@@ -20,6 +20,7 @@ type UserDoc struct {
 	CreatedAt   time.Time     `bson:"createdAt"`
 }
 type ctxKey string
+
 const userCtxKey ctxKey = "user"
 
 // GinClerkAuthMiddleware verifies Clerk JWT tokens and adds user to Gin context
@@ -68,11 +69,11 @@ func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 		}
 
 		// Add user to request context (for GraphQL resolvers)
-		ctx := context.WithValue(c.Request.Context(), "user", userDoc)
+		ctx := context.WithValue(c.Request.Context(), userCtxKey, userDoc)
 		c.Request = c.Request.WithContext(ctx)
 
 		// Also set in Gin context for convenience
-		c.Set(ctx.Value(userCtxKey), userDoc)
+		c.Set("user", userDoc)
 
 		c.Next()
 	}
@@ -132,7 +133,7 @@ func getOrCreateUser(ctx context.Context, db *mongo.Database, clerkUserID string
 
 	var user UserDoc
 	err := coll.FindOne(ctx, bson.M{"clerkUserId": clerkUserID}).Decode(&user)
-	
+
 	// User exists
 	if err == nil {
 		return &user, nil
@@ -160,7 +161,7 @@ func getOrCreateUser(ctx context.Context, db *mongo.Database, clerkUserID string
 
 // GetUserFromContext retrieves user from request context
 func GetUserFromContext(ctx context.Context) (*UserDoc, error) {
-	user, ok := ctx.Value("user").(*UserDoc)
+	user, ok := ctx.Value(userCtxKey).(*UserDoc)
 	if !ok || user == nil {
 		return nil, errors.New("user not found in context")
 	}
