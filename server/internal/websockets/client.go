@@ -10,107 +10,94 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//For heartbeat
-const ( 
-	writeWait  = 10*time.Second
-	pongWait 	 = 60*time.Second
-	pingPeriod = (pongWait * 9)/10
+// For heartbeat
+const (
+	writeWait  = 10 * time.Second
+	pongWait   = 60 * time.Second
+	pingPeriod = (pongWait * 9) / 10
 )
 
 type Client struct {
-	id 	string 	//an unique identifier associated with client
-	name string //name of the client
-	hub *Hub //reference to a hub
+	id         string          //an unique identifier associated with client
+	name       string          //name of the client
+	hub        *Hub            //reference to a hub
 	connection *websocket.Conn //actual websocket connection
-	send 		chan []byte //channel for outgoing messages
-	ready 	bool
+	send       chan []byte     //channel for outgoing messages
+	ready      bool
 }
 
-/* There is read and write operation for each clinet in seperate goroutine */ 
+/* There is read and write operation for each clinet in seperate goroutine */
 /* reads the input from the client (Typescript)  */
-func (c *Client)Read(){ 
-	defer func(){ 
-		c.hub.unregister <- c 	
+func (c *Client) Read() {
+	defer func() {
+		// Unregister client and close connection.
+		// Hub.Run is responsible for broadcasting leave/presence updates,
+		// so we avoid sending a duplicate leave message here.
+		c.hub.unregister <- c
 		c.connection.Close()
 		log.Println("closing client.Read")
-	}()	
+	}()
 
-	//setting the connection's read limit to 4kb
-	// Todo: overall websocket error handeling rather than discarding data 
-	c.connection.SetReadLimit(4096) 
+	// increase the connection read limit to 64kb to support larger Yjs frames
+	// and reduce chance of legitimate frames being rejected.
+	c.connection.SetReadLimit(65536)
 	_ = c.connection.SetReadDeadline(time.Now().Add(pongWait))
-	c.connection.SetPongHandler(func(string) error { 
+	c.connection.SetPongHandler(func(string) error {
 		_ = c.connection.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 
-	for { 
-		//reading data from client's websocket
+	for {
+		// reading data from client's websocket
 		msgtype, data, err := c.connection.ReadMessage()
-		if err != nil{ 
-			log.Println("err:","while reading from connection",err)	
+		if err != nil {
+			log.Println("err:", "while reading from connection", err)
 			break
 		}
 
 		if msgtype == websocket.BinaryMessage {
-			c.hub.broadcast <- data
+			// Forward binary frames to the hub for broadcast to other clients.
+			// Wrap with sender info so hub can avoid echoing the payload back to the originator.
+			// Use a non-blocking send to avoid blocking if hub is overloaded.
+			select {
+			case c.hub.broadcast <- BroadcastMessage{Sender: c, Data: data}:
+			default:
+				log.Println("warning: dropping broadcast message, hub channel full")
+			}
 		}
 	}
 }
 
-
 /* writes the output from server to client (i.e server -> client) */
-func (c *Client) Write(){ 
+func (c *Client) Write() {
 	ticker := time.NewTicker(pingPeriod)
-	defer func(){ 
+	defer func() {
 		ticker.Stop()
 		c.connection.Close()
 		log.Println("closing client.write")
 	}()
 
-	for { 
-		select { 
-			case message, ok := <-c.send: 
+	for {
+		select {
+		case message, ok := <-c.send:
 			_ = c.connection.SetWriteDeadline(time.Now().Add(writeWait))
-			if !ok { 
+			if !ok {
 				_ = c.connection.WriteMessage(websocket.CloseMessage, []byte{})
 				log.Printf("send channel closed for user")
 				return
 			}
 
-			w, err := c.connection.NextWriter(websocket.BinaryMessage)
-			if err != nil { 
-				log.Println("err:","error while creating next writer", err)
-				return
-			}
-
-			// writing into next writer
-			if _, err := w.Write(message); err != nil { 
-				log.Println("err:","while writing from the connection", err)
-				_=w.Close()
-				return 
-			}
-
-			//writing queued messages from the connection 
-			//debug: if necessary
-			n := len(c.send)
-			for i:=0; i<n; i++ { 
-				nextMsg := <-c.send
-				if _, err := w.Write(nextMsg); err != nil { 
-					log.Println("err:","error while writing big message")
-					break	
-				}
-			}
-
-			//closing connection
-			if err := w.Close(); err != nil {
+			// Write each outgoing message as its own BinaryMessage frame.
+			// This preserves message boundaries which Yjs and awareness payloads rely on.
+			if err := c.connection.WriteMessage(websocket.BinaryMessage, message); err != nil {
+				log.Println("err:", "while writing message to the connection", err)
 				return
 			}
 
 		case <-ticker.C:
 			_ = c.connection.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.connection.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Println("error:","error while writing pingMessage", err)
+				log.Println("error:", "error while writing pingMessage", err)
 				return
 			}
 		}
