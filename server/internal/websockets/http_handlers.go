@@ -1,3 +1,6 @@
+/* Currently not in use so leave this piece of code it just exists */
+/* Ai test code */
+
 package websockets
 
 import (

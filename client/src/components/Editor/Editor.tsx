@@ -1,112 +1,139 @@
-import React, { useMemo } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { latex } from "codemirror-lang-latex";
-import { highlightActiveLine, EditorView } from "@codemirror/view";
+import { useEffect, useState } from "react";
 import Collaboration from "./Collaboration";
 
-interface EditorProps {
-  // When true (default) use the Yjs-based collaborative editor.
-  collab?: boolean;
-  // Room/document id for the Yjs websocket provider (only used when collab === true).
+/*
+  Editor.tsx
+
+  - Requires an explicit `roomId` and `wsUrl`. No implicit/default room.
+  - Verifies the document exists by calling GET /api/documents/:roomId
+    - 200 -> mount the Collaboration editor with the returned content (if any)
+    - 404 -> surface "Document not found" error and DO NOT mount Collaboration
+    - other non-2xx -> surface an error with status text
+  - Surfaces loading and error UI so the user knows why the editor did not mount.
+  - Does not assume any defaults for websocket or room identifiers.
+*/
+
+export interface EditorProps {
+  // Must be provided by the caller (no default).
   roomId?: string;
-  // WebSocket server url for the y-websocket server (only used when collab === true).
+  // Must be provided by the caller (no default).
   wsUrl?: string;
-  // Display name used for awareness (only used when collab === true).
   name?: string;
-  // Initial content applied to the Y.Doc before sync (optional).
   initialValue?: string;
-  // Fallback non-collab initial content (used when collab === false).
-  value?: string;
-  // Container height (CSS unit)
-  height?: string;
-  // Optional onChange for non-collab editor
-  onChange?: (value: string) => void;
+  height?: string; // CSS height value
 }
 
-/**
- * Editor
- *
- * Defaults to Yjs (y-codemirror.next + y-websocket) collaborative editor.
- * Pass `collab={false}` to use a local CodeMirror instance instead.
- */
 export default function Editor({
-  collab = true,
-  roomId = "default-room",
+  roomId,
   wsUrl,
   name,
   initialValue = "",
-  value = "",
   height = "100%",
-  onChange,
 }: EditorProps) {
-  // Keep cursor visible when document changes (useful for non-collab editor)
-  const keepCursorVisible = useMemo(
-    () =>
-      EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-          update.view.scrollIntoView(update.state.selection.main.head, {
-            y: "nearest",
-          });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [serverContent, setServerContent] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Reset states whenever inputs change
+    setError(null);
+    setServerContent(null);
+
+    // Validate presence of required inputs
+    if (!roomId || roomId.trim() === "") {
+      setError(
+        "Missing document/room identifier. Please provide a valid `roomId`.",
+      );
+      return;
+    }
+    if (!wsUrl || wsUrl.trim() === "") {
+      setError(
+        "Missing WebSocket URL. Please provide a valid `wsUrl` for realtime collaboration.",
+      );
+      return;
+    }
+
+    // Fetch document to confirm existence and optionally obtain initial content.
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const endpoint = `/api/documents/${encodeURIComponent(roomId)}`;
+
+    let didFinish = false;
+    setLoading(true);
+
+    fetch(endpoint, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal,
+    })
+      .then(async (res) => {
+        if (signal.aborted) return;
+        if (res.status === 404) {
+          throw new Error("Document not found (invalid room).");
         }
-      }),
-    [],
-  );
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          throw new Error(
+            `Failed to load document: ${res.status} ${res.statusText} ${body}`,
+          );
+        }
+        // Expecting a JSON body like: { content: string, meta?: {...} }
+        return res.json();
+      })
+      .then((data) => {
+        if (signal.aborted) return;
+        // If backend returns an object with `content`, use it. Otherwise fallback to provided initialValue.
+        if (data && typeof data.content === "string") {
+          setServerContent(data.content);
+        } else {
+          setServerContent(initialValue ?? "");
+        }
+      })
+      .catch((err: unknown) => {
+        if (signal.aborted) return;
+        // Surface a clear message
+        const msg = err instanceof Error ? err.message : String(err);
+        setError(msg);
+      })
+      .finally(() => {
+        if (signal.aborted) return;
+        didFinish = true;
+        setLoading(false);
+      });
 
-  // Reduce scrollPastEnd extra padding
-  const customScrollPad = useMemo(
-    () =>
-      EditorView.theme({
-        ".cm-scroller": {
-          paddingBottom: "45rem", // smaller scroll area after last line
-        },
-      }),
-    [],
-  );
+    return () => {
+      if (!didFinish) controller.abort();
+    };
+    // We intentionally treat initialValue only as a fallback and do not include it in deps to avoid refetch churn.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, wsUrl]);
 
-  const localExtensions = useMemo(
-    () => [
-      latex(),
-      keepCursorVisible,
-      highlightActiveLine(),
-      EditorView.lineWrapping,
-      customScrollPad,
-      EditorView.theme({
-        ".cm-scroller": { overflow: "auto" },
-      }),
-    ],
-    [keepCursorVisible, customScrollPad],
-  );
-
-  if (collab) {
-    // Render Yjs-based collaboration editor
+  // UI states
+  if (loading) {
     return (
       <div className="h-[95%] overflow-auto" style={{ height }}>
-        <Collaboration
-          wsUrl={wsUrl}
-          roomId={roomId}
-          name={name}
-          initialValue={initialValue}
-          height={height}
-        />
+        <div className="p-4 text-gray-600">Loading document...</div>
       </div>
     );
   }
 
-  // Render local (non-collaborative) CodeMirror editor
+  if (error) {
+    return (
+      <div className="h-[95%] overflow-auto" style={{ height }}>
+        <div className="p-4 text-red-600 break-words">Error: {error}</div>
+      </div>
+    );
+  }
+
+  // serverContent will be non-null if the fetch succeeded; otherwise we would have errored earlier.
   return (
     <div className="h-[95%] overflow-auto" style={{ height }}>
-      <CodeMirror
-        value={value}
+      <Collaboration
+        wsUrl={wsUrl}
+        roomId={roomId}
+        name={name}
+        initialValue={serverContent ?? initialValue}
         height={height}
-        theme="light"
-        extensions={localExtensions}
-        basicSetup={{
-          lineNumbers: true,
-          autocompletion: true,
-        }}
-        onChange={(val) => {
-          onChange?.(val);
-        }}
       />
     </div>
   );
