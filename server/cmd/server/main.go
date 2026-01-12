@@ -100,11 +100,9 @@ func main() {
 			"database": "connected",
     })
   }
-
-	hub := websockets.NewHub()
-	go hub.Run()
-
-	r.GET("/ws", websockets.AuthenticatedWSHandler(hub))
+  // Initializing new hub manager and websocket route
+	hm := websockets.NewHubManager()
+	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
 
 	log.Printf("Server starting on http://localhost:%s/", port)
 	log.Printf("GraphQL Playground: http://localhost:%s/", port)
