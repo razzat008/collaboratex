@@ -1,8 +1,8 @@
 import React from "react";
-import { UserButton } from "@clerk/clerk-react";
+import { UserButton, type UserResource } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
 
-export default function Topbar({ user }) {
+export default function Topbar({ user }: { user: UserResource | null }) {
   return (
     <header className="h-14 border-b border-gray-300 px-4 flex items-center justify-between bg-gray-200">
       <div className="flex items-center gap-4">
