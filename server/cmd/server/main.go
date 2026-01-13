@@ -118,6 +118,7 @@ func main() {
 
 	r.GET("/ws", websockets.AuthenticatedWSHandler(hub))
 
+
 	log.Printf("Server starting on http://localhost:%s/", port)
 	log.Printf("GraphQL Playground: http://localhost:%s/", port)
 	log.Printf("GraphQL Endpoint: http://localhost:%s/query", port)

@@ -34,6 +34,7 @@
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "codemirror": "^6.0.2",
     "codemirror-lang-latex": "^0.2.0",
     "dropdown-menu": "link:@/components/ui/dropdown-menu",
     "graphql": "^16.12.0",
