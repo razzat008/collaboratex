@@ -25,7 +25,7 @@ type Props = {
 
 export default function ProjectTable({ projects }: Props) {
 
-  const [deleteProject, { loading, error }] = useDeleteProject();
+  const [deleteProject, { loading  }] = useDeleteProject();
   const columns = useMemo<ColumnDef<Project>[]>(
     () => [
       {
@@ -89,7 +89,7 @@ export default function ProjectTable({ projects }: Props) {
         },
       },
     ],
-    []
+    [deleteProject, loading]
   );
 
   const table = useReactTable({
