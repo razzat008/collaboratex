@@ -27,7 +27,7 @@ func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract token from Authorization header
 		authHeader := c.GetHeader("Authorization")
-		log.Println(">>> GinClerkAuthMiddleware HIT")
+		// log.Println(">>> GinClerkAuthMiddleware HIT")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
@@ -59,7 +59,7 @@ func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		log.Println(">>> Clerk user:", clerkUserID)
+		// log.Println(">>> Clerk user:", clerkUserID)
 
 		// Fetch or create user in MongoDB
 		userDoc, err := getOrCreateUser(c.Request.Context(), db, clerkUserID)
@@ -73,7 +73,7 @@ func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 		// Add user to request context (for GraphQL resolvers)
 		ctx := context.WithValue(c.Request.Context(), usercontext.UserCtxKey, userDoc)
 		c.Request = c.Request.WithContext(ctx)
-		log.Println(">>> User inserted into context:", userDoc.ClerkUserID)
+		// log.Println(">>> User inserted into context:", userDoc.ClerkUserID)
 
 		// Also set in Gin context for convenience
 		c.Set("user", userDoc)
@@ -132,7 +132,7 @@ func ClerkAuthMiddleware(db *mongo.Database) func(http.Handler) http.Handler {
 
 // getOrCreateUser fetches existing user or creates new one
 func getOrCreateUser(ctx context.Context, db *mongo.Database, clerkUserID string) (*UserDoc, error) {
-	log.Println("Getting or creating user for Clerk ID:", clerkUserID)
+	// log.Println("Getting or creating user for Clerk ID:", clerkUserID)
 	coll := db.Collection("User")
 
 	var user UserDoc

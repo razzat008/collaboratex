@@ -6,7 +6,7 @@ export default function Sidebar() {
     <aside className="w-80 border-r border-gray-300 bg-gray-200 p-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="w-full rounded-full bg-teal-700">+ Create New Project</Button>
+          <Button className="w-full rounded-full bg-white">+ Create New Project</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="mt-2 w-full">
           <DropdownMenuItem>Create a blank Project</DropdownMenuItem>

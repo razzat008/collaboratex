@@ -1,5 +1,6 @@
 import { gql } from "@apollo/client";
 import * as Apollo from "@apollo/client";
+import * as ApolloReactHooks from "@apollo/client/react";
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = {
@@ -674,57 +675,66 @@ export const GetProjectsDocument = gql`
  * });
  */
 export function useGetProjects(
-  baseOptions?: Apollo.QueryHookOptions<
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
     GetProjectsResult,
     GetProjectsVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetProjectsResult, GetProjectsVariables>(
+  return ApolloReactHooks.useQuery<GetProjectsResult, GetProjectsVariables>(
     GetProjectsDocument,
     options,
   );
 }
 export function useGetProjectsLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
     GetProjectsResult,
     GetProjectsVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetProjectsResult, GetProjectsVariables>(
+  return ApolloReactHooks.useLazyQuery<GetProjectsResult, GetProjectsVariables>(
     GetProjectsDocument,
     options,
   );
 }
 // @ts-ignore
 export function useGetProjectsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<
+  baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<
     GetProjectsResult,
     GetProjectsVariables
   >,
-): Apollo.UseSuspenseQueryResult<GetProjectsResult, GetProjectsVariables>;
+): ApolloReactHooks.UseSuspenseQueryResult<
+  GetProjectsResult,
+  GetProjectsVariables
+>;
 export function useGetProjectsSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetProjectsResult, GetProjectsVariables>,
-): Apollo.UseSuspenseQueryResult<
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetProjectsResult,
+        GetProjectsVariables
+      >,
+): ApolloReactHooks.UseSuspenseQueryResult<
   GetProjectsResult | undefined,
   GetProjectsVariables
 >;
 export function useGetProjectsSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetProjectsResult, GetProjectsVariables>,
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetProjectsResult,
+        GetProjectsVariables
+      >,
 ) {
   const options =
-    baseOptions === Apollo.skipToken
+    baseOptions === ApolloReactHooks.skipToken
       ? baseOptions
       : { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<GetProjectsResult, GetProjectsVariables>(
-    GetProjectsDocument,
-    options,
-  );
+  return ApolloReactHooks.useSuspenseQuery<
+    GetProjectsResult,
+    GetProjectsVariables
+  >(GetProjectsDocument, options);
 }
 export type GetProjectsHookResult = ReturnType<typeof useGetProjects>;
 export type GetProjectsLazyQueryHookResult = ReturnType<
@@ -771,55 +781,67 @@ export const GetProjectDocument = gql`
  * });
  */
 export function useGetProject(
-  baseOptions: Apollo.QueryHookOptions<GetProjectResult, GetProjectVariables> &
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetProjectResult,
+    GetProjectVariables
+  > &
     ({ variables: GetProjectVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetProjectResult, GetProjectVariables>(
+  return ApolloReactHooks.useQuery<GetProjectResult, GetProjectVariables>(
     GetProjectDocument,
     options,
   );
 }
 export function useGetProjectLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
     GetProjectResult,
     GetProjectVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetProjectResult, GetProjectVariables>(
+  return ApolloReactHooks.useLazyQuery<GetProjectResult, GetProjectVariables>(
     GetProjectDocument,
     options,
   );
 }
 // @ts-ignore
 export function useGetProjectSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<
+  baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<
     GetProjectResult,
     GetProjectVariables
   >,
-): Apollo.UseSuspenseQueryResult<GetProjectResult, GetProjectVariables>;
+): ApolloReactHooks.UseSuspenseQueryResult<
+  GetProjectResult,
+  GetProjectVariables
+>;
 export function useGetProjectSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetProjectResult, GetProjectVariables>,
-): Apollo.UseSuspenseQueryResult<
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetProjectResult,
+        GetProjectVariables
+      >,
+): ApolloReactHooks.UseSuspenseQueryResult<
   GetProjectResult | undefined,
   GetProjectVariables
 >;
 export function useGetProjectSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetProjectResult, GetProjectVariables>,
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetProjectResult,
+        GetProjectVariables
+      >,
 ) {
   const options =
-    baseOptions === Apollo.skipToken
+    baseOptions === ApolloReactHooks.skipToken
       ? baseOptions
       : { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<GetProjectResult, GetProjectVariables>(
-    GetProjectDocument,
-    options,
-  );
+  return ApolloReactHooks.useSuspenseQuery<
+    GetProjectResult,
+    GetProjectVariables
+  >(GetProjectDocument, options);
 }
 export type GetProjectHookResult = ReturnType<typeof useGetProject>;
 export type GetProjectLazyQueryHookResult = ReturnType<
@@ -862,46 +884,61 @@ export const GetFileDocument = gql`
  * });
  */
 export function useGetFile(
-  baseOptions: Apollo.QueryHookOptions<GetFileResult, GetFileVariables> &
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetFileResult,
+    GetFileVariables
+  > &
     ({ variables: GetFileVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetFileResult, GetFileVariables>(
+  return ApolloReactHooks.useQuery<GetFileResult, GetFileVariables>(
     GetFileDocument,
     options,
   );
 }
 export function useGetFileLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<GetFileResult, GetFileVariables>,
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetFileResult,
+    GetFileVariables
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetFileResult, GetFileVariables>(
+  return ApolloReactHooks.useLazyQuery<GetFileResult, GetFileVariables>(
     GetFileDocument,
     options,
   );
 }
 // @ts-ignore
 export function useGetFileSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<
+  baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<
     GetFileResult,
     GetFileVariables
   >,
-): Apollo.UseSuspenseQueryResult<GetFileResult, GetFileVariables>;
+): ApolloReactHooks.UseSuspenseQueryResult<GetFileResult, GetFileVariables>;
 export function useGetFileSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetFileResult, GetFileVariables>,
-): Apollo.UseSuspenseQueryResult<GetFileResult | undefined, GetFileVariables>;
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetFileResult,
+        GetFileVariables
+      >,
+): ApolloReactHooks.UseSuspenseQueryResult<
+  GetFileResult | undefined,
+  GetFileVariables
+>;
 export function useGetFileSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetFileResult, GetFileVariables>,
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetFileResult,
+        GetFileVariables
+      >,
 ) {
   const options =
-    baseOptions === Apollo.skipToken
+    baseOptions === ApolloReactHooks.skipToken
       ? baseOptions
       : { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<GetFileResult, GetFileVariables>(
+  return ApolloReactHooks.useSuspenseQuery<GetFileResult, GetFileVariables>(
     GetFileDocument,
     options,
   );
@@ -941,7 +978,7 @@ export const GetWorkingFileDocument = gql`
  * });
  */
 export function useGetWorkingFile(
-  baseOptions: Apollo.QueryHookOptions<
+  baseOptions: ApolloReactHooks.QueryHookOptions<
     GetWorkingFileResult,
     GetWorkingFileVariables
   > &
@@ -951,57 +988,60 @@ export function useGetWorkingFile(
     ),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetWorkingFileResult, GetWorkingFileVariables>(
-    GetWorkingFileDocument,
-    options,
-  );
+  return ApolloReactHooks.useQuery<
+    GetWorkingFileResult,
+    GetWorkingFileVariables
+  >(GetWorkingFileDocument, options);
 }
 export function useGetWorkingFileLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
     GetWorkingFileResult,
     GetWorkingFileVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetWorkingFileResult, GetWorkingFileVariables>(
-    GetWorkingFileDocument,
-    options,
-  );
+  return ApolloReactHooks.useLazyQuery<
+    GetWorkingFileResult,
+    GetWorkingFileVariables
+  >(GetWorkingFileDocument, options);
 }
 // @ts-ignore
 export function useGetWorkingFileSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<
+  baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<
     GetWorkingFileResult,
     GetWorkingFileVariables
   >,
-): Apollo.UseSuspenseQueryResult<GetWorkingFileResult, GetWorkingFileVariables>;
+): ApolloReactHooks.UseSuspenseQueryResult<
+  GetWorkingFileResult,
+  GetWorkingFileVariables
+>;
 export function useGetWorkingFileSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
         GetWorkingFileResult,
         GetWorkingFileVariables
       >,
-): Apollo.UseSuspenseQueryResult<
+): ApolloReactHooks.UseSuspenseQueryResult<
   GetWorkingFileResult | undefined,
   GetWorkingFileVariables
 >;
 export function useGetWorkingFileSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
         GetWorkingFileResult,
         GetWorkingFileVariables
       >,
 ) {
   const options =
-    baseOptions === Apollo.skipToken
+    baseOptions === ApolloReactHooks.skipToken
       ? baseOptions
       : { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<GetWorkingFileResult, GetWorkingFileVariables>(
-    GetWorkingFileDocument,
-    options,
-  );
+  return ApolloReactHooks.useSuspenseQuery<
+    GetWorkingFileResult,
+    GetWorkingFileVariables
+  >(GetWorkingFileDocument, options);
 }
 export type GetWorkingFileHookResult = ReturnType<typeof useGetWorkingFile>;
 export type GetWorkingFileLazyQueryHookResult = ReturnType<
@@ -1044,55 +1084,67 @@ export const GetVersionDocument = gql`
  * });
  */
 export function useGetVersion(
-  baseOptions: Apollo.QueryHookOptions<GetVersionResult, GetVersionVariables> &
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetVersionResult,
+    GetVersionVariables
+  > &
     ({ variables: GetVersionVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetVersionResult, GetVersionVariables>(
+  return ApolloReactHooks.useQuery<GetVersionResult, GetVersionVariables>(
     GetVersionDocument,
     options,
   );
 }
 export function useGetVersionLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
     GetVersionResult,
     GetVersionVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetVersionResult, GetVersionVariables>(
+  return ApolloReactHooks.useLazyQuery<GetVersionResult, GetVersionVariables>(
     GetVersionDocument,
     options,
   );
 }
 // @ts-ignore
 export function useGetVersionSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<
+  baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<
     GetVersionResult,
     GetVersionVariables
   >,
-): Apollo.UseSuspenseQueryResult<GetVersionResult, GetVersionVariables>;
+): ApolloReactHooks.UseSuspenseQueryResult<
+  GetVersionResult,
+  GetVersionVariables
+>;
 export function useGetVersionSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetVersionResult, GetVersionVariables>,
-): Apollo.UseSuspenseQueryResult<
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetVersionResult,
+        GetVersionVariables
+      >,
+): ApolloReactHooks.UseSuspenseQueryResult<
   GetVersionResult | undefined,
   GetVersionVariables
 >;
 export function useGetVersionSuspenseQuery(
   baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<GetVersionResult, GetVersionVariables>,
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetVersionResult,
+        GetVersionVariables
+      >,
 ) {
   const options =
-    baseOptions === Apollo.skipToken
+    baseOptions === ApolloReactHooks.skipToken
       ? baseOptions
       : { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<GetVersionResult, GetVersionVariables>(
-    GetVersionDocument,
-    options,
-  );
+  return ApolloReactHooks.useSuspenseQuery<
+    GetVersionResult,
+    GetVersionVariables
+  >(GetVersionDocument, options);
 }
 export type GetVersionHookResult = ReturnType<typeof useGetVersion>;
 export type GetVersionLazyQueryHookResult = ReturnType<
@@ -1140,16 +1192,16 @@ export type CreateProjectMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useCreateProject(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     CreateProjectResult,
     CreateProjectVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<CreateProjectResult, CreateProjectVariables>(
-    CreateProjectDocument,
-    options,
-  );
+  return ApolloReactHooks.useMutation<
+    CreateProjectResult,
+    CreateProjectVariables
+  >(CreateProjectDocument, options);
 }
 export type CreateProjectHookResult = ReturnType<typeof useCreateProject>;
 export type CreateProjectMutationResult =
@@ -1186,16 +1238,16 @@ export type DeleteProjectMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useDeleteProject(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     DeleteProjectResult,
     DeleteProjectVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<DeleteProjectResult, DeleteProjectVariables>(
-    DeleteProjectDocument,
-    options,
-  );
+  return ApolloReactHooks.useMutation<
+    DeleteProjectResult,
+    DeleteProjectVariables
+  >(DeleteProjectDocument, options);
 }
 export type DeleteProjectHookResult = ReturnType<typeof useDeleteProject>;
 export type DeleteProjectMutationResult =
@@ -1236,16 +1288,16 @@ export type AddCollaboratorMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useAddCollaborator(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     AddCollaboratorResult,
     AddCollaboratorVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<AddCollaboratorResult, AddCollaboratorVariables>(
-    AddCollaboratorDocument,
-    options,
-  );
+  return ApolloReactHooks.useMutation<
+    AddCollaboratorResult,
+    AddCollaboratorVariables
+  >(AddCollaboratorDocument, options);
 }
 export type AddCollaboratorHookResult = ReturnType<typeof useAddCollaborator>;
 export type AddCollaboratorMutationResult =
@@ -1286,13 +1338,13 @@ export type RemoveCollaboratorMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useRemoveCollaborator(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     RemoveCollaboratorResult,
     RemoveCollaboratorVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<
+  return ApolloReactHooks.useMutation<
     RemoveCollaboratorResult,
     RemoveCollaboratorVariables
   >(RemoveCollaboratorDocument, options);
@@ -1341,13 +1393,13 @@ export type CreateFileMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useCreateFile(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     CreateFileResult,
     CreateFileVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<CreateFileResult, CreateFileVariables>(
+  return ApolloReactHooks.useMutation<CreateFileResult, CreateFileVariables>(
     CreateFileDocument,
     options,
   );
@@ -1390,13 +1442,13 @@ export type RenameFileMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useRenameFile(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     RenameFileResult,
     RenameFileVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<RenameFileResult, RenameFileVariables>(
+  return ApolloReactHooks.useMutation<RenameFileResult, RenameFileVariables>(
     RenameFileDocument,
     options,
   );
@@ -1435,13 +1487,13 @@ export type DeleteFileMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useDeleteFile(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     DeleteFileResult,
     DeleteFileVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<DeleteFileResult, DeleteFileVariables>(
+  return ApolloReactHooks.useMutation<DeleteFileResult, DeleteFileVariables>(
     DeleteFileDocument,
     options,
   );
@@ -1483,13 +1535,13 @@ export type UpdateWorkingFileMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useUpdateWorkingFile(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     UpdateWorkingFileResult,
     UpdateWorkingFileVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<
+  return ApolloReactHooks.useMutation<
     UpdateWorkingFileResult,
     UpdateWorkingFileVariables
   >(UpdateWorkingFileDocument, options);
@@ -1538,16 +1590,16 @@ export type CreateVersionMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useCreateVersion(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     CreateVersionResult,
     CreateVersionVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<CreateVersionResult, CreateVersionVariables>(
-    CreateVersionDocument,
-    options,
-  );
+  return ApolloReactHooks.useMutation<
+    CreateVersionResult,
+    CreateVersionVariables
+  >(CreateVersionDocument, options);
 }
 export type CreateVersionHookResult = ReturnType<typeof useCreateVersion>;
 export type CreateVersionMutationResult =
@@ -1591,16 +1643,16 @@ export type RestoreVersionMutationFn = Apollo.MutationFunction<
  * });
  */
 export function useRestoreVersion(
-  baseOptions?: Apollo.MutationHookOptions<
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
     RestoreVersionResult,
     RestoreVersionVariables
   >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<RestoreVersionResult, RestoreVersionVariables>(
-    RestoreVersionDocument,
-    options,
-  );
+  return ApolloReactHooks.useMutation<
+    RestoreVersionResult,
+    RestoreVersionVariables
+  >(RestoreVersionDocument, options);
 }
 export type RestoreVersionHookResult = ReturnType<typeof useRestoreVersion>;
 export type RestoreVersionMutationResult =
@@ -1635,7 +1687,7 @@ export const WorkingFileUpdatedDocument = gql`
  * });
  */
 export function useWorkingFileUpdated(
-  baseOptions: Apollo.SubscriptionHookOptions<
+  baseOptions: ApolloReactHooks.SubscriptionHookOptions<
     WorkingFileUpdatedResult,
     WorkingFileUpdatedVariables
   > &
@@ -1645,7 +1697,7 @@ export function useWorkingFileUpdated(
     ),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useSubscription<
+  return ApolloReactHooks.useSubscription<
     WorkingFileUpdatedResult,
     WorkingFileUpdatedVariables
   >(WorkingFileUpdatedDocument, options);
@@ -1681,7 +1733,7 @@ export const ProjectUpdatedDocument = gql`
  * });
  */
 export function useProjectUpdated(
-  baseOptions: Apollo.SubscriptionHookOptions<
+  baseOptions: ApolloReactHooks.SubscriptionHookOptions<
     ProjectUpdatedResult,
     ProjectUpdatedVariables
   > &
@@ -1691,10 +1743,10 @@ export function useProjectUpdated(
     ),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useSubscription<ProjectUpdatedResult, ProjectUpdatedVariables>(
-    ProjectUpdatedDocument,
-    options,
-  );
+  return ApolloReactHooks.useSubscription<
+    ProjectUpdatedResult,
+    ProjectUpdatedVariables
+  >(ProjectUpdatedDocument, options);
 }
 export type ProjectUpdatedHookResult = ReturnType<typeof useProjectUpdated>;
 export type ProjectUpdatedSubscriptionResult =
