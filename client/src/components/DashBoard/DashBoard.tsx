@@ -1,54 +1,55 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
 import { useUser } from "@clerk/clerk-react";
-import axios from "axios";
+import { ApolloProvider, useMutation, useQuery } from "@apollo/client/react";
 
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import EmptyProject from "./EmptyProject";
 import ProjectTable from "./ProjectTable";
 
-export default function DashBoard() {
-  const { isSignedIn, user } = useUser();
-  const [projects, setProjects] = useState([]);
+import { useApolloClient } from "@/lib/apollo";
+import { CREATE_PROJECT } from "@/graphql/projects";
 
-  // Fetch projects for logged-in user
-  useEffect(() => {
-    if (!isSignedIn) return;
+/**
+ * 1. INNER COMPONENT
+ * This component lives inside the ApolloProvider. 
+ * It can use hooks like useQuery() without any extra config.
+ */
+function DashBoardContent() {
+  const { user } = useUser();
+  const { data, loading, error } = useQuery(CREATE_PROJECT);
 
-    const fetchProjects = async () => {
-      try {
-        const clerkToken = await user?.getToken(); // Clerk JWT
-        const res = await axios.get("http://localhost:8080/api/projects", {
-          headers: { Authorization: `Bearer ${clerkToken}` },
-        });
-
-        setProjects(res.data); // [{_id, projectName, lastModified, userName}, ...]
-      } catch (err) {
-        console.error("Error fetching projects:", err);
-      }
-    };
-
-    fetchProjects();
-  }, [isSignedIn, user]);
-
-  if (!isSignedIn) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-gray-700">Please log in to access the dashboard.</p>
+        <p className="animate-pulse">Loading projects...</p>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen text-red-500">
+        Error loading projects: {error.message}
+      </div>
+    );
+  }
+
+  const projects = data?.projects ?? [];
+
   return (
-    <div className="h-screen w-screen flex">
-      <Sidebar setProjects={setProjects} />
+    <div className="h-screen w-screen flex bg-gray-50">
+      <Sidebar />
+
       <div className="flex-1 flex flex-col">
         <Topbar user={user} />
-        <main className="flex-1 p-6 overflow-auto bg-gray-50">
+
+        <main className="flex-1 p-6 overflow-auto">
           {projects.length === 0 ? (
             <EmptyProject />
           ) : (
-            <ProjectTable projects={projects} setProjects={setProjects} />
+            <ProjectTable projects={projects} />
           )}
         </main>
       </div>
@@ -56,3 +57,34 @@ export default function DashBoard() {
   );
 }
 
+/**
+ * 2. MAIN EXPORT (The Shell)
+ * This handles the "Setup" logic: Auth check and Apollo initialization.
+ */
+export default function DashBoard() {
+  const { isSignedIn, user, isLoaded } = useUser();
+  
+  // No need to call useApolloClient() here! 
+  // useQuery automatically finds the client from the root Provider.
+  const { data, loading, error } = useMutation(CREATE_PROJECT, {
+    skip: !isSignedIn,
+  });
+
+  if (!isLoaded || loading) return <div>Loading...</div>;
+  if (!isSignedIn) return <div>Please log in.</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  const projects = data?.projects ?? [];
+
+  return (
+    <div className="h-screen w-screen flex bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Topbar user={user} />
+        <main className="flex-1 p-6">
+          {projects.length === 0 ? <EmptyProject /> : <ProjectTable projects={projects} />}
+        </main>
+      </div>
+    </div>
+  );
+}
