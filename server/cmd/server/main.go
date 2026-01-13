@@ -113,10 +113,9 @@ func main() {
 		})
 	})
 
-	hub := websockets.NewHub()
-	go hub.Run()
+	hm := websockets.NewHubManager()
 
-	r.GET("/ws", websockets.AuthenticatedWSHandler(hub))
+	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
 
 
 	log.Printf("Server starting on http://localhost:%s/", port)
