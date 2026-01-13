@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"log"
 	"net/http"
 	"os"
@@ -19,7 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
-  "gollaboratex/server/internal/websockets"
+	"gollaboratex/server/internal/websockets"
 
 	"github.com/joho/godotenv"
 	"gollaboratex/server/internal/db"
@@ -77,6 +76,7 @@ func main() {
 
 	// Initialize Gin router
 	r := gin.Default()
+
 	// Setup CORS middleware
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URLs
@@ -85,24 +85,39 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// yeta herumnata k k vairako xa yeso
+	r.Use(func(ctx *gin.Context) {
+		log.Println("Incoming request:", ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Next()
+	})
+
 	// GraphQL Playground route (no auth required)
 	r.GET("/", gin.WrapF(playground.Handler("GraphQL playground", "/query")))
 
+	api := r.Group("/")
+
+	api.Use(middleware.GinClerkAuthMiddleware(database))
+	{
+		api.POST("/query", func(c *gin.Context) {
+			srv.ServeHTTP(c.Writer, c.Request)
+		})
+	}
+
 	// GraphQL query endpoint (with auth middleware)
-	r.POST("/query", middleware.GinClerkAuthMiddleware(database), func(c *gin.Context) {
-		srv.ServeHTTP(c.Writer, c.Request)
-	})
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":   "ok",
 			"database": "connected",
-    })
-  }
-  // Initializing new hub manager and websocket route
-	hm := websockets.NewHubManager()
-	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
+		})
+	})
+
+	hub := websockets.NewHub()
+	go hub.Run()
+
+	r.GET("/ws", websockets.AuthenticatedWSHandler(hub))
+
 
 	log.Printf("Server starting on http://localhost:%s/", port)
 	log.Printf("GraphQL Playground: http://localhost:%s/", port)

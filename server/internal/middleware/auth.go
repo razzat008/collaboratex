@@ -3,6 +3,8 @@ package middleware
 import (
 	"context"
 	"errors"
+	"gollaboratex/server/internal/middleware/usercontext"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -19,15 +21,13 @@ type UserDoc struct {
 	ClerkUserID string        `bson:"clerkUserId"`
 	CreatedAt   time.Time     `bson:"createdAt"`
 }
-type ctxKey string
-
-const userCtxKey ctxKey = "user"
 
 // GinClerkAuthMiddleware verifies Clerk JWT tokens and adds user to Gin context
 func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract token from Authorization header
 		authHeader := c.GetHeader("Authorization")
+		log.Println(">>> GinClerkAuthMiddleware HIT")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
@@ -59,9 +59,11 @@ func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		log.Println(">>> Clerk user:", clerkUserID)
 
 		// Fetch or create user in MongoDB
 		userDoc, err := getOrCreateUser(c.Request.Context(), db, clerkUserID)
+		log.Println("fetchin/creating user")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to authenticate user"})
 			c.Abort()
@@ -69,8 +71,9 @@ func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 		}
 
 		// Add user to request context (for GraphQL resolvers)
-		ctx := context.WithValue(c.Request.Context(), userCtxKey, userDoc)
+		ctx := context.WithValue(c.Request.Context(), usercontext.UserCtxKey, userDoc)
 		c.Request = c.Request.WithContext(ctx)
+		log.Println(">>> User inserted into context:", userDoc.ClerkUserID)
 
 		// Also set in Gin context for convenience
 		c.Set("user", userDoc)
@@ -121,7 +124,7 @@ func ClerkAuthMiddleware(db *mongo.Database) func(http.Handler) http.Handler {
 			}
 
 			// Add user to context
-			ctx := context.WithValue(r.Context(), "user", userDoc)
+			ctx := context.WithValue(r.Context(), usercontext.UserCtxKey, userDoc)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -129,7 +132,8 @@ func ClerkAuthMiddleware(db *mongo.Database) func(http.Handler) http.Handler {
 
 // getOrCreateUser fetches existing user or creates new one
 func getOrCreateUser(ctx context.Context, db *mongo.Database, clerkUserID string) (*UserDoc, error) {
-	coll := db.Collection("users")
+	log.Println("Getting or creating user for Clerk ID:", clerkUserID)
+	coll := db.Collection("User")
 
 	var user UserDoc
 	err := coll.FindOne(ctx, bson.M{"clerkUserId": clerkUserID}).Decode(&user)
@@ -161,7 +165,7 @@ func getOrCreateUser(ctx context.Context, db *mongo.Database, clerkUserID string
 
 // GetUserFromContext retrieves user from request context
 func GetUserFromContext(ctx context.Context) (*UserDoc, error) {
-	user, ok := ctx.Value(userCtxKey).(*UserDoc)
+	user, ok := ctx.Value(usercontext.UserCtxKey).(*UserDoc)
 	if !ok || user == nil {
 		return nil, errors.New("user not found in context")
 	}

@@ -1,0 +1,51 @@
+overwrite: true
+schema: "src/graphql/schema.graphql"
+documents: "src/graphql/operations.graphql"
+generates:
+  src/graphql/generated.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      # Type generation options
+      withHooks: true
+      withComponent: false
+      withHOC: false
+      
+      # Make all types stricter
+      avoidOptionals:
+        field: false
+        inputValue: false
+        object: false
+      
+      # Naming conventions
+      enumsAsTypes: true
+      futureProofEnums: true
+      
+      # Apollo Client specific
+      apolloClientVersion: 3
+      
+      # Generate detailed types
+      scalars:
+        ID: string
+        String: string
+        Boolean: boolean
+        Int: number
+        Float: number
+      
+      # Add custom scalar types if needed
+      # Date: string
+      
+      # Optional: make fragments type-safe
+      preResolveTypes: true
+      
+      # Make hook names shorter
+      omitOperationSuffix: true
+      
+      # Add operation result suffix
+      operationResultSuffix: "Result"
+      
+hooks:
+  afterAllFileWrite:
+    - prettier --write
