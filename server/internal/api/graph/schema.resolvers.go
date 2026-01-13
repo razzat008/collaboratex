@@ -1,13 +1,16 @@
 package graph
 
 import (
+	"slices"
 	"context"
 	"errors"
 	"time"
 
 	"gollaboratex/server/internal/api/graph/model"
+	"gollaboratex/server/internal/middleware"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
+
 )
 
 // ============================================================================
@@ -67,14 +70,6 @@ type VersionFileDoc struct {
 // HELPER FUNCTIONS
 // ============================================================================
 
-func getUserFromContext(ctx context.Context) (*UserDoc, error) {
-	user, ok := ctx.Value("user").(*UserDoc)
-	if !ok || user == nil {
-		return nil, errors.New("user not found in context")
-	}
-	return user, nil
-}
-
 func (r *Resolver) hasProjectAccess(ctx context.Context, projectID bson.ObjectID, userID bson.ObjectID) (bool, error) {
 	var project ProjectDoc
 	err := r.DB.Collection("projects").FindOne(ctx, bson.M{"_id": projectID}).Decode(&project)
@@ -86,11 +81,9 @@ func (r *Resolver) hasProjectAccess(ctx context.Context, projectID bson.ObjectID
 		return true, nil
 	}
 
-	for _, collabID := range project.CollaboratorIDs {
-		if collabID == userID {
+	if slices.Contains(project.CollaboratorIDs, userID) {
 			return true, nil
 		}
-	}
 
 	return false, nil
 }
@@ -146,7 +139,7 @@ func stringToFileType(s string) model.FileType {
 // ============================================================================
 
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewProjectInput) (*model.Project, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +213,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewPro
 }
 
 func (r *mutationResolver) DeleteProject(ctx context.Context, projectID string) (bool, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -263,7 +256,7 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID string) 
 }
 
 func (r *mutationResolver) AddCollaborator(ctx context.Context, projectID string, userID string) (*model.Project, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +292,7 @@ func (r *mutationResolver) AddCollaborator(ctx context.Context, projectID string
 }
 
 func (r *mutationResolver) RemoveCollaborator(ctx context.Context, projectID string, userID string) (*model.Project, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +326,7 @@ func (r *mutationResolver) RemoveCollaborator(ctx context.Context, projectID str
 }
 
 func (r *mutationResolver) CreateFile(ctx context.Context, input model.NewFileInput) (*model.File, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +385,7 @@ func (r *mutationResolver) CreateFile(ctx context.Context, input model.NewFileIn
 }
 
 func (r *mutationResolver) RenameFile(ctx context.Context, fileID string, name string) (*model.File, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -428,7 +421,7 @@ func (r *mutationResolver) RenameFile(ctx context.Context, fileID string, name s
 }
 
 func (r *mutationResolver) DeleteFile(ctx context.Context, fileID string) (bool, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -457,7 +450,7 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, fileID string) (bool,
 }
 
 func (r *mutationResolver) UpdateWorkingFile(ctx context.Context, input model.UpdateWorkingFileInput) (*model.WorkingFile, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +503,7 @@ func (r *mutationResolver) UpdateWorkingFile(ctx context.Context, input model.Up
 }
 
 func (r *mutationResolver) CreateVersion(ctx context.Context, input model.CreateVersionInput) (*model.Version, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -579,7 +572,7 @@ func (r *mutationResolver) CreateVersion(ctx context.Context, input model.Create
 }
 
 func (r *mutationResolver) RestoreVersion(ctx context.Context, versionID string) (*model.Project, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +639,7 @@ func (r *mutationResolver) RestoreVersion(ctx context.Context, versionID string)
 // ============================================================================
 
 func (r *queryResolver) Projects(ctx context.Context) ([]*model.Project, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -691,7 +684,7 @@ func (r *queryResolver) Projects(ctx context.Context) ([]*model.Project, error) 
 }
 
 func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -729,7 +722,7 @@ func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project,
 }
 
 func (r *queryResolver) File(ctx context.Context, id string) (*model.File, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -761,7 +754,7 @@ func (r *queryResolver) File(ctx context.Context, id string) (*model.File, error
 }
 
 func (r *queryResolver) WorkingFile(ctx context.Context, fileID string) (*model.WorkingFile, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -799,7 +792,7 @@ func (r *queryResolver) WorkingFile(ctx context.Context, fileID string) (*model.
 }
 
 func (r *queryResolver) Version(ctx context.Context, id string) (*model.Version, error) {
-	user, err := getUserFromContext(ctx)
+	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
