@@ -9,6 +9,15 @@ import (
 	"strconv"
 )
 
+type Asset struct {
+	ID        string `json:"id"`
+	ProjectID string `json:"projectId"`
+	Path      string `json:"path"`
+	MimeType  string `json:"mimeType"`
+	Size      int32  `json:"size"`
+	CreatedAt string `json:"createdAt"`
+}
+
 type CreateVersionInput struct {
 	ProjectID string  `json:"projectId"`
 	Message   *string `json:"message,omitempty"`
@@ -46,6 +55,7 @@ type Project struct {
 	CollaboratorIds []string   `json:"collaboratorIds"`
 	RootFileID      string     `json:"rootFileId"`
 	Files           []*File    `json:"files"`
+	Assets          []*Asset   `json:"assets"`
 	Versions        []*Version `json:"versions"`
 }
 
@@ -96,7 +106,6 @@ type FileType string
 const (
 	FileTypeTex   FileType = "TEX"
 	FileTypeBib   FileType = "BIB"
-	FileTypeImage FileType = "IMAGE"
 	FileTypeCls   FileType = "CLS"
 	FileTypeSty   FileType = "STY"
 	FileTypeOther FileType = "OTHER"
@@ -105,7 +114,6 @@ const (
 var AllFileType = []FileType{
 	FileTypeTex,
 	FileTypeBib,
-	FileTypeImage,
 	FileTypeCls,
 	FileTypeSty,
 	FileTypeOther,
@@ -113,7 +121,7 @@ var AllFileType = []FileType{
 
 func (e FileType) IsValid() bool {
 	switch e {
-	case FileTypeTex, FileTypeBib, FileTypeImage, FileTypeCls, FileTypeSty, FileTypeOther:
+	case FileTypeTex, FileTypeBib, FileTypeCls, FileTypeSty, FileTypeOther:
 		return true
 	}
 	return false

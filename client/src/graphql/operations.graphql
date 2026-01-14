@@ -10,6 +10,10 @@ fragment ProjectFields on Project {
   ownerId
   collaboratorIds
   rootFileId
+
+  assets {
+    ...AssetFields
+  }
 }
 
 fragment FileFields on File {
@@ -19,6 +23,15 @@ fragment FileFields on File {
   type
   createdAt
   updatedAt
+}
+
+fragment AssetFields on Asset {
+  id
+  projectId
+  path
+  mimeType
+  size
+  createdAt
 }
 
 fragment WorkingFileFields on WorkingFile {

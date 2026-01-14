@@ -31,6 +31,16 @@ export type Scalars = {
   Float: { input: number; output: number };
 };
 
+export type Asset = {
+  __typename?: "Asset";
+  createdAt: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  mimeType: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
+  projectId: Scalars["ID"]["output"];
+  size: Scalars["Int"]["output"];
+};
+
 export type CreateVersionInput = {
   message?: InputMaybe<Scalars["String"]["input"]>;
   projectId: Scalars["ID"]["input"];
@@ -50,7 +60,6 @@ export type File = {
 export type FileType =
   | "BIB"
   | "CLS"
-  | "IMAGE"
   | "OTHER"
   | "STY"
   | "TEX"
@@ -125,6 +134,7 @@ export type NewProjectInput = {
 
 export type Project = {
   __typename?: "Project";
+  assets: Array<Asset>;
   collaboratorIds: Array<Scalars["ID"]["output"]>;
   createdAt: Scalars["String"]["output"];
   files: Array<File>;
@@ -224,6 +234,15 @@ export type ProjectFields = {
   ownerId: string;
   collaboratorIds: Array<string>;
   rootFileId: string;
+  assets: Array<{
+    __typename?: "Asset";
+    id: string;
+    projectId: string;
+    path: string;
+    mimeType: string;
+    size: number;
+    createdAt: string;
+  }>;
 };
 
 export type FileFields = {
@@ -234,6 +253,16 @@ export type FileFields = {
   type: FileType;
   createdAt: string;
   updatedAt: string;
+};
+
+export type AssetFields = {
+  __typename?: "Asset";
+  id: string;
+  projectId: string;
+  path: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
 };
 
 export type WorkingFileFields = {
@@ -276,6 +305,15 @@ export type GetProjectsResult = {
     ownerId: string;
     collaboratorIds: Array<string>;
     rootFileId: string;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
+    }>;
   }>;
 };
 
@@ -309,6 +347,15 @@ export type GetProjectResult = {
       projectId: string;
       createdAt: string;
       message?: string | null;
+    }>;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
     }>;
   } | null;
 };
@@ -402,6 +449,15 @@ export type CreateProjectResult = {
       createdAt: string;
       updatedAt: string;
     }>;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
+    }>;
   };
 };
 
@@ -430,6 +486,15 @@ export type AddCollaboratorResult = {
     ownerId: string;
     collaboratorIds: Array<string>;
     rootFileId: string;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
+    }>;
   };
 };
 
@@ -449,6 +514,15 @@ export type RemoveCollaboratorResult = {
     ownerId: string;
     collaboratorIds: Array<string>;
     rootFileId: string;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
+    }>;
   };
 };
 
@@ -565,6 +639,15 @@ export type RestoreVersionResult = {
       createdAt: string;
       updatedAt: string;
     }>;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
+    }>;
   };
 };
 
@@ -599,9 +682,28 @@ export type ProjectUpdatedResult = {
     ownerId: string;
     collaboratorIds: Array<string>;
     rootFileId: string;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
+    }>;
   };
 };
 
+export const AssetFields = gql`
+  fragment AssetFields on Asset {
+    id
+    projectId
+    path
+    mimeType
+    size
+    createdAt
+  }
+`;
 export const ProjectFields = gql`
   fragment ProjectFields on Project {
     id
@@ -611,7 +713,11 @@ export const ProjectFields = gql`
     ownerId
     collaboratorIds
     rootFileId
+    assets {
+      ...AssetFields
+    }
   }
+  ${AssetFields}
 `;
 export const FileFields = gql`
   fragment FileFields on File {
