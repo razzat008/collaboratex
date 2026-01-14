@@ -1,21 +1,24 @@
 "use client";
 
 import { useUser } from "@clerk/clerk-react";
-import { ApolloProvider, useMutation, useQuery } from "@apollo/client/react";
+// import { ApolloProvider, useMutation, useQuery } from "@apollo/client/react";
 
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import EmptyProject from "./EmptyProject";
 import ProjectTable from "./ProjectTable";
+import LoadingScreen from "./Loading";
 
 import { useGetProjects } from "@/graphql/generated";
+
+
 
 export default function DashBoard() {
   const { user, isLoaded } = useUser();
 
   const { data, loading, error } = useGetProjects();
 
-  if (!isLoaded || loading) return <div>Loading...</div>;
+  if (!isLoaded || loading) return <LoadingScreen />;
   if (error) return <div>Error: {error.message}</div>;
 
   const projects =
