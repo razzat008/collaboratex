@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"gollaboratex/server/internal/middleware"
 	"log"
 	"net/http"
 	"net/url"
@@ -59,11 +60,16 @@ var upgrader = &websocket.Upgrader{
 }
 
 /* websocket handler that is used to initiate the websocket connection */
-//api eg: ws://localhost:8080/ws?action=join&room_id=abcd1234
-//api eg: ws://localhost:8080/ws?action=create
 func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		//Todo: only provide entry to validated user
+		// Require that authentication middleware has already populated request context.
+		// We use the same user type placed into the context by middleware.GinClerkAuthMiddleware.
+		user, err := middleware.GetUserFromContext(ctx.Request.Context())
+		if err != nil {
+			log.Println("WS auth failed: user not found in context")
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthenticated"})
+			return
+		}
 
 		// checking if the request for websocket is upgrade or not
 		// Log basic request info to help debugging handshake failures.
@@ -75,47 +81,41 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 			return
 		}
 
-		// Names are taken after auth sessions; for now read optional `name` query param
-		name := ctx.Query("name")
-		if name == "" {
-			name = "Someone"
-		}
+		// Prefer an explicit display name provided by the client, otherwise derive from authenticated user.
+		//once Need to get the username
+		var name string
+			if user.ClerkUserID != "" {
+				name = user.ClerkUserID
+			} else {
+				name = "Anynomous"
+			}
 		log.Println("Connecting client name:", name)
 
-		// Assign a unique Id when user is created (replace with auth-based id later).
-		// This is useful for presence and debugging.
-		id := GenerateRoomID() //Todo: remove this (just for testing)
-		log.Println("Assigned temporary client id:", id)
+		// Use authenticated user's ClerkUserID as the client id (stable across connections).
+		id := user.ClerkUserID
+		log.Println("Assigned client id:", id)
 
-		// Determine room id: prefer path parameter (/:room) and fall back to query param
-		roomId := ctx.Param("room")
+		// Determine canonical room/project id.
+		// Prefer a value injected by upstream middleware (e.g. project lookup middleware).
+		var roomId string
+		if v, ok := ctx.Get("project_id"); ok {
+			if s, ok2 := v.(string); ok2 {
+				roomId = s
+			}
+		}
+		// Fallbacks: path param then query param
 		if roomId == "" {
+			roomId = ctx.Param("room")
+		} else if roomId == "" {
 			roomId = ctx.Query("room_id")
+		} else {
+			roomId = "testRoomId"
 		}
 		// Log selected room id for debugging
 		log.Println("Requested room id:", roomId)
 
-		// Determine action (create/join). If not provided, prefer Join when a room is provided,
-		// otherwise default to Create for convenience.
-		action := Action(ctx.Query("action"))
-		if action == "" {
-			if roomId != "" {
-				action = JoinAction
-			} else {
-				action = CreateAction
-			}
-		}
-		// Log the requested action to help debugging
-		log.Println("Requested action:", string(action))
-
-		// Validate and obtain hub
-		hub, err := hm.GetExistingHubOrNewHub(action, roomId)
-		if err != nil {
-			// Log the exact error for server-side debugging and return it to client
-			log.Println("GetExistingHubOrNewHub error:", err.Error(), "action=", string(action), "roomId=", roomId)
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		// Validate and obtain hub using canonical room id (resolved/authorized by middleware if available).
+		hub := hm.GetExistingHubOrNewHub(roomId)
 		log.Println("Obtained hub for room:", hub.roomId)
 
 		// Attempt to upgrade the HTTP request to a websocket connection.
@@ -132,19 +132,19 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 
 		// Debug: log successful websocket upgrade so we can verify which clients connect
 		// and which room/action they are requesting.
-		log.Printf("WS upgrade OK from %s — room=%s action=%s\n", ctx.Request.RemoteAddr, roomId, action)
+		log.Printf("WS upgrade OK from %s — room=%s  user=%s\n", ctx.Request.RemoteAddr, roomId, user.ClerkUserID)
 
-		/* This is just a default test client and hub*/
+		// Create client using authenticated identity and resolved room/hub.
 		client := &Client{
-			id:         id, //just generate id
+			id:         id,
 			name:       name,
 			hub:        hub,
 			connection: conn,
 			send:       make(chan []byte, 256),
 			ready:      true,
 		}
-		/* end */
 
+		// Register client and start read/write pumps.
 		client.hub.register <- client
 
 		go client.Read()
