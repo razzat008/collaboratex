@@ -32,7 +32,13 @@ export default function SplitView() {
             {!editorCollapsed && <FormattingToolbar />}
 
             <div className="flex-1 min-h-0 overflow-auto">
-              <EditorPane />
+
+              <EditorPane 
+              roomId="ws"
+              wsUrl="ws://localhost:8080"
+              name="Test User"
+              initialValue=""
+							/>
             </div>
           </div>
         </ResizablePanel>
