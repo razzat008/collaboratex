@@ -18,9 +18,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import CodeMirror from '@uiw/react-codemirror';
-import { loadLanguage } from '@uiw/codemirror-extensions-langs';
-import { githubLight } from '@uiw/codemirror-theme-github';
+import  CMEditor  from "../components/Editor/Codemirror"
 import FileExplorer from '../components/Editor/FileExplorer';
 
 const Editor: React.FC = () => {
@@ -223,14 +221,7 @@ These massive objects play a crucial role in the evolution of galaxies. Most lar
             </div>
             <div className="flex-1 overflow-hidden relative">
               {/* Fix: Changed 'latex' to 'stex' as CodeMirror 6 language identifier for LaTeX is 'stex' */}
-              <CodeMirror
-                value={latexCode}
-                height="100%"
-                theme={githubLight}
-                // extensions={[loadLanguage('stex')!]}
-                onChange={(value) => setLatexCode(value)}
-                className="h-full text-sm"
-              />
+							<CMEditor />
             </div>
           </div>
 

@@ -79,7 +79,7 @@ func main() {
 
 	// Setup CORS middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URLs
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"}, // Add your frontend URLs
 		AllowMethods:     []string{"GET", "POST", "OPTIONS", "DELETE", "PUT"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -104,7 +104,7 @@ func main() {
 		})
 
 	}
-	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
+	r.GET("/ws/:room", websockets.AuthenticatedWSHandler(hm))
 
 
 	// GraphQL query endpoint (with auth middleware)
