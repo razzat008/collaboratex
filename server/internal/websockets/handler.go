@@ -138,7 +138,7 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 
 		// Debug: log successful websocket upgrade so we can verify which clients connect
 		// and which room/action they are requesting.
-		log.Printf("WS upgrade OK from %s — room=%s  name=%s\n", ctx.Request.RemoteAddr, name)
+		log.Printf("WS upgrade OK from %s — room=%s  ", ctx.Request.RemoteAddr, roomId)
 
 		// Create client using authenticated identity and resolved room/hub.
 		client := &Client{

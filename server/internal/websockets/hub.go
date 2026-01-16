@@ -56,9 +56,9 @@ func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[*Client]bool),
 		roomId:     "",
-		register:   make(chan *Client, 100), //buffered channel to prevent deadlock
+		register:   make(chan *Client, 10), //buffered channel to prevent deadlock
 		unregister: make(chan *Client, 5),
-		broadcast:  make(chan BroadcastMessage),
+		broadcast:  make(chan BroadcastMessage, 50),
 	}
 }
 
@@ -86,8 +86,6 @@ func (h *Hub) Run() {
 
 func (hm *HubManager) GetExistingHubOrNewHub(roomId string) (*Hub) {
 	// Handle create explicitly respecting provided roomId; otherwise generate new id.
-		hm.mu.RLock()
-		defer hm.mu.RUnlock()
 		var h *Hub
 		if h, ok := hm.hubs[roomId]; ok {
 			return h
