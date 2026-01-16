@@ -1,11 +1,12 @@
 package websockets
 
 import (
-	"gollaboratex/server/internal/middleware"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"strconv"
+	"math/rand"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -64,12 +65,12 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Require that authentication middleware has already populated request context.
 		// We use the same user type placed into the context by middleware.GinClerkAuthMiddleware.
-		user, err := middleware.GetUserFromContext(ctx.Request.Context())
-		if err != nil {
-			log.Println("WS auth failed: user not found in context")
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthenticated"})
-			return
-		}
+		// user, err := middleware.GetUserFromContext(ctx.Request.Context())
+		// if err != nil {
+		// 	log.Println("WS auth failed: user not found in context")
+		// 	ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthenticated"})
+		// 	return
+		// }
 
 		// checking if the request for websocket is upgrade or not
 		// Log basic request info to help debugging handshake failures.
@@ -84,15 +85,17 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 		// Prefer an explicit display name provided by the client, otherwise derive from authenticated user.
 		//once Need to get the username
 		var name string
-			if user.ClerkUserID != "" {
-				name = user.ClerkUserID
-			} else {
+			// if user.ClerkUserID != "" {
+			// 	name = user.ClerkUserID
+			// } 
+			if name ==""{
 				name = "Anynomous"
 			}
 		log.Println("Connecting client name:", name)
 
 		// Use authenticated user's ClerkUserID as the client id (stable across connections).
-		id := user.ClerkUserID
+		// id := user.ClerkUserID
+		id := strconv.FormatInt(rand.Int63(), 10)
 		log.Println("Assigned client id:", id)
 
 		// Determine canonical room/project id.
@@ -106,11 +109,14 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 		// Fallbacks: path param then query param
 		if roomId == "" {
 			roomId = ctx.Param("room")
-		} else if roomId == "" {
+		}
+		if roomId == "" {
 			roomId = ctx.Query("room_id")
-		} else {
+		}
+		if roomId == "" {
 			roomId = "testRoomId"
 		}
+
 		// Log selected room id for debugging
 		log.Println("Requested room id:", roomId)
 
@@ -132,7 +138,7 @@ func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 
 		// Debug: log successful websocket upgrade so we can verify which clients connect
 		// and which room/action they are requesting.
-		log.Printf("WS upgrade OK from %s — room=%s  user=%s\n", ctx.Request.RemoteAddr, roomId, user.ClerkUserID)
+		log.Printf("WS upgrade OK from %s — room=%s  name=%s\n", ctx.Request.RemoteAddr, name)
 
 		// Create client using authenticated identity and resolved room/hub.
 		client := &Client{
