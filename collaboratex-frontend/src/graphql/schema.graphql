@@ -1,0 +1,165 @@
+# ---------------------------------------
+# Core Types
+# ---------------------------------------
+
+type Project {
+  id: ID!
+  projectName: String!
+  createdAt: String!
+  lastEditedAt: String!
+
+  ownerId: ID!
+  collaboratorIds: [ID!]!
+
+  rootFileId: ID!
+
+  files: [File!]!
+  assets: [Asset!]!
+  versions: [Version!]!
+}
+
+type User {
+  id: ID!
+  clerkUserId: String!
+  createdAt: String!
+}
+
+# ---------------------------------------
+# Files
+# ---------------------------------------
+
+type File {
+  id: ID!
+  projectId: ID!
+  name: String!
+  type: FileType!
+  createdAt: String!
+  updatedAt: String!
+
+  workingFile: WorkingFile!
+}
+
+# unstructured data | BLOBs
+type Asset {
+  id: ID!
+  projectId: ID!
+  path: String!
+  mimeType: String!
+  size: Int!
+  createdAt: String!
+}
+
+type WorkingFile {
+  id: ID!
+  fileId: ID!
+  projectId: ID!
+  content: String!
+  updatedAt: String!
+}
+
+
+enum FileType {
+  TEX
+  BIB
+  CLS
+  STY
+  OTHER
+}
+
+# ---------------------------------------
+# Versioning
+# ---------------------------------------
+
+type Version {
+  id: ID!
+  projectId: ID!
+  createdAt: String!
+  message: String
+  files: [VersionFile!]!
+}
+
+type VersionFile {
+  id: ID!
+  versionId: ID!
+  fileId: ID!
+  name: String!
+  type: FileType!
+  content: String!
+}
+
+# ---------------------------------------
+# Queries
+# ---------------------------------------
+
+type Query {
+  # Projects
+  projects: [Project!]!
+  project(id: ID!): Project
+
+  # Files
+  file(id: ID!): File
+  workingFile(fileId: ID!): WorkingFile
+
+  # Versions
+  version(id: ID!): Version
+}
+
+
+# ---------------------------------------
+# Inputs
+# ---------------------------------------
+
+input NewProjectInput {
+  projectName: String!
+}
+
+input NewFileInput {
+  projectId: ID!
+  name: String!
+  type: FileType!
+}
+
+input UpdateWorkingFileInput {
+  fileId: ID!
+  content: String!
+}
+
+input CreateVersionInput {
+  projectId: ID!
+  message: String
+}
+
+# ---------------------------------------
+# Mutations
+# ---------------------------------------
+
+type Mutation {
+  # Projects
+  createProject(input: NewProjectInput!): Project!
+  deleteProject(projectId: ID!): Boolean!
+
+  addCollaborator(projectId: ID!, userId: ID!): Project!
+  removeCollaborator(projectId: ID!, userId: ID!): Project!
+
+  # Files
+  createFile(input: NewFileInput!): File!
+  renameFile(fileId: ID!, name: String!): File!
+  deleteFile(fileId: ID!): Boolean!
+
+  # Working Tree
+  updateWorkingFile(input: UpdateWorkingFileInput!): WorkingFile!
+
+  # Versioning
+  createVersion(input: CreateVersionInput!): Version!
+  restoreVersion(versionId: ID!): Project!
+}
+
+# ---------------------------------------
+# Subscriptions (optional)
+# ---------------------------------------
+
+type Subscription {
+  workingFileUpdated(projectId: ID!): WorkingFile!
+  projectUpdated(projectId: ID!): Project!
+}
+

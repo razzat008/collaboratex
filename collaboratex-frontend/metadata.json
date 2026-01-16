@@ -1,0 +1,8 @@
+{
+  "name": "Collaboratex - Collaborative LaTeX Editor",
+  "description": "A clean, minimal, and open-source collaborative LaTeX editor designed for simplicity and performance. Features a split-view editor, real-time preview, and project management dashboard.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
