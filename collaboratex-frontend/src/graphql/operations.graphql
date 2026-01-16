@@ -1,0 +1,201 @@
+# ---------------------------------------
+# Fragments (Reusable field selections)
+# ---------------------------------------
+
+fragment ProjectFields on Project {
+  id
+  projectName
+  createdAt
+  lastEditedAt
+  ownerId
+  collaboratorIds
+  rootFileId
+
+  assets {
+    ...AssetFields
+  }
+}
+
+fragment FileFields on File {
+  id
+  projectId
+  name
+  type
+  createdAt
+  updatedAt
+}
+
+fragment AssetFields on Asset {
+  id
+  projectId
+  path
+  mimeType
+  size
+  createdAt
+}
+
+fragment WorkingFileFields on WorkingFile {
+  id
+  fileId
+  projectId
+  content
+  updatedAt
+}
+
+fragment VersionFields on Version {
+  id
+  projectId
+  createdAt
+  message
+}
+
+fragment VersionFileFields on VersionFile {
+  id
+  versionId
+  fileId
+  name
+  type
+  content
+}
+
+# ---------------------------------------
+# Queries
+# ---------------------------------------
+
+query GetProjects {
+  projects {
+    ...ProjectFields
+  }
+}
+
+query GetProject($id: ID!) {
+  project(id: $id) {
+    ...ProjectFields
+    files {
+      ...FileFields
+    }
+    versions {
+      ...VersionFields
+    }
+  }
+}
+
+query GetFile($id: ID!) {
+  file(id: $id) {
+    ...FileFields
+    workingFile {
+      ...WorkingFileFields
+    }
+  }
+}
+
+query GetWorkingFile($fileId: ID!) {
+  workingFile(fileId: $fileId) {
+    ...WorkingFileFields
+  }
+}
+
+query GetVersion($id: ID!) {
+  version(id: $id) {
+    ...VersionFields
+    files {
+      ...VersionFileFields
+    }
+  }
+}
+
+# ---------------------------------------
+# Mutations - Projects
+# ---------------------------------------
+
+mutation CreateProject($input: NewProjectInput!) {
+  createProject(input: $input) {
+    ...ProjectFields
+    files {
+      ...FileFields
+    }
+  }
+}
+
+mutation DeleteProject($projectId: ID!) {
+  deleteProject(projectId: $projectId)
+}
+
+mutation AddCollaborator($projectId: ID!, $userId: ID!) {
+  addCollaborator(projectId: $projectId, userId: $userId) {
+    ...ProjectFields
+  }
+}
+
+mutation RemoveCollaborator($projectId: ID!, $userId: ID!) {
+  removeCollaborator(projectId: $projectId, userId: $userId) {
+    ...ProjectFields
+  }
+}
+
+# ---------------------------------------
+# Mutations - Files
+# ---------------------------------------
+
+mutation CreateFile($input: NewFileInput!) {
+  createFile(input: $input) {
+    ...FileFields
+    workingFile {
+      ...WorkingFileFields
+    }
+  }
+}
+
+mutation RenameFile($fileId: ID!, $name: String!) {
+  renameFile(fileId: $fileId, name: $name) {
+    ...FileFields
+  }
+}
+
+mutation DeleteFile($fileId: ID!) {
+  deleteFile(fileId: $fileId)
+}
+
+mutation UpdateWorkingFile($input: UpdateWorkingFileInput!) {
+  updateWorkingFile(input: $input) {
+    ...WorkingFileFields
+  }
+}
+
+# ---------------------------------------
+# Mutations - Versioning
+# ---------------------------------------
+
+mutation CreateVersion($input: CreateVersionInput!) {
+  createVersion(input: $input) {
+    ...VersionFields
+    files {
+      ...VersionFileFields
+    }
+  }
+}
+
+mutation RestoreVersion($versionId: ID!) {
+  restoreVersion(versionId: $versionId) {
+    ...ProjectFields
+    files {
+      ...FileFields
+    }
+  }
+}
+
+# ---------------------------------------
+# Subscriptions
+# ---------------------------------------
+
+subscription WorkingFileUpdated($projectId: ID!) {
+  workingFileUpdated(projectId: $projectId) {
+    ...WorkingFileFields
+  }
+}
+
+subscription ProjectUpdated($projectId: ID!) {
+  projectUpdated(projectId: $projectId) {
+    ...ProjectFields
+  }
+}
