@@ -96,12 +96,16 @@ func main() {
 
 	api := r.Group("/")
 
+	hm := websockets.NewHubManager()
 	api.Use(middleware.GinClerkAuthMiddleware(database))
 	{
 		api.POST("/query", func(c *gin.Context) {
 			srv.ServeHTTP(c.Writer, c.Request)
 		})
+
 	}
+	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
+
 
 	// GraphQL query endpoint (with auth middleware)
 
@@ -112,10 +116,6 @@ func main() {
 			"database": "connected",
 		})
 	})
-
-	hm := websockets.NewHubManager()
-
-	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
 
 
 	log.Printf("Server starting on http://localhost:%s/", port)
