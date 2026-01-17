@@ -20,8 +20,7 @@ import {
   EyeOff,
   Save
 } from 'lucide-react';
-import CodeMirror, { basicSetup } from '@uiw/react-codemirror';
-import { githubLight } from '@uiw/codemirror-theme-github';
+import  CMEditor  from "../components/Editor/Codemirror"
 import FileExplorer from '../components/Editor/FileExplorer';
 import { useUpdateWorkingFile } from '@/src/graphql/generated';
 import { autocompletion, latex } from 'codemirror-lang-latex';
@@ -318,16 +317,7 @@ const Editor: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-hidden relative bg-white">
-              {currentFile ? (
-                <CodeMirror
-                  value={currentFile.content}
-                  height="100%"
-                  theme={githubLight}
-                  extensions={[autocompletion()]}
-                  onChange={handleContentChange}
-                  className="h-full text-sm"
-                  basicSetup={{ lineNumbers: true, foldGutter: true }}
-                />
+							<CMEditor />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
                   <FileText size={32} className="opacity-20" />

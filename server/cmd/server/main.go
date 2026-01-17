@@ -124,7 +124,7 @@ func main() {
 
 	// Setup CORS middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"}, // Add your frontend URLs
 		AllowMethods:     []string{"GET", "POST", "OPTIONS", "DELETE", "PUT"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Disposition", "Content-Length"},
@@ -142,13 +142,17 @@ func main() {
 
 	api := r.Group("/api")
 
+	hm := websockets.NewHubManager()
 	api.Use(middleware.GinClerkAuthMiddleware(database))
 	{
 		api.GET("/", gin.WrapF(playground.Handler("GraphQL playground", "/api/query")))
 		api.POST("/query", func(c *gin.Context) {
 			srv.ServeHTTP(c.Writer, c.Request)
 		})
+
 	}
+	r.GET("/ws/:room", websockets.AuthenticatedWSHandler(hm))
+
 
 	uploads := api.Group("/uploads")
 	{
@@ -184,9 +188,6 @@ func main() {
 		})
 	})
 
-	hm := websockets.NewHubManager()
-
-	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
 
 	log.Printf("Server starting on http://localhost:%s/", port)
 	log.Printf("GraphQL Playground: http://localhost:%s/", port)

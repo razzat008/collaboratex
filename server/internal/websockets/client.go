@@ -30,16 +30,12 @@ type Client struct {
 /* reads the input from the client (Typescript)  */
 func (c *Client) Read() {
 	defer func() {
-		// Unregister client and close connection.
-		// Hub.Run is responsible for broadcasting leave/presence updates,
-		// so we avoid sending a duplicate leave message here.
 		c.hub.unregister <- c
 		c.connection.Close()
 		log.Println("closing client.Read")
 	}()
 
-	// increase the connection read limit to 64kb to support larger Yjs frames
-	// and reduce chance of legitimate frames being rejected.
+	// The connection read limit to 64kb
 	c.connection.SetReadLimit(65536)
 	_ = c.connection.SetReadDeadline(time.Now().Add(pongWait))
 	c.connection.SetPongHandler(func(string) error {
@@ -56,9 +52,6 @@ func (c *Client) Read() {
 		}
 
 		if msgtype == websocket.BinaryMessage {
-			// Forward binary frames to the hub for broadcast to other clients.
-			// Wrap with sender info so hub can avoid echoing the payload back to the originator.
-			// Use a non-blocking send to avoid blocking if hub is overloaded.
 			select {
 			case c.hub.broadcast <- BroadcastMessage{Sender: c, Data: data}:
 			default:
