@@ -9,6 +9,7 @@ import (
 
 	"gollaboratex/server/internal/api/graph"
 	"gollaboratex/server/internal/api/handlers"
+	"gollaboratex/server/internal/api/handlers/download"
 	"gollaboratex/server/internal/middleware"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -94,6 +95,12 @@ func main() {
 		Bucket: bucketName,
 	}
 
+	downloadHandler := &download.ProjectHandler{
+		DB:     database,
+		Minio:  minioClient,
+		Bucket: bucketName,
+	}
+
 	// Configure GraphQL server with subscriptions support
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
@@ -117,9 +124,10 @@ func main() {
 
 	// Setup CORS middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URLs
+		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "OPTIONS", "DELETE", "PUT"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Disposition", "Content-Length"},
 		AllowCredentials: true,
 	}))
 
@@ -136,6 +144,7 @@ func main() {
 
 	api.Use(middleware.GinClerkAuthMiddleware(database))
 	{
+		api.GET("/", gin.WrapF(playground.Handler("GraphQL playground", "/api/query")))
 		api.POST("/query", func(c *gin.Context) {
 			srv.ServeHTTP(c.Writer, c.Request)
 		})
@@ -145,6 +154,11 @@ func main() {
 	{
 		uploads.POST("/file", uploadHandler.UploadSingleFile)
 		uploads.POST("/zip", uploadHandler.UploadZIP)
+	}
+
+	downloads := api.Group("/downloads")
+	{
+		downloads.GET("/project/:id", downloadHandler.DownloadProject)
 	}
 
 	assets := api.Group("/assets")
