@@ -39,9 +39,12 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	File() FileResolver
 	Mutation() MutationResolver
+	Project() ProjectResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
+	Version() VersionResolver
 }
 
 type DirectiveRoot struct {
@@ -139,6 +142,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type FileResolver interface {
+	WorkingFile(ctx context.Context, obj *model.File) (*model.WorkingFile, error)
+}
 type MutationResolver interface {
 	CreateProject(ctx context.Context, input model.NewProjectInput) (*model.Project, error)
 	DeleteProject(ctx context.Context, projectID string) (bool, error)
@@ -152,6 +158,11 @@ type MutationResolver interface {
 	RestoreVersion(ctx context.Context, versionID string) (*model.Project, error)
 	CreateAsset(ctx context.Context, input model.CreateAssetInput) (*model.Asset, error)
 }
+type ProjectResolver interface {
+	Files(ctx context.Context, obj *model.Project) ([]*model.File, error)
+	Assets(ctx context.Context, obj *model.Project) ([]*model.Asset, error)
+	Versions(ctx context.Context, obj *model.Project) ([]*model.Version, error)
+}
 type QueryResolver interface {
 	Projects(ctx context.Context) ([]*model.Project, error)
 	Project(ctx context.Context, id string) (*model.Project, error)
@@ -162,6 +173,9 @@ type QueryResolver interface {
 type SubscriptionResolver interface {
 	WorkingFileUpdated(ctx context.Context, projectID string) (<-chan *model.WorkingFile, error)
 	ProjectUpdated(ctx context.Context, projectID string) (<-chan *model.Project, error)
+}
+type VersionResolver interface {
+	Files(ctx context.Context, obj *model.Version) ([]*model.VersionFile, error)
 }
 
 type executableSchema struct {
@@ -1404,7 +1418,7 @@ func (ec *executionContext) _File_workingFile(ctx context.Context, field graphql
 		field,
 		ec.fieldContext_File_workingFile,
 		func(ctx context.Context) (any, error) {
-			return obj.WorkingFile, nil
+			return ec.resolvers.File().WorkingFile(ctx, obj)
 		},
 		nil,
 		ec.marshalNWorkingFile2ᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐWorkingFile,
@@ -1417,8 +1431,8 @@ func (ec *executionContext) fieldContext_File_workingFile(_ context.Context, fie
 	fc = &graphql.FieldContext{
 		Object:     "File",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2257,7 +2271,7 @@ func (ec *executionContext) _Project_files(ctx context.Context, field graphql.Co
 		field,
 		ec.fieldContext_Project_files,
 		func(ctx context.Context) (any, error) {
-			return obj.Files, nil
+			return ec.resolvers.Project().Files(ctx, obj)
 		},
 		nil,
 		ec.marshalNFile2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐFileᚄ,
@@ -2270,8 +2284,8 @@ func (ec *executionContext) fieldContext_Project_files(_ context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Project",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2302,7 +2316,7 @@ func (ec *executionContext) _Project_assets(ctx context.Context, field graphql.C
 		field,
 		ec.fieldContext_Project_assets,
 		func(ctx context.Context) (any, error) {
-			return obj.Assets, nil
+			return ec.resolvers.Project().Assets(ctx, obj)
 		},
 		nil,
 		ec.marshalNAsset2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐAssetᚄ,
@@ -2315,8 +2329,8 @@ func (ec *executionContext) fieldContext_Project_assets(_ context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "Project",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2345,7 +2359,7 @@ func (ec *executionContext) _Project_versions(ctx context.Context, field graphql
 		field,
 		ec.fieldContext_Project_versions,
 		func(ctx context.Context) (any, error) {
-			return obj.Versions, nil
+			return ec.resolvers.Project().Versions(ctx, obj)
 		},
 		nil,
 		ec.marshalNVersion2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐVersionᚄ,
@@ -2358,8 +2372,8 @@ func (ec *executionContext) fieldContext_Project_versions(_ context.Context, fie
 	fc = &graphql.FieldContext{
 		Object:     "Project",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -3090,7 +3104,7 @@ func (ec *executionContext) _Version_files(ctx context.Context, field graphql.Co
 		field,
 		ec.fieldContext_Version_files,
 		func(ctx context.Context) (any, error) {
-			return obj.Files, nil
+			return ec.resolvers.Version().Files(ctx, obj)
 		},
 		nil,
 		ec.marshalNVersionFile2ᚕᚖgollaboratexᚋserverᚋinternalᚋapiᚋgraphᚋmodelᚐVersionFileᚄ,
@@ -3103,8 +3117,8 @@ func (ec *executionContext) fieldContext_Version_files(_ context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Version",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -5161,38 +5175,69 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._File_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "projectId":
 			out.Values[i] = ec._File_projectId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._File_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
 			out.Values[i] = ec._File_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._File_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._File_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "workingFile":
-			out.Values[i] = ec._File_workingFile(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._File_workingFile(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5349,53 +5394,146 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Project_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "projectName":
 			out.Values[i] = ec._Project_projectName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._Project_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lastEditedAt":
 			out.Values[i] = ec._Project_lastEditedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "ownerId":
 			out.Values[i] = ec._Project_ownerId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "collaboratorIds":
 			out.Values[i] = ec._Project_collaboratorIds(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "rootFileId":
 			out.Values[i] = ec._Project_rootFileId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "files":
-			out.Values[i] = ec._Project_files(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_files(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "assets":
-			out.Values[i] = ec._Project_assets(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_assets(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "versions":
-			out.Values[i] = ec._Project_versions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_versions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5652,25 +5790,56 @@ func (ec *executionContext) _Version(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Version_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "projectId":
 			out.Values[i] = ec._Version_projectId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._Version_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "message":
 			out.Values[i] = ec._Version_message(ctx, field, obj)
 		case "files":
-			out.Values[i] = ec._Version_files(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Version_files(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
