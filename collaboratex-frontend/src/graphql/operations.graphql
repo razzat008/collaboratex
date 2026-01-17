@@ -1,7 +1,6 @@
 # ---------------------------------------
 # Fragments (Reusable field selections)
 # ---------------------------------------
-
 fragment ProjectFields on Project {
   id
   projectName
@@ -10,7 +9,6 @@ fragment ProjectFields on Project {
   ownerId
   collaboratorIds
   rootFileId
-
   assets {
     ...AssetFields
   }
@@ -23,6 +21,19 @@ fragment FileFields on File {
   type
   createdAt
   updatedAt
+}
+
+# NEW: File with content - use this when you need the actual file content
+fragment FileWithContentFields on File {
+  id
+  projectId
+  name
+  type
+  createdAt
+  updatedAt
+  workingFile {
+    ...WorkingFileFields
+  }
 }
 
 fragment AssetFields on Asset {
@@ -61,14 +72,27 @@ fragment VersionFileFields on VersionFile {
 # ---------------------------------------
 # Queries
 # ---------------------------------------
-
 query GetProjects {
   projects {
     ...ProjectFields
   }
 }
 
+# Updated: Now includes file contents
 query GetProject($id: ID!) {
+  project(id: $id) {
+    ...ProjectFields
+    files {
+      ...FileWithContentFields
+    }
+    versions {
+      ...VersionFields
+    }
+  }
+}
+
+# NEW: Get project with files but WITHOUT content (lighter query for file list)
+query GetProjectWithoutContent($id: ID!) {
   project(id: $id) {
     ...ProjectFields
     files {
@@ -107,12 +131,11 @@ query GetVersion($id: ID!) {
 # ---------------------------------------
 # Mutations - Projects
 # ---------------------------------------
-
 mutation CreateProject($input: NewProjectInput!) {
   createProject(input: $input) {
     ...ProjectFields
     files {
-      ...FileFields
+      ...FileWithContentFields
     }
   }
 }
@@ -136,7 +159,6 @@ mutation RemoveCollaborator($projectId: ID!, $userId: ID!) {
 # ---------------------------------------
 # Mutations - Files
 # ---------------------------------------
-
 mutation CreateFile($input: NewFileInput!) {
   createFile(input: $input) {
     ...FileFields
@@ -163,9 +185,13 @@ mutation UpdateWorkingFile($input: UpdateWorkingFileInput!) {
 }
 
 # ---------------------------------------
-# Mutations - Versioning
+# NOTE: Asset uploads are handled via REST API
+# Assets are uploaded to MinIO and metadata is stored via REST endpoint
 # ---------------------------------------
 
+# ---------------------------------------
+# Mutations - Versioning
+# ---------------------------------------
 mutation CreateVersion($input: CreateVersionInput!) {
   createVersion(input: $input) {
     ...VersionFields
@@ -179,7 +205,7 @@ mutation RestoreVersion($versionId: ID!) {
   restoreVersion(versionId: $versionId) {
     ...ProjectFields
     files {
-      ...FileFields
+      ...FileWithContentFields
     }
   }
 }
@@ -187,7 +213,6 @@ mutation RestoreVersion($versionId: ID!) {
 # ---------------------------------------
 # Subscriptions
 # ---------------------------------------
-
 subscription WorkingFileUpdated($projectId: ID!) {
   workingFileUpdated(projectId: $projectId) {
     ...WorkingFileFields
