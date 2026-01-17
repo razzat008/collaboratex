@@ -62,6 +62,7 @@ enum FileType {
   TEX
   BIB
   CLS
+  FLS
   STY
   OTHER
 }
@@ -129,6 +130,13 @@ input CreateVersionInput {
   message: String
 }
 
+input CreateAssetInput {
+  projectId: ID!
+  path: String!
+  mimeType: String!
+  size: Int!
+}
+
 # ---------------------------------------
 # Mutations
 # ---------------------------------------
@@ -152,6 +160,10 @@ type Mutation {
   # Versioning
   createVersion(input: CreateVersionInput!): Version!
   restoreVersion(versionId: ID!): Project!
+
+  # Assets
+  createAsset(input: CreateAssetInput!): Asset!
+
 }
 
 # ---------------------------------------
