@@ -317,7 +317,8 @@ const Editor: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-hidden relative bg-white">
-							<CMEditor />
+			{currentFile ? (
+			<CMEditor />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
                   <FileText size={32} className="opacity-20" />
