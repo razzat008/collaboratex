@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"gollaboratex/server/internal/api/graph"
+	"gollaboratex/server/internal/api/handlers"
 	"gollaboratex/server/internal/middleware"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -20,8 +22,12 @@ import (
 
 	"gollaboratex/server/internal/websockets"
 
-	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+
 	"gollaboratex/server/internal/db"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -33,6 +39,8 @@ func main() {
 	clerkSecretKey := os.Getenv("CLERK_SECRET_KEY")
 	mongoURI := os.Getenv("MONGODB_URI")
 	port := os.Getenv("PORT")
+	minio_username := os.Getenv("MINIO_USERNAME")
+	minio_pass := os.Getenv("MINIO_PASS")
 
 	if clerkSecretKey == "" {
 		log.Fatal("CLERK_SECRET_KEY environment variable required")
@@ -53,8 +61,38 @@ func main() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
+	ctx := context.Background()
+	bucketName := "assets"
+
+	minioClient, err := minio.New("localhost:9000", &minio.Options{
+		Creds:  credentials.NewStaticV4(minio_username, minio_pass, ""),
+		Secure: false, // true in prod
+	})
+	if err != nil {
+		log.Fatal("Failed to initialize MinIO:", err)
+	}
+	exists, err := minioClient.BucketExists(ctx, bucketName)
+	if err != nil {
+		log.Fatal("Failed to check MinIO bucket:", err)
+	}
+
+	if !exists {
+		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			log.Fatal("Failed to create MinIO bucket:", err)
+		}
+		log.Println("Created MinIO bucket:", bucketName)
+	}
+
 	// Create GraphQL resolver
 	resolver := graph.NewResolver(database)
+
+	// upload handler instance
+	uploadHandler := &handlers.UploadHandler{
+		DB:     database,
+		Minio:  minioClient,
+		Bucket: bucketName,
+	}
 
 	// Configure GraphQL server with subscriptions support
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
@@ -94,7 +132,7 @@ func main() {
 	// GraphQL Playground route (no auth required)
 	r.GET("/", gin.WrapF(playground.Handler("GraphQL playground", "/query")))
 
-	api := r.Group("/")
+	api := r.Group("/api")
 
 	api.Use(middleware.GinClerkAuthMiddleware(database))
 	{
@@ -103,20 +141,38 @@ func main() {
 		})
 	}
 
-	// GraphQL query endpoint (with auth middleware)
+	uploads := api.Group("/uploads")
+	{
+		uploads.POST("/file", uploadHandler.UploadSingleFile)
+		uploads.POST("/zip", uploadHandler.UploadZIP)
+	}
+
+	assets := api.Group("/assets")
+	{
+		assets.GET("/:id", func(c *gin.Context) {
+			c.JSON(http.StatusNotImplemented, gin.H{
+				"error": "Asset download not yet implemented",
+			})
+		})
+		assets.DELETE("/:id", func(c *gin.Context) {
+			c.JSON(http.StatusNotImplemented, gin.H{
+				"error": "Asset deletion not yet implemented",
+			})
+		})
+	}
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":   "ok",
 			"database": "connected",
+			"minio":    "connected",
 		})
 	})
 
 	hm := websockets.NewHubManager()
 
 	r.GET("/ws", websockets.AuthenticatedWSHandler(hm))
-
 
 	log.Printf("Server starting on http://localhost:%s/", port)
 	log.Printf("GraphQL Playground: http://localhost:%s/", port)
