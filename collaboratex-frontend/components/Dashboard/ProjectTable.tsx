@@ -141,7 +141,7 @@ export default function ProjectTable({
                 <Copy size={18} />
               </button>
               <button
-                onClick={() => onDownload(project.id)}
+                onClick={() => onDownload(project.projectName, project.id)}
                 className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                 title="Download"
               >

@@ -10,129 +10,12 @@ import (
 	"errors"
 	"gollaboratex/server/internal/api/graph/model"
 	"gollaboratex/server/internal/middleware"
-	"slices"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-// =============================================
-// MongoDB models ( internal to resolvers ) 
-// =============================================
-
-type UserDoc struct {
-	ID          bson.ObjectID `bson:"_id,omitempty"`
-	ClerkUserID string        `bson:"clerkUserId"`
-	CreatedAt   time.Time     `bson:"createdAt"`
-}
-type ProjectDoc struct {
-	ID              bson.ObjectID   `bson:"_id,omitempty"`
-	ProjectName     string          `bson:"projectName"`
-	OwnerID         bson.ObjectID   `bson:"ownerId"`
-	CollaboratorIDs []bson.ObjectID `bson:"collaboratorIds"`
-	RootFileID      bson.ObjectID   `bson:"rootFileId"`
-	LastEditedAt    time.Time       `bson:"lastEditedAt"`
-	CreatedAt       time.Time       `bson:"createdAt"`
-}
-type FileDoc struct {
-	ID        bson.ObjectID `bson:"_id,omitempty"`
-	ProjectID bson.ObjectID `bson:"projectId"`
-	Name      string        `bson:"name"`
-	Type      string        `bson:"type"`
-	CreatedAt time.Time     `bson:"createdAt"`
-	UpdatedAt time.Time     `bson:"updatedAt"`
-}
-type WorkingFileDoc struct {
-	ID        bson.ObjectID `bson:"_id,omitempty"`
-	FileID    bson.ObjectID `bson:"fileId"`
-	ProjectID bson.ObjectID `bson:"projectId"`
-	Content   string        `bson:"content"`
-	UpdatedAt time.Time     `bson:"updatedAt"`
-}
-type VersionDoc struct {
-	ID        bson.ObjectID `bson:"_id,omitempty"`
-	ProjectID bson.ObjectID `bson:"projectId"`
-	Message   *string       `bson:"message,omitempty"`
-	CreatedAt time.Time     `bson:"createdAt"`
-}
-type VersionFileDoc struct {
-	ID        bson.ObjectID `bson:"_id,omitempty"`
-	VersionID bson.ObjectID `bson:"versionId"`
-	FileID    bson.ObjectID `bson:"fileId"`
-	Name      string        `bson:"name"`
-	Type      string        `bson:"type"`
-	Content   string        `bson:"content"`
-}
-
-// =============================================
-// Helper functions
-// =============================================
-
-func (r *Resolver) hasProjectAccess(ctx context.Context, projectID bson.ObjectID, userID bson.ObjectID) (bool, error) {
-	var project ProjectDoc
-	err := r.DB.Collection("projects").FindOne(ctx, bson.M{"_id": projectID}).Decode(&project)
-	if err != nil {
-		return false, err
-	}
-
-	if project.OwnerID == userID {
-		return true, nil
-	}
-
-	if slices.Contains(project.CollaboratorIDs, userID) {
-		return true, nil
-	}
-
-	return false, nil
-}
-func (r *Resolver) isProjectOwner(ctx context.Context, projectID bson.ObjectID, userID bson.ObjectID) (bool, error) {
-	var project ProjectDoc
-	err := r.DB.Collection("projects").FindOne(ctx, bson.M{"_id": projectID}).Decode(&project)
-	if err != nil {
-		return false, err
-	}
-	return project.OwnerID == userID, nil
-}
-
-func toObjectID(id string) (bson.ObjectID, error) {
-	return bson.ObjectIDFromHex(id)
-}
-
-func toObjectIDs(ids []string) ([]bson.ObjectID, error) {
-	result := make([]bson.ObjectID, len(ids))
-	for i, id := range ids {
-		oid, err := bson.ObjectIDFromHex(id)
-		if err != nil {
-			return nil, err
-		}
-		result[i] = oid
-	}
-	return result, nil
-}
-
-func fileTypeToString(ft model.FileType) string {
-	return string(ft)
-}
-
-func stringToFileType(s string) model.FileType {
-	switch s {
-	case "TEX":
-		return model.FileTypeTex
-	case "BIB":
-		return model.FileTypeBib
-	case "CLS":
-		return model.FileTypeCls
-	case "STY":
-		return model.FileTypeSty
-	default:
-		return model.FileTypeOther
-	}
-}
-
-// =============================================
-// Mutation resolvers
-// =============================================
-
+// CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewProjectInput) (*model.Project, error) {
 	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
@@ -638,9 +521,199 @@ func (r *mutationResolver) RestoreVersion(ctx context.Context, versionID string)
 	return qr.Project(ctx, version.ProjectID.Hex())
 }
 
-// =============================================
-// Query resolvers
-// =============================================
+// CreateAsset is the resolver for the createAsset field.
+func (r *mutationResolver) CreateAsset(ctx context.Context, input model.CreateAssetInput) (*model.Asset, error) {
+	user, err := middleware.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	projectOID, err := toObjectID(input.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	hasAccess, err := r.hasProjectAccess(ctx, projectOID, user.ID)
+	if err != nil || !hasAccess {
+		return nil, errors.New("access denied")
+	}
+
+	now := time.Now()
+	asset := AssetDoc{
+		ProjectID: projectOID,
+		Path:      input.Path,
+		MimeType:  input.MimeType,
+		Size:      int(input.Size),
+		CreatedAt: now,
+	}
+
+	result, err := r.DB.Collection("assets").InsertOne(ctx, asset)
+	if err != nil {
+		return nil, err
+	}
+	asset.ID = result.InsertedID.(bson.ObjectID)
+
+	return &model.Asset{
+		ID:        asset.ID.Hex(),
+		ProjectID: asset.ProjectID.Hex(),
+		Path:      asset.Path,
+		MimeType:  asset.MimeType,
+		Size:      int32(asset.Size),
+		CreatedAt: asset.CreatedAt.Format(time.RFC3339),
+	}, nil
+}
+
+// WorkingFile is the resolver for the workingFile field.
+func (r *fileResolver) WorkingFile(ctx context.Context, obj *model.File) (*model.WorkingFile, error) {
+	fileOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var workingFile WorkingFileDoc
+	err = r.DB.Collection("working_files").FindOne(ctx, bson.M{"fileId": fileOID}).Decode(&workingFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.WorkingFile{
+		ID:        workingFile.ID.Hex(),
+		FileID:    workingFile.FileID.Hex(),
+		ProjectID: workingFile.ProjectID.Hex(),
+		Content:   workingFile.Content,
+		UpdatedAt: workingFile.UpdatedAt.Format(time.RFC3339),
+	}, nil
+}
+
+// Files is the resolver for the files field.
+func (r *projectResolver) Files(ctx context.Context, obj *model.Project) ([]*model.File, error) {
+	projectOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cursor, err := r.DB.Collection("files").Find(ctx, bson.M{"projectId": projectOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var fileDocs []FileDoc
+	if err = cursor.All(ctx, &fileDocs); err != nil {
+		return nil, err
+	}
+
+	files := make([]*model.File, len(fileDocs))
+	for i, f := range fileDocs {
+		files[i] = &model.File{
+			ID:        f.ID.Hex(),
+			ProjectID: f.ProjectID.Hex(),
+			Name:      f.Name,
+			Type:      stringToFileType(f.Type),
+			CreatedAt: f.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: f.UpdatedAt.Format(time.RFC3339),
+		}
+	}
+
+	return files, nil
+}
+
+// Assets is the resolver for the assets field.
+func (r *projectResolver) Assets(ctx context.Context, obj *model.Project) ([]*model.Asset, error) {
+	projectOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cursor, err := r.DB.Collection("assets").Find(ctx, bson.M{"projectId": projectOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var assetDocs []AssetDoc
+	if err = cursor.All(ctx, &assetDocs); err != nil {
+		return nil, err
+	}
+
+	assets := make([]*model.Asset, len(assetDocs))
+	for i, a := range assetDocs {
+		assets[i] = &model.Asset{
+			ID:        a.ID.Hex(),
+			ProjectID: a.ProjectID.Hex(),
+			Path:      a.Path,
+			MimeType:  a.MimeType,
+			Size:      int32(a.Size),
+			CreatedAt: a.CreatedAt.Format(time.RFC3339),
+		}
+	}
+
+	return assets, nil
+}
+
+// Versions is the resolver for the versions field.
+func (r *projectResolver) Versions(ctx context.Context, obj *model.Project) ([]*model.Version, error) {
+	projectOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cursor, err := r.DB.Collection("versions").Find(ctx, bson.M{"projectId": projectOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var versionDocs []VersionDoc
+	if err = cursor.All(ctx, &versionDocs); err != nil {
+		return nil, err
+	}
+
+	versions := make([]*model.Version, len(versionDocs))
+	for i, v := range versionDocs {
+		versions[i] = &model.Version{
+			ID:        v.ID.Hex(),
+			ProjectID: v.ProjectID.Hex(),
+			CreatedAt: v.CreatedAt.Format(time.RFC3339),
+			Message:   v.Message,
+		}
+	}
+
+	return versions, nil
+}
+
+// Files is the resolver for the files field.
+func (r *versionResolver) Files(ctx context.Context, obj *model.Version) ([]*model.VersionFile, error) {
+	versionOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cursor, err := r.DB.Collection("version_files").Find(ctx, bson.M{"versionId": versionOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var versionFileDocs []VersionFileDoc
+	if err = cursor.All(ctx, &versionFileDocs); err != nil {
+		return nil, err
+	}
+
+	files := make([]*model.VersionFile, len(versionFileDocs))
+	for i, vf := range versionFileDocs {
+		files[i] = &model.VersionFile{
+			ID:        vf.ID.Hex(),
+			VersionID: vf.VersionID.Hex(),
+			FileID:    vf.FileID.Hex(),
+			Name:      vf.Name,
+			Type:      stringToFileType(vf.Type),
+			Content:   vf.Content,
+		}
+	}
+
+	return files, nil
+}
 
 // Projects is the resolver for the projects field.
 func (r *queryResolver) Projects(ctx context.Context) ([]*model.Project, error) {

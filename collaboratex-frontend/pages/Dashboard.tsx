@@ -9,13 +9,14 @@ import {
 } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
 import ProjectTable, { DashboardProject } from '../components/Dashboard/ProjectTable';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { UserButton } from '@clerk/clerk-react';
 import { useCreateProject, useDeleteProject, useGetProjects } from "@/src/graphql/generated";
 import LoadingScreen from '@/components/Dashboard/LoadingScreen';
 import { useApolloClient } from '@apollo/client/react';
 
 const Dashboard: React.FC = () => {
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -130,8 +131,38 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDownloadProject = (projectName: string, id: string) => {
-    alert(`Downloading source for project ${id}...`);
+  const handleDownloadProject = async (projectName: string, id: string) => {
+    const token = await getToken();
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/downloads/project/${id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download project");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${projectName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Project download failed");
+    }
   };
 
   return (

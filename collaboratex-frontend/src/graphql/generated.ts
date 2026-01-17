@@ -60,6 +60,7 @@ export type File = {
 export type FileType =
   | "BIB"
   | "CLS"
+  | "FLS"
   | "OTHER"
   | "STY"
   | "TEX"
@@ -255,6 +256,24 @@ export type FileFields = {
   updatedAt: string;
 };
 
+export type FileWithContentFields = {
+  __typename?: "File";
+  id: string;
+  projectId: string;
+  name: string;
+  type: FileType;
+  createdAt: string;
+  updatedAt: string;
+  workingFile: {
+    __typename?: "WorkingFile";
+    id: string;
+    fileId: string;
+    projectId: string;
+    content: string;
+    updatedAt: string;
+  };
+};
+
 export type AssetFields = {
   __typename?: "Asset";
   id: string;
@@ -322,6 +341,57 @@ export type GetProjectVariables = Exact<{
 }>;
 
 export type GetProjectResult = {
+  __typename?: "Query";
+  project?: {
+    __typename?: "Project";
+    id: string;
+    projectName: string;
+    createdAt: string;
+    lastEditedAt: string;
+    ownerId: string;
+    collaboratorIds: Array<string>;
+    rootFileId: string;
+    files: Array<{
+      __typename?: "File";
+      id: string;
+      projectId: string;
+      name: string;
+      type: FileType;
+      createdAt: string;
+      updatedAt: string;
+      workingFile: {
+        __typename?: "WorkingFile";
+        id: string;
+        fileId: string;
+        projectId: string;
+        content: string;
+        updatedAt: string;
+      };
+    }>;
+    versions: Array<{
+      __typename?: "Version";
+      id: string;
+      projectId: string;
+      createdAt: string;
+      message?: string | null;
+    }>;
+    assets: Array<{
+      __typename?: "Asset";
+      id: string;
+      projectId: string;
+      path: string;
+      mimeType: string;
+      size: number;
+      createdAt: string;
+    }>;
+  } | null;
+};
+
+export type GetProjectWithoutContentVariables = Exact<{
+  id: Scalars["ID"]["input"];
+}>;
+
+export type GetProjectWithoutContentResult = {
   __typename?: "Query";
   project?: {
     __typename?: "Project";
@@ -448,6 +518,14 @@ export type CreateProjectResult = {
       type: FileType;
       createdAt: string;
       updatedAt: string;
+      workingFile: {
+        __typename?: "WorkingFile";
+        id: string;
+        fileId: string;
+        projectId: string;
+        content: string;
+        updatedAt: string;
+      };
     }>;
     assets: Array<{
       __typename?: "Asset";
@@ -638,6 +716,14 @@ export type RestoreVersionResult = {
       type: FileType;
       createdAt: string;
       updatedAt: string;
+      workingFile: {
+        __typename?: "WorkingFile";
+        id: string;
+        fileId: string;
+        projectId: string;
+        content: string;
+        updatedAt: string;
+      };
     }>;
     assets: Array<{
       __typename?: "Asset";
@@ -737,6 +823,20 @@ export const WorkingFileFields = gql`
     content
     updatedAt
   }
+`;
+export const FileWithContentFields = gql`
+  fragment FileWithContentFields on File {
+    id
+    projectId
+    name
+    type
+    createdAt
+    updatedAt
+    workingFile {
+      ...WorkingFileFields
+    }
+  }
+  ${WorkingFileFields}
 `;
 export const VersionFields = gql`
   fragment VersionFields on Version {
@@ -858,7 +958,7 @@ export const GetProjectDocument = gql`
     project(id: $id) {
       ...ProjectFields
       files {
-        ...FileFields
+        ...FileWithContentFields
       }
       versions {
         ...VersionFields
@@ -866,7 +966,7 @@ export const GetProjectDocument = gql`
     }
   }
   ${ProjectFields}
-  ${FileFields}
+  ${FileWithContentFields}
   ${VersionFields}
 `;
 
@@ -959,6 +1059,118 @@ export type GetProjectSuspenseQueryHookResult = ReturnType<
 export type GetProjectQueryResult = Apollo.QueryResult<
   GetProjectResult,
   GetProjectVariables
+>;
+export const GetProjectWithoutContentDocument = gql`
+  query GetProjectWithoutContent($id: ID!) {
+    project(id: $id) {
+      ...ProjectFields
+      files {
+        ...FileFields
+      }
+      versions {
+        ...VersionFields
+      }
+    }
+  }
+  ${ProjectFields}
+  ${FileFields}
+  ${VersionFields}
+`;
+
+/**
+ * __useGetProjectWithoutContent__
+ *
+ * To run a query within a React component, call `useGetProjectWithoutContent` and pass it any options that fit your needs.
+ * When your component renders, `useGetProjectWithoutContent` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProjectWithoutContent({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetProjectWithoutContent(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetProjectWithoutContentResult,
+    GetProjectWithoutContentVariables
+  > &
+    (
+      | { variables: GetProjectWithoutContentVariables; skip?: boolean }
+      | { skip: boolean }
+    ),
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetProjectWithoutContentResult,
+    GetProjectWithoutContentVariables
+  >(GetProjectWithoutContentDocument, options);
+}
+export function useGetProjectWithoutContentLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetProjectWithoutContentResult,
+    GetProjectWithoutContentVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetProjectWithoutContentResult,
+    GetProjectWithoutContentVariables
+  >(GetProjectWithoutContentDocument, options);
+}
+// @ts-ignore
+export function useGetProjectWithoutContentSuspenseQuery(
+  baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<
+    GetProjectWithoutContentResult,
+    GetProjectWithoutContentVariables
+  >,
+): ApolloReactHooks.UseSuspenseQueryResult<
+  GetProjectWithoutContentResult,
+  GetProjectWithoutContentVariables
+>;
+export function useGetProjectWithoutContentSuspenseQuery(
+  baseOptions?:
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetProjectWithoutContentResult,
+        GetProjectWithoutContentVariables
+      >,
+): ApolloReactHooks.UseSuspenseQueryResult<
+  GetProjectWithoutContentResult | undefined,
+  GetProjectWithoutContentVariables
+>;
+export function useGetProjectWithoutContentSuspenseQuery(
+  baseOptions?:
+    | ApolloReactHooks.SkipToken
+    | ApolloReactHooks.SuspenseQueryHookOptions<
+        GetProjectWithoutContentResult,
+        GetProjectWithoutContentVariables
+      >,
+) {
+  const options =
+    baseOptions === ApolloReactHooks.skipToken
+      ? baseOptions
+      : { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useSuspenseQuery<
+    GetProjectWithoutContentResult,
+    GetProjectWithoutContentVariables
+  >(GetProjectWithoutContentDocument, options);
+}
+export type GetProjectWithoutContentHookResult = ReturnType<
+  typeof useGetProjectWithoutContent
+>;
+export type GetProjectWithoutContentLazyQueryHookResult = ReturnType<
+  typeof useGetProjectWithoutContentLazyQuery
+>;
+export type GetProjectWithoutContentSuspenseQueryHookResult = ReturnType<
+  typeof useGetProjectWithoutContentSuspenseQuery
+>;
+export type GetProjectWithoutContentQueryResult = Apollo.QueryResult<
+  GetProjectWithoutContentResult,
+  GetProjectWithoutContentVariables
 >;
 export const GetFileDocument = gql`
   query GetFile($id: ID!) {
@@ -1268,12 +1480,12 @@ export const CreateProjectDocument = gql`
     createProject(input: $input) {
       ...ProjectFields
       files {
-        ...FileFields
+        ...FileWithContentFields
       }
     }
   }
   ${ProjectFields}
-  ${FileFields}
+  ${FileWithContentFields}
 `;
 export type CreateProjectMutationFn = Apollo.MutationFunction<
   CreateProjectResult,
@@ -1719,12 +1931,12 @@ export const RestoreVersionDocument = gql`
     restoreVersion(versionId: $versionId) {
       ...ProjectFields
       files {
-        ...FileFields
+        ...FileWithContentFields
       }
     }
   }
   ${ProjectFields}
-  ${FileFields}
+  ${FileWithContentFields}
 `;
 export type RestoreVersionMutationFn = Apollo.MutationFunction<
   RestoreVersionResult,

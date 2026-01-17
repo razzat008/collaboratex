@@ -18,6 +18,13 @@ type Asset struct {
 	CreatedAt string `json:"createdAt"`
 }
 
+type CreateAssetInput struct {
+	ProjectID string `json:"projectId"`
+	Path      string `json:"path"`
+	MimeType  string `json:"mimeType"`
+	Size      int32  `json:"size"`
+}
+
 type CreateVersionInput struct {
 	ProjectID string  `json:"projectId"`
 	Message   *string `json:"message,omitempty"`
@@ -107,6 +114,7 @@ const (
 	FileTypeTex   FileType = "TEX"
 	FileTypeBib   FileType = "BIB"
 	FileTypeCls   FileType = "CLS"
+	FileTypeFls   FileType = "FLS"
 	FileTypeSty   FileType = "STY"
 	FileTypeOther FileType = "OTHER"
 )
@@ -115,13 +123,14 @@ var AllFileType = []FileType{
 	FileTypeTex,
 	FileTypeBib,
 	FileTypeCls,
+	FileTypeFls,
 	FileTypeSty,
 	FileTypeOther,
 }
 
 func (e FileType) IsValid() bool {
 	switch e {
-	case FileTypeTex, FileTypeBib, FileTypeCls, FileTypeSty, FileTypeOther:
+	case FileTypeTex, FileTypeBib, FileTypeCls, FileTypeFls, FileTypeSty, FileTypeOther:
 		return true
 	}
 	return false
