@@ -60,6 +60,7 @@ export type File = {
 export type FileType =
   | "BIB"
   | "CLS"
+  | "FLS"
   | "OTHER"
   | "STY"
   | "TEX"
