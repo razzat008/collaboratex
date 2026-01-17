@@ -4,7 +4,7 @@ import { SetContextLink } from "@apollo/client/link/context";
 // This is a regular function, not a hook
 export const createApolloClient = (getToken: () => Promise<string | null>) => {
   const httpLink =  new HttpLink({
-    uri: "http://localhost:8080/query"
+    uri: "http://localhost:8080/api/query"
   });
 
   const authLink = new SetContextLink(async (_, { headers }) => {
