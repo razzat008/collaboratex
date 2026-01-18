@@ -19,21 +19,24 @@ interface CMEditorProps {
   fileId: string;
   initialContent: string;
   onContentChange?: (content: string) => void;
+  onReady?: (getCurrentContent: () => string) => void; // ✅ Add this
 }
 
 /* ------------------ editor ------------------ */
-export default function CMEditor({ fileId, initialContent, onContentChange }: CMEditorProps) {
+export default function CMEditor({ fileId, initialContent, onContentChange, onReady }: CMEditorProps) {
   const { id: projectId } = useParams<{ id: string }>();
   const editorRef = useRef<HTMLDivElement | null>(null);
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const username = user?.firstName ?? "Anonymous";
   const userColor = useMemo(() => randomColor(), []);
-  const onContentChangeRef = useRef(onContentChange);
-  const observerRef = useRef<(() => void) | null>(null);
+  const yTextRef = useRef<Y.Text | null>(null);
+  const observerRef = useRef<((event: Y.YTextEvent) => void) | null>(null);
+  const onContentChangeRef = useRef<((content: string) => void) | null>(null);
+
 
   useEffect(() => {
-    onContentChangeRef.current = onContentChange;
+    onContentChangeRef.current = onContentChange ?? null;
   }, [onContentChange]);
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export default function CMEditor({ fileId, initialContent, onContentChange }: CM
         ydoc = new Y.Doc();
         const docName = `${projectId}/${fileId}`;
         const yText = ydoc.getText("codemirror");
+        yTextRef.current = yText; // ✅ Store reference
 
         // Create WebSocket provider FIRST (before setting content)
         provider = new WebsocketProvider(
@@ -132,6 +136,11 @@ export default function CMEditor({ fileId, initialContent, onContentChange }: CM
         yText.observe(observer);
         observerRef.current = observer;
 
+        // ✅ Notify parent that editor is ready with getCurrentContent function
+        if (onReady) {
+          onReady(() => yText.toString());
+        }
+
       } catch (error) {
         console.error('[CMEditor] Init error:', error);
       }
@@ -142,6 +151,9 @@ export default function CMEditor({ fileId, initialContent, onContentChange }: CM
     return () => {
       console.log('[CMEditor] Cleanup for fileId:', fileId);
       cancelled = true;
+
+      // Clear yText reference
+      yTextRef.current = null;
 
       // Unobserve before destroying
       if (observerRef.current && ydoc) {

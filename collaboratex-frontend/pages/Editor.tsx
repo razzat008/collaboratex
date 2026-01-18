@@ -35,6 +35,12 @@ const Editor: React.FC = () => {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastCompiledContentRef = useRef<string | null>(null);
+  const getCurrentContentRef = useRef<() => string>(() => (null));
+  const autoSaveRef = useRef<boolean>(autoSave);
+
+  useEffect(() => {
+    autoSaveRef.current = autoSave;
+  }, [autoSave]);
 
   const [logs, setLogs] = useState([
     '[system] Workspace initialized.',
@@ -70,6 +76,7 @@ const Editor: React.FC = () => {
 
     // Reset compilation ref when switching files
     lastCompiledContentRef.current = null;
+    getCurrentContentRef.current = null;
 
     setCurrentFile(file);
     setHasUnsavedChanges(false);
@@ -102,7 +109,8 @@ const Editor: React.FC = () => {
     const file = currentFileRef.current;
     if (!file) return;
 
-    const content = contentToSave ?? file.content;
+    // ✅ Get content from Yjs if not provided
+    const content = contentToSave ?? (getCurrentContentRef.current ? getCurrentContentRef.current() : file.content);
 
     try {
       setIsSaving(true);
@@ -133,21 +141,26 @@ const Editor: React.FC = () => {
   const handleContentChange = useCallback((value: string) => {
     if (!currentFileRef.current) return;
 
-    // Update local state immediately
-    // setCurrentFile(prev => prev ? { ...prev, content: value } : null);
     setHasUnsavedChanges(true);
 
-    // Handle Auto-Save with debouncing
-    if (autoSave) {
+    // ✅ keep currentFile in sync
+    setCurrentFile(prev =>
+      prev ? { ...prev, content: value } : prev
+    );
+
+    if (autoSaveRef.current) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
 
       saveTimeoutRef.current = setTimeout(() => {
-        // Pass the current value to ensure we save the latest content
-        saveFileRef.current(value)
+        saveFile(value);
       }, 2000);
     }
+  }, [saveFile]);
+
+  const handleEditorReady = useCallback((getCurrentContent: () => string) => {
+    getCurrentContentRef.current = getCurrentContent;
   }, []);
 
   useEffect(() => {
@@ -360,13 +373,14 @@ const Editor: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 flex-col h-full min-h-0 overflow-auto">
             {currentFile ? (
               <CMEditor
                 key={currentFile.id}
                 fileId={currentFile.id}
                 initialContent={currentFile.content}
                 onContentChange={handleContentChange}
+                onReady={handleEditorReady}
               />
             ) : (
               <div className="h-full flex items-center justify-center text-slate-400">
