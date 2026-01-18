@@ -25,24 +25,30 @@ type UserDoc struct {
 // GinClerkAuthMiddleware verifies Clerk JWT tokens and adds user to Gin context
 func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract token from Authorization header
-		authHeader := c.GetHeader("Authorization")
-		// log.Println(">>> GinClerkAuthMiddleware HIT")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
-			c.Abort()
-			return
+		var token string
+
+		if strings.Contains(c.Request.URL.Path, "/ws/") {
+			// For WebSocket: check query parameter
+			token = c.Query("token")
+			log.Printf("WebSocket token from query: %v", token != "")
 		}
 
-		// Remove "Bearer " prefix
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == authHeader {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
-			c.Abort()
-			return
+		if token == "" {
+			authHeader := c.GetHeader("Authorization")
+			if authHeader == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+				c.Abort()
+				return
+			}
+
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+			if token == authHeader {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
+				c.Abort()
+				return
+			}
 		}
 
-		// Verify token with Clerk
 		claims, err := jwt.Verify(c.Request.Context(), &jwt.VerifyParams{
 			Token: token,
 		})

@@ -1,5 +1,5 @@
 package usercontext
 
-type UserCtxKeyType string
+type userCtxKeyType struct{}
 
-const UserCtxKey UserCtxKeyType = "User"
+var UserCtxKey = userCtxKeyType{}

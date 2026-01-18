@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"gollaboratex/server/internal/api/graph"
@@ -21,7 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
-	"gollaboratex/server/internal/websockets"
+	// "gollaboratex/server/internal/websockets"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -109,9 +110,14 @@ func main() {
 	srv.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		Upgrader: websocket.Upgrader{
+			// In upgrader
 			CheckOrigin: func(r *http.Request) bool {
-				// Configure based on your CORS policy
-				return true
+				origin := r.Header.Get("Origin")
+				// For development, allow all
+				if strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1") {
+					return true
+				}
+				return false
 			},
 		},
 	})
@@ -124,7 +130,7 @@ func main() {
 
 	// Setup CORS middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"}, // Add your frontend URLs
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000", "http://localhost:1234"}, // Add your frontend URLs
 		AllowMethods:     []string{"GET", "POST", "OPTIONS", "DELETE", "PUT"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Disposition", "Content-Length"},
@@ -139,10 +145,11 @@ func main() {
 
 	// GraphQL Playground route (no auth required)
 	r.GET("/", gin.WrapF(playground.Handler("GraphQL playground", "/query")))
-
+	r.POST("/api/verify-token", handlers.VerifyTokenHandler(database))
+	// Add to main.go for testing
 	api := r.Group("/api")
 
-	hm := websockets.NewHubManager()
+	// hm := websockets.NewHubManager()
 	api.Use(middleware.GinClerkAuthMiddleware(database))
 	{
 		api.GET("/", gin.WrapF(playground.Handler("GraphQL playground", "/api/query")))
@@ -151,8 +158,12 @@ func main() {
 		})
 
 	}
-	r.GET("/ws/:room", websockets.AuthenticatedWSHandler(hm))
-
+	// main.go - Update the WebSocket routes section
+	// ws := api.Group("/ws")
+	// ws.Use(middleware.GinClerkAuthMiddleware(database)) // <-- Use the new middleware
+	// {
+	// 	ws.GET("/:room", websockets.AuthenticatedWSHandler(hm))
+	// }
 
 	uploads := api.Group("/uploads")
 	{
@@ -187,7 +198,6 @@ func main() {
 			"minio":    "connected",
 		})
 	})
-
 
 	log.Printf("Server starting on http://localhost:%s/", port)
 	log.Printf("GraphQL Playground: http://localhost:%s/", port)

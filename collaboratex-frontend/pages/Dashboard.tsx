@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -25,7 +24,7 @@ const Dashboard: React.FC = () => {
   const [projects, setProjects] = useState<DashboardProject[]>([]);
 
   const { user, isLoaded } = useUser();
-  const { data, loading, error } = useGetProjects();
+  const { data, loading, error, refetch } = useGetProjects();
   const [deleteProject] = useDeleteProject();
   const [createProject] = useCreateProject();
   const apolloClient = useApolloClient();
@@ -44,9 +43,7 @@ const Dashboard: React.FC = () => {
       rootFileId: proj.rootFileId
     }));
     setProjects(mapped);
-
-  }, [data])
-
+  }, [data]);
 
   // Local state for projects, mapping to the new structure
   const filteredProjects = useMemo(() => {
@@ -96,6 +93,7 @@ const Dashboard: React.FC = () => {
     if (!confirmed) return;
 
     try {
+      setIsDeleting(true);
       await deleteProject({
         variables: { projectId: id },
 
@@ -115,6 +113,8 @@ const Dashboard: React.FC = () => {
     } catch (err) {
       console.error("DeleteProject failed", err);
       alert("Failed to delete project");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -163,6 +163,11 @@ const Dashboard: React.FC = () => {
       console.error(err);
       alert("Project download failed");
     }
+  };
+
+  // Refetch projects when needed (e.g., after adding collaborator)
+  const handleRefreshProjects = () => {
+    refetch();
   };
 
   return (
@@ -222,6 +227,7 @@ const Dashboard: React.FC = () => {
           onDelete={handleDeleteProject}
           onCopy={handleCopyProject}
           onDownload={handleDownloadProject}
+          onRefresh={handleRefreshProjects}
           isLoading={isDeleting}
         />
       </main>
