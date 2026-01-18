@@ -1,0 +1,18 @@
+{
+  "name": "yjs-websocket-server",
+  "version": "1.0.0",
+  "description": "Authenticated y-websocket server for collaborative editing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "y-websocket": "^2.0.4",
+    "yjs": "^13.6.20"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
