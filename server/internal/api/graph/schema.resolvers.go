@@ -134,7 +134,6 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID string) 
 	return true, nil
 }
 
-// AddCollaborator is the resolver for the addCollaborator field.
 func (r *mutationResolver) AddCollaborator(ctx context.Context, projectID string, userID string) (*model.Project, error) {
 	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
@@ -151,16 +150,23 @@ func (r *mutationResolver) AddCollaborator(ctx context.Context, projectID string
 		return nil, errors.New("only owner can add collaborators")
 	}
 
-	// Get collaborator user by clerkUserId
+	// Convert userID string to ObjectID
+	collaboratorOID, err := toObjectID(userID)
+	if err != nil {
+		return nil, errors.New("invalid user ID format")
+	}
+
+	// Check if user exists
 	var collaborator UserDoc
-	err = r.DB.Collection("users").FindOne(ctx, bson.M{"clerkUserId": userID}).Decode(&collaborator)
+	err = r.DB.Collection("User").FindOne(ctx, bson.M{"_id": collaboratorOID}).Decode(&collaborator)
 	if err != nil {
 		return nil, errors.New("collaborator not found")
 	}
 
+	// Add collaborator to project
 	_, err = r.DB.Collection("projects").UpdateOne(ctx,
 		bson.M{"_id": projectOID},
-		bson.M{"$addToSet": bson.M{"collaboratorIds": collaborator.ID}},
+		bson.M{"$addToSet": bson.M{"collaboratorIds": collaboratorOID}},
 	)
 	if err != nil {
 		return nil, err
