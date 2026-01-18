@@ -1,29 +1,9 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import {
-  ChevronLeft,
-  Play,
-  Download,
-  Share2,
-  Code2,
-  Search,
-  MessageSquare,
-  FileText,
-  Maximize2,
-  Minimize2,
-  ChevronRight,
-  Loader2,
-  Terminal,
-  Activity,
-  Eye,
-  EyeOff,
-  Save
-} from 'lucide-react';
-import  CMEditor  from "../components/Editor/Codemirror"
+import { ChevronLeft, Play, Download, Share2, Code2, Search, MessageSquare, FileText, Maximize2, Minimize2, ChevronRight, Loader2, Terminal, Activity, Eye, EyeOff, Save } from 'lucide-react';
+import CMEditor from "../components/Editor/Codemirror"
 import FileExplorer from '../components/Editor/FileExplorer';
 import { useUpdateWorkingFile } from '@/src/graphql/generated';
-import { autocompletion, latex } from 'codemirror-lang-latex';
 
 interface CurrentFile {
   id: string;
@@ -50,11 +30,13 @@ const Editor: React.FC = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isResizing, setIsResizing] = useState(false);
 
+  // Use refs to always have the latest values
+  const currentFileRef = useRef<CurrentFile | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const lastCompiledContentRef = useRef<string | null>(null);
 
-  const [logs, setLogs] = useState<string[]>([
+  const [logs, setLogs] = useState([
     '[system] Workspace initialized.',
     '[system] LaTeX 2.0e engine ready.',
     '[system] Collaborative session: ACTIVE'
@@ -66,22 +48,36 @@ const Editor: React.FC = () => {
     sections: [] as { title: string, content: string }[]
   });
 
-  // GraphQL mutation for updating file content
   const [updateWorkingFile] = useUpdateWorkingFile();
 
-  // Handle file selection from FileExplorer
+  // Update ref whenever currentFile changes
+  useEffect(() => {
+    currentFileRef.current = currentFile;
+  }, [currentFile]);
+
   const handleFileSelect = (
     fileId: string,
     fileName: string,
     content: string
   ) => {
+    // Clear any pending saves
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
     const file = { id: fileId, name: fileName, content };
+
+    // Reset compilation ref when switching files
+    lastCompiledContentRef.current = null;
+
     setCurrentFile(file);
     setHasUnsavedChanges(false);
     setIsInitialLoad(false);
     setLogs(prev => [...prev, `[file] Opened ${fileName}`]);
 
-    handleRecompile(false);
+    // Compile the new file content
+    setTimeout(() => handleRecompile(false, content), 100);
   };
 
   const handleAssetSelect = (assetPath: string) => {
@@ -90,6 +86,7 @@ const Editor: React.FC = () => {
 
   const handleFilesLoaded = (files: Array<{ id: string; name: string }>, rootFileId?: string) => {
     if (!isInitialLoad || files.length === 0) return;
+
     let defaultFile = files.find(f => f.name.toLowerCase() === 'main.tex');
     if (!defaultFile && rootFileId) {
       defaultFile = files.find(f => f.id === rootFileId);
@@ -97,72 +94,100 @@ const Editor: React.FC = () => {
     if (!defaultFile) {
       defaultFile = files[0];
     }
+
     return defaultFile.id;
   };
 
-  const saveFile = async () => {
-    if (!currentFile || !hasUnsavedChanges) return;
+  const saveFile = useCallback(async (contentToSave?: string) => {
+    const file = currentFileRef.current;
+    if (!file) return;
+
+    const content = contentToSave ?? file.content;
+
     try {
       setIsSaving(true);
       await updateWorkingFile({
         variables: {
           input: {
-            fileId: currentFile.id,
-            content: currentFile.content
+            fileId: file.id,
+            content: content
           }
         }
       });
       setHasUnsavedChanges(false);
-      setLogs(prev => [...prev, `[save] Saved ${currentFile.name}`]);
+      setLogs(prev => [...prev, `[save] Saved ${file.name}`]);
     } catch (error) {
       console.error('Failed to save:', error);
-      setLogs(prev => [...prev, `[error] Failed to save ${currentFile.name}`]);
+      setLogs(prev => [...prev, `[error] Failed to save ${file.name}`]);
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [updateWorkingFile]);
 
-  const handleContentChange = (value: string) => {
-    if (!currentFile) return;
-    setCurrentFile({ ...currentFile, content: value });
+  const saveFileRef = useRef(autoSave);
+  useEffect(() => {
+    saveFileRef.current = autoSave;
+  }, [autoSave]);
+
+
+  const handleContentChange = useCallback((value: string) => {
+    if (!currentFileRef.current) return;
+
+    // Update local state immediately
+    // setCurrentFile(prev => prev ? { ...prev, content: value } : null);
     setHasUnsavedChanges(true);
-    if (!autoSave) return;
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(async () => {
-      await saveFile();
-    }, 1000);
-  };
+
+    // Handle Auto-Save with debouncing
+    if (autoSave) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(() => {
+        // Pass the current value to ensure we save the latest content
+        saveFileRef.current(value)
+      }, 2000);
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
     };
   }, []);
 
-  const handleRecompile = useCallback((silent = false) => {
-    if (!currentFile?.content) return;
-    if (currentFile.content === lastCompiledContentRef.current) return;
-    lastCompiledContentRef.current = currentFile.content;
+  const handleRecompile = useCallback((silent = false, contentOverride?: string) => {
+    const content = contentOverride ?? currentFile?.content;
+    if (!content) return;
+
+    if (content === lastCompiledContentRef.current) return;
+    lastCompiledContentRef.current = content;
+
     if (!silent) setIsCompiling(true);
 
     setTimeout(() => {
-      const titleMatch = currentFile.content.match(/\\title\{([^}]+)\}/);
-      const authorMatch = currentFile.content.match(/\\author\{([^}]+)\}/);
+      const titleMatch = content.match(/\\title\{([^}]+)\}/);
+      const authorMatch = content.match(/\\author\{([^}]+)\}/);
       const sections: { title: string, content: string }[] = [];
       const sectionRegex = /\\section\{([^}]+)\}([\s\S]*?)(?=\\section|\\end\{document\}|$)/g;
       let match;
       let count = 1;
-      while ((match = sectionRegex.exec(currentFile.content)) !== null) {
+
+      while ((match = sectionRegex.exec(content)) !== null) {
         sections.push({
           title: `${count++} ${match[1]}`,
           content: match[2].trim().replace(/\\blindtext/g, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.')
         });
       }
+
       setParsedDoc({
         title: titleMatch ? titleMatch[1] : 'Untitled Document',
         author: authorMatch ? authorMatch[1] : 'Anonymous',
         sections: sections.length > 0 ? sections : [{ title: 'Preview', content: 'No sections found.' }]
       });
+
       if (!silent) {
         setLogs(prev => [...prev, `[compilation] Built successfully`]);
         setIsCompiling(false);
@@ -176,92 +201,104 @@ const Editor: React.FC = () => {
     return () => clearTimeout(timer);
   }, [currentFile?.content, autoCompile, handleRecompile]);
 
-  // Smooth Resizing Logic
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsResizing(true);
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const containerBounds = containerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - containerBounds.left;
+      const newRatio = (mouseX / containerBounds.width) * 100;
+      if (newRatio > 15 && newRatio < 85) {
+        setSplitRatio(newRatio);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!containerRef.current) return;
-    const containerBounds = containerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - containerBounds.left;
-    const newRatio = (mouseX / containerBounds.width) * 100;
-    if (newRatio > 15 && newRatio < 85) {
-      setSplitRatio(newRatio);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsResizing(false);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   return (
-    <div className="h-screen flex flex-col bg-white overflow-hidden select-none">
-      {/* Resizing Overlay to prevent interaction with CodeMirror/PDF during drag */}
-      {isResizing && <div className="fixed inset-0 z-[100] cursor-col-resize" />}
+    <div className="h-screen flex flex-col bg-slate-50">
+      {/* Resizing Overlay */}
+      {isResizing && (
+        <div className="fixed inset-0 z-50 cursor-col-resize" />
+      )}
 
-      <header className="h-14 border-b border-slate-200 px-6 flex items-center justify-between shrink-0 bg-white z-40">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
+      {/* Header */}
+      <div className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <Link to="/projects" className="text-slate-400 hover:text-slate-600 transition-colors">
             <ChevronLeft size={20} />
           </Link>
-          <div className="h-4 w-px bg-slate-200"></div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-slate-700">{projectName}</span>
-            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-400 font-mono">ID: {id}</span>
+          <div>
+            <h1 className="text-lg font-semibold text-slate-800">{projectName}</h1>
+            <p className="text-xs text-slate-500">ID: {id}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {isSaving && (
-            <div className="flex items-center gap-2 text-xs text-blue-600 font-medium">
-              <Loader2 size={12} className="animate-spin" /> Saving...
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <Loader2 size={14} className="animate-spin" />
+              Saving...
             </div>
           )}
           {!isSaving && hasUnsavedChanges && (
-            <div className="flex items-center gap-2 text-xs text-amber-600 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Unsaved changes
+            <div className="flex items-center gap-2 text-sm text-amber-600">
+              <div className="w-2 h-2 bg-amber-600 rounded-full animate-pulse" />
+              Unsaved changes
             </div>
           )}
 
           <button
-            onClick={saveFile}
-            disabled={isSaving || !hasUnsavedChanges || !currentFile}
+            onClick={() => saveFile()}
+            disabled={!hasUnsavedChanges || isSaving}
             className="flex items-center gap-2 px-3 py-1.5 text-slate-600 hover:text-slate-900 text-sm font-medium rounded-lg transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={16} /> Save
+            <Save size={16} />
+            Save
           </button>
 
           <button
             onClick={() => alert("PDF Export...")}
             className="flex items-center gap-2 px-3 py-1.5 text-slate-600 hover:text-slate-900 text-sm font-medium rounded-lg transition-colors border border-slate-200"
           >
-            <Download size={16} /> PDF
+            <Download size={16} />
+            PDF
           </button>
 
-          <div className="h-4 w-px bg-slate-200 mx-1"></div>
-
-          <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Auto Save</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 border border-slate-200 rounded-lg">
+            <span>Auto Save</span>
             <button
               onClick={() => setAutoSave(!autoSave)}
               className={`w-8 h-4 rounded-full transition-colors relative ${autoSave ? 'bg-green-600' : 'bg-slate-300'}`}
             >
-              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${autoSave ? 'right-0.5' : 'left-4.5'}`}></div>
+              <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${autoSave ? 'translate-x-4' : ''}`} />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Auto Compile</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 border border-slate-200 rounded-lg">
+            <span>Auto Compile</span>
             <button
               onClick={() => setAutoCompile(!autoCompile)}
               className={`w-8 h-4 rounded-full transition-colors relative ${autoCompile ? 'bg-green-600' : 'bg-slate-300'}`}
             >
-              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${autoCompile ? 'right-0.5' : 'left-4.5'}`}></div>
+              <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${autoCompile ? 'translate-x-4' : ''}`} />
             </button>
           </div>
 
@@ -274,156 +311,157 @@ const Editor: React.FC = () => {
             Recompile
           </button>
         </div>
-      </header>
+      </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        <FileExplorer
-          isOpen={isSidebarOpen}
-          activeFileId={currentFile?.id || ''}
-          onFileSelect={handleFileSelect}
-          onAssetSelect={handleAssetSelect}
-          onFilesLoaded={handleFilesLoaded}
-        />
-
-        <div className="flex-1 flex relative overflow-hidden" ref={containerRef}>
+      {/* Main Content */}
+      <div ref={containerRef} className="flex-1 flex overflow-hidden relative">
+        {/* Sidebar */}
+        <div
+          className={`bg-white border-r border-slate-200 transition-all duration-300 relative ${isSidebarOpen ? 'w-64' : 'w-0'
+            }`}
+        >
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="text-white absolute top-1/4 -left-1 z-30 w-6 h-6 bg-blue-400 border border-slate-200 rounded-full flex items-center justify-center shadow-sm text-slate-400 hover:text-slate-600 transition-all z-50 hover:scale-150 active:scale-95"
+            className="text-white absolute top-1/4 -right-3 z-30 w-6 h-6 bg-blue-400 border border-slate-200 rounded-full flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all"
           >
             {isSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>
 
-          {/* Editor Area - Removed transition-all while resizing */}
-          <div
-            className={`flex flex-col border-r border-slate-200 bg-white min-w-0 ${isPreviewExpanded ? 'w-0 hidden' : ''}`}
-            style={{
-              width: isPreviewExpanded ? '0%' : (isPdfVisible ? `${splitRatio}%` : '100%'),
-              transition: isResizing ? 'none' : 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
-          >
-            <div className="h-10 bg-slate-50 border-b border-slate-200 flex items-center px-4 justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <Code2 size={12} className="text-slate-400" />
-                <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider truncate">
-                  {currentFile?.name || 'No file selected'}
-                </span>
-              </div>
-              <button
-                onClick={() => setIsPdfVisible(!isPdfVisible)}
-                className={`p-1 rounded transition-colors ${!isPdfVisible ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                {isPdfVisible ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-hidden relative bg-white">
-			{currentFile ? (
-			<CMEditor />
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
-                  <FileText size={32} className="opacity-20" />
-                  Select a file to start editing
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Resizer */}
-          {isPdfVisible && !isPreviewExpanded && (
-            <div
-              onMouseDown={handleMouseDown}
-              className={`w-1 z-40 relative cursor-col-resize group transition-colors ${isResizing ? 'bg-blue-500' : 'bg-slate-100 hover:bg-blue-400'}`}
-            >
-              <div className="absolute inset-y-0 -left-1 -right-1 z-10" />
-            </div>
-          )}
-
-          {/* Preview Area - Flex 1 handles the remaining width */}
-          {isPdfVisible && (
-            <div
-              className={`flex flex-col bg-slate-100 relative min-w-0 ${isPreviewExpanded ? 'flex-1' : ''}`}
-              style={{ flex: 1 }}
-            >
-              <div className="h-10 bg-slate-50 border-b border-slate-200 flex items-center px-4 justify-between shrink-0">
-                <div className="flex items-center gap-2">
-                  <FileText size={12} className="text-slate-400" />
-                  <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">PDF Viewer</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
-                    className={`text-slate-400 hover:text-slate-600 transition-colors ${isPreviewExpanded ? 'text-blue-600 bg-blue-50 rounded p-0.5' : ''}`}
-                  >
-                    {isPreviewExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                  </button>
-                  <button onClick={() => alert('Download')} className="text-slate-400 hover:text-slate-600 transition-colors">
-                    <Download size={14} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1 p-8 overflow-y-auto flex flex-col items-center bg-slate-200/50">
-                {currentFile ? (
-                  <div className={`bg-white w-[595px] min-h-[842px] paper-shadow rounded-sm p-16 relative transition-opacity duration-300 ${isCompiling ? 'opacity-40' : 'opacity-100'}`}>
-                    <div className="text-center mb-12">
-                      <h1 className="text-3xl font-serif mb-3 text-slate-900 leading-tight">{parsedDoc.title}</h1>
-                      <p className="text-base font-serif italic text-slate-700">{parsedDoc.author}</p>
-                      <p className="text-xs font-serif text-slate-400 mt-1">{new Date().toLocaleDateString()}</p>
-                    </div>
-
-                    <div className="prose prose-slate max-w-none font-serif text-slate-800">
-                      {parsedDoc.sections.map((section, idx) => (
-                        <div key={idx} className="mb-8">
-                          <h2 className="text-xl font-bold mb-3 border-b border-slate-100 pb-1 text-slate-900">{section.title}</h2>
-                          <p className="mb-4 leading-relaxed text-justify">{section.content}</p>
-                        </div>
-                      ))}
-                      {currentFile.content.includes('\\begin{equation}') && (
-                        <div className="bg-slate-50 p-6 rounded-lg text-center my-10 border border-slate-100">
-                          <span className="font-serif italic text-2xl text-slate-900">
-                            {currentFile.content.match(/\\begin\{equation\}([\s\S]*?)\\end\{equation\}/)?.[1]?.trim() || 'E = mc^2'}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="absolute bottom-8 right-12 text-slate-300 text-[10px] font-mono">
-                      Page 1 of 1
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white w-[595px] min-h-[842px] paper-shadow rounded-sm flex items-center justify-center text-slate-300">
-                    No preview available
-                  </div>
-                )}
-                <div className="h-16 w-full shrink-0"></div>
-              </div>
-
-              {isCompiling && (
-                <div className="absolute bottom-8 right-8 z-50">
-                  <div className="bg-white px-4 py-2 rounded-full shadow-xl border border-slate-200 flex items-center gap-2">
-                    <Loader2 size={16} className="animate-spin text-blue-600" />
-                    <span className="text-xs font-semibold text-slate-600">Compiling...</span>
-                  </div>
-                </div>
-              )}
-            </div>
+          {isSidebarOpen && (
+            <FileExplorer
+              isOpen={isSidebarOpen}
+              activeFileId={currentFile?.id || ''}
+              onFileSelect={handleFileSelect}
+              onAssetSelect={handleAssetSelect}
+              onFilesLoaded={handleFilesLoaded}
+            />
           )}
         </div>
-      </div>
 
-      {showLogs && (
-        <div className="h-40 bg-slate-900 border-t border-slate-800 p-3 overflow-y-auto z-50">
-          <div className="flex items-center justify-between mb-2 px-2">
-            <div className="flex items-center gap-2 text-slate-500 font-bold text-[10px] uppercase tracking-widest">
-              <Terminal size={12} /> Compilation Logs
+        {/* Editor Area */}
+        <div
+          className={`flex flex-col bg-white border-r border-slate-200 ${isResizing ? '' : 'transition-all duration-150'}`}
+          style={{
+            width: isPdfVisible && !isPreviewExpanded ? `${splitRatio}%` : '100%'
+          }}
+        >
+          <div className="h-10 bg-slate-50 border-b border-slate-200 flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <FileText size={16} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-700">
+                {currentFile?.name || 'No file selected'}
+              </span>
             </div>
-            <button onClick={() => setShowLogs(false)} className="text-slate-500 hover:text-white transition-colors">
-              <Minimize2 size={12} />
+            <button
+              onClick={() => setIsPdfVisible(!isPdfVisible)}
+              className={`p-1 rounded transition-colors ${!isPdfVisible ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              {isPdfVisible ? <Eye size={16} /> : <EyeOff size={16} />}
             </button>
           </div>
-          <div className="font-mono text-[11px] text-slate-400 space-y-1 px-2">
+
+          <div className="flex-1 overflow-hidden">
+            {currentFile ? (
+              <CMEditor
+                key={currentFile.id}
+                fileId={currentFile.id}
+                initialContent={currentFile.content}
+                onContentChange={handleContentChange}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400">
+                <div className="text-center">
+                  <FileText size={48} className="mx-auto mb-2 opacity-50" />
+                  <p>Select a file to start editing</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Resizer */}
+        {isPdfVisible && !isPreviewExpanded && (
+          <div
+            onMouseDown={handleMouseDown}
+            className="w-1 bg-slate-200 hover:bg-blue-400 cursor-col-resize transition-colors z-10 relative group"
+          >
+            <div className="absolute inset-y-0 -left-1 -right-1" />
+          </div>
+        )}
+
+        {/* Preview Area */}
+        {isPdfVisible && (
+          <div className={`flex flex-col bg-slate-50 ${isPreviewExpanded ? 'flex-1' : ''}`}>
+            <div className="h-10 bg-white border-b border-slate-200 flex items-center justify-between px-4">
+              <span className="text-sm font-medium text-slate-700">PDF Viewer</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
+                  className={`text-slate-400 hover:text-slate-600 transition-colors ${isPreviewExpanded ? 'text-blue-600 bg-blue-50 rounded p-0.5' : ''}`}
+                >
+                  {isPreviewExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+                <button onClick={() => alert('Download')} className="text-slate-400 hover:text-slate-600 transition-colors">
+                  <Download size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto p-6">
+              {currentFile ? (
+                <div className="max-w-3xl mx-auto bg-white shadow-lg p-12 min-h-full">
+                  <h1 className="text-3xl font-bold text-center mb-2">{parsedDoc.title}</h1>
+                  <p className="text-center text-slate-600 mb-1">{parsedDoc.author}</p>
+                  <p className="text-center text-sm text-slate-500 mb-8">{new Date().toLocaleDateString()}</p>
+
+                  {parsedDoc.sections.map((section, idx) => (
+                    <div key={idx} className="mb-6">
+                      <h2 className="text-xl font-semibold mb-3 text-slate-800">{section.title}</h2>
+                      <p className="text-slate-700 leading-relaxed">{section.content}</p>
+                    </div>
+                  ))}
+
+                  {currentFile.content.includes('\\begin{equation}') && (
+                    <div className="my-6 p-4 bg-slate-50 border border-slate-200 rounded text-center">
+                      <code className="text-lg">
+                        {currentFile.content.match(/\\begin\{equation\}([\s\S]*?)\\end\{equation\}/)?.[1]?.trim() || 'E = mc^2'}
+                      </code>
+                    </div>
+                  )}
+
+                  <div className="mt-12 pt-4 border-t border-slate-200 text-center text-sm text-slate-500">
+                    Page 1 of 1
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400">
+                  No preview available
+                </div>
+              )}
+
+              {isCompiling && (
+                <div className="absolute bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  Compiling...
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Logs Panel */}
+      {showLogs && (
+        <div className="h-48 bg-slate-900 text-slate-300 border-t border-slate-700 flex flex-col">
+          <div className="h-10 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4">
+            <span className="text-sm font-medium text-slate-200">Compilation Logs</span>
+            <button onClick={() => setShowLogs(false)} className="text-slate-500 hover:text-white transition-colors">
+              <Minimize2 size={16} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-4 font-mono text-xs space-y-1">
             {logs.map((log, i) => (
-              <div key={i} className={log.includes('Built') || log.includes('Saved') ? 'text-emerald-400' : log.includes('error') ? 'text-red-400' : ''}>
+              <div key={i} className="text-slate-400">
                 {log}
               </div>
             ))}
@@ -431,19 +469,28 @@ const Editor: React.FC = () => {
         </div>
       )}
 
-      <footer className="h-7 bg-slate-900 text-slate-400 text-[10px] px-3 flex items-center justify-between shrink-0 z-40">
+      {/* Footer */}
+      <div className="h-8 bg-slate-800 text-slate-400 text-xs flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Connected</span>
+          <span className="flex items-center gap-1">
+            <Activity size={12} className="text-green-500" />
+            Connected
+          </span>
           <span>LaTeX 2e (pdfTeX)</span>
-          <button onClick={() => setShowLogs(!showLogs)} className="hover:text-white transition-colors">View Logs</button>
+          <button onClick={() => setShowLogs(!showLogs)} className="hover:text-white transition-colors">
+            View Logs
+          </button>
         </div>
         <div className="flex items-center gap-4">
           <span>{autoSave ? '💾 Auto-save: ON' : '📝 Auto-save: OFF'}</span>
-          {hasUnsavedChanges && <span className="text-amber-400">● Unsaved Changes</span>}
+          {hasUnsavedChanges && <span className="text-amber-500">● Unsaved Changes</span>}
           <span>UTF-8</span>
-          <button className="flex items-center gap-1 hover:text-white transition-colors"><MessageSquare size={10} /> Chat</button>
+          <button className="hover:text-white transition-colors flex items-center gap-1">
+            <MessageSquare size={12} />
+            Chat
+          </button>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };

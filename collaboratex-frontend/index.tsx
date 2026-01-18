@@ -20,7 +20,6 @@ const ApolloProviderWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <StrictMode>
     <ClerkProvider publishableKey={clerkPubKey}>
       <ApolloProviderWrapper>
         {/* <SidebarProvider> */}
@@ -28,5 +27,4 @@ root.render(
         {/* </SidebarProvider> */}
       </ApolloProviderWrapper>
     </ClerkProvider>
-  </StrictMode>
 );
