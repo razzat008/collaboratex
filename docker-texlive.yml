@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  texlive:
+    image: texlive-compiler:latest
+    container_name: texlive-compiler
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # Where LaTeX files live
+    working_dir: /workspace
+
+    # 🔐 SECURITY
+    network_mode: "none"
+    read_only: true
+
+    security_opt:
+      - no-new-privileges:true
+
+    # 📂 FILE ACCESS
+    volumes:
+      - ./workspace:/workspace:rw
+
+    # 🧠 COMMAND (FULL COMPILE PIPELINE)
+    command:
+      [
+        "latexmk",
+        "-pdf",
+        "-interaction=nonstopmode",
+        "-halt-on-error",
+        "-file-line-error",
+        "-no-shell-escape",
+        "main.tex"
+      ]
+
+    # 🧹 Auto-remove container after run
+    restart: "no"
