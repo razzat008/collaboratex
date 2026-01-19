@@ -28,8 +28,13 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
 	"gollaboratex/server/internal/db"
+	"gollaboratex/server/internal/worker"
 
 	"github.com/joho/godotenv"
+
+	// Added for worker runtime
+	"github.com/docker/docker/client"
+	"github.com/go-redis/redis/v8"
 )
 
 func main() {
@@ -57,11 +62,15 @@ func main() {
 	// Initialize Clerk
 	clerk.SetKey(clerkSecretKey)
 
-	// Connect to MongoDB
-	database, err := db.GetDatabase()
+	// Connect to MongoDB (returns client and database)
+	mongoClient, database, err := db.GetDatabase()
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+	// ensure we disconnect on shutdown
+	defer func() {
+		_ = mongoClient.Disconnect(context.Background())
+	}()
 
 	ctx := context.Background()
 	bucketName := "assets"
@@ -73,17 +82,29 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to initialize MinIO:", err)
 	}
-	exists, err := minioClient.BucketExists(ctx, bucketName)
-	if err != nil {
-		log.Fatal("Failed to check MinIO bucket:", err)
-	}
 
-	if !exists {
-		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	// Ensure required buckets exist before starting the worker:
+	// - assets (existing)
+	// - compile-sources (where inline uploads are stored)
+	// - compile-logs (worker uploads logs here)
+	// - compiled-pdfs (worker uploads produced PDFs here)
+	requiredBuckets := []string{
+		bucketName,
+		"compile-sources",
+		"compile-logs",
+		"compiled-pdfs",
+	}
+	for _, b := range requiredBuckets {
+		exists, err := minioClient.BucketExists(ctx, b)
 		if err != nil {
-			log.Fatal("Failed to create MinIO bucket:", err)
+			log.Fatalf("Failed to check MinIO bucket %s: %v", b, err)
 		}
-		log.Println("Created MinIO bucket:", bucketName)
+		if !exists {
+			if err := minioClient.MakeBucket(ctx, b, minio.MakeBucketOptions{}); err != nil {
+				log.Fatalf("Failed to create MinIO bucket %s: %v", b, err)
+			}
+			log.Printf("Created MinIO bucket: %s", b)
+		}
 	}
 
 	// Create GraphQL resolver
@@ -101,6 +122,53 @@ func main() {
 		Minio:  minioClient,
 		Bucket: bucketName,
 	}
+
+	// Initialize Redis (for job queue)
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       0,
+	})
+
+	// Initialize Docker client (used to run tectonic compiler containers)
+	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Fatalf("Failed to initialize Docker client: %v", err)
+	}
+
+	// Worker configuration (tune as needed or drive from env)
+	dockerImage := os.Getenv("TECTONIC_IMAGE")
+	if dockerImage == "" {
+		// Prefer TEXLIVE_IMAGE as a fallback if TECTONIC_IMAGE is not set.
+		dockerImage = os.Getenv("TEXLIVE_IMAGE")
+	}
+	if dockerImage == "" {
+		// Final fallback if neither env var is set.
+		dockerImage = "texlive-compiler:latest"
+	}
+
+	workerCfg := worker.Config{
+		RedisQueueName:  "compile:queue",
+		MongoDatabase:   database.Name(),
+		JobCollection:   "compile_jobs",
+		MinioBucketLogs: "compile-logs",
+		MinioBucketPDFs: "compiled-pdfs",
+		DockerImage:     dockerImage,
+		MemoryBytes:     750 << 20,
+		NanoCPUs:        500000000,
+		Timeout:         60 * time.Second,
+	}
+
+	// Start the compile worker in background (server continues serving)
+	go func() {
+		if err := worker.Run(context.Background(), workerCfg, redisClient, mongoClient, minioClient, dockerCli); err != nil {
+			log.Printf("worker exited: %v", err)
+		}
+	}()
 
 	// Configure GraphQL server with subscriptions support
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
@@ -189,6 +257,20 @@ func main() {
 			})
 		})
 	}
+
+	// Register worker HTTP handlers (compile endpoints) on a public API group so
+	// the frontend can POST compile jobs and poll status. These endpoints are
+	// intentionally registered without Clerk auth for now (use a different group
+	// or add the middleware if you want them protected).
+	// Ensure the job collection name matches workerCfg.JobCollection.
+	jobColl := database.Collection(workerCfg.JobCollection)
+	compileHandler := worker.NewHandler(redisClient, minioClient, jobColl, workerCfg.RedisQueueName, workerCfg.MinioBucketLogs, workerCfg.MinioBucketPDFs)
+
+	// Register compile endpoints directly under /api paths (public).
+	// Doing direct registrations avoids potential router group ordering issues.
+	r.POST("/api/compile-inline", compileHandler.EnqueueCompileInline)
+	r.POST("/api/compile", compileHandler.EnqueueCompile)
+	r.GET("/api/compile/:id", compileHandler.GetJobStatus)
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
