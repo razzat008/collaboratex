@@ -482,6 +482,7 @@ const Editor: React.FC = () => {
     const payload = {
       files: filesPayload,
       mainFile: mainFileName,
+      docId: id,
     };
 
     try {

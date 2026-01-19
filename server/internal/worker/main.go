@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -67,6 +68,7 @@ type Config struct {
 type JobPayload struct {
 	JobID        string `json:"jobId"`
 	UserID       string `json:"userId"`
+	DocID        string `json:"docId,omitempty"`
 	SourceBucket string `json:"sourceBucket"` // MinIO bucket with source archive or files
 	SourceObject string `json:"sourceObject"` // object name (e.g., zip archive) OR prefix
 	MainFile     string `json:"mainFile"`     // entrypoint, e.g., main.tex
@@ -301,6 +303,101 @@ func processJob(ctx context.Context, job JobPayload, cfg Config, dockerCli *clie
 	if !found {
 		_ = updateJobStatus(ctx, jobColl, job.JobID, "failed", "", "main file missing")
 		return fmt.Errorf("main file missing: tried candidates %v; extracted files: %v", candidates, extracted)
+	}
+
+	// Before running the container, scan .tex files for \includegraphics references and
+	// attempt to fetch any missing assets from the MinIO "assets" bucket into the workspace.
+	// This helps when images are stored in MinIO (e.g., projectId/assets/...) instead of being
+	// included inside the uploaded ZIP.
+	//
+	// We look for patterns like:
+	//   \includegraphics{Assets/GES.png}
+	//   \includegraphics[width=...]{Assets/GES.png}
+	// The regex below captures the filename argument.
+	graphicsRe := regexp.MustCompile(`\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}`)
+	refs := map[string]struct{}{}
+
+	_ = filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if strings.HasSuffix(strings.ToLower(path), ".tex") {
+			b, rerr := os.ReadFile(path)
+			if rerr != nil {
+				log.Printf(logPrefix+"warning: failed to read tex file %s: %v", path, rerr)
+				return nil
+			}
+			matches := graphicsRe.FindAllStringSubmatch(string(b), -1)
+			for _, m := range matches {
+				if len(m) >= 2 {
+					// m[1] is the argument inside braces
+					refs[m[1]] = struct{}{}
+				}
+			}
+		}
+		return nil
+	})
+
+	// Try to fetch each referenced asset if it's missing from the workspace.
+	for ref := range refs {
+		// Normalize any leading './'
+		ref = strings.TrimPrefix(ref, "./")
+		targetPath := filepath.Join(workspace, ref)
+		if _, statErr := os.Stat(targetPath); statErr == nil {
+			// already present
+			continue
+		}
+
+		// Ensure parent directory exists
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+			log.Printf(logPrefix+"warning: failed to create dir for asset %s: %v", targetPath, err)
+			continue
+		}
+
+		// Candidate object keys to try in the assets bucket.
+		// Try raw ref first, then try prefixed by user ID / doc/project ID / job ID (common layouts).
+		candidates := []string{ref}
+		if job.UserID != "" {
+			candidates = append(candidates, filepath.Join(job.UserID, ref))
+			candidates = append(candidates, filepath.Join(job.UserID, "assets", filepath.Base(ref)))
+		}
+		// Try doc/project id if provided — many uploads store under `project/<projectId>/assets/...`
+		if job.DocID != "" {
+			candidates = append(candidates, filepath.Join("project", job.DocID, ref))
+			candidates = append(candidates, filepath.Join("project", job.DocID, "assets", filepath.Base(ref)))
+			candidates = append(candidates, filepath.Join(job.DocID, ref))
+			candidates = append(candidates, filepath.Join(job.DocID, "assets", filepath.Base(ref)))
+		}
+		// Also try job.JobID as a prefix if present (sometimes project stored by job or project id)
+		if job.JobID != "" {
+			candidates = append(candidates, filepath.Join(job.JobID, ref))
+			candidates = append(candidates, filepath.Join(job.JobID, "assets", filepath.Base(ref)))
+		}
+
+		fetched := false
+		for _, key := range candidates {
+			// Skip empty keys
+			if key == "" {
+				continue
+			}
+			// Attempt to fetch from bucket name "assets"
+			if ferr := minioClient.FGetObject(ctx, "assets", key, targetPath, minio.GetObjectOptions{}); ferr == nil {
+				// ensure readable permissions
+				_ = os.Chmod(targetPath, 0644)
+				log.Printf(logPrefix+"fetched asset from MinIO: %s -> %s", key, targetPath)
+				fetched = true
+				break
+			} else {
+				// keep trying next candidate; log at debug level
+				log.Printf(logPrefix+"asset not found (or fetch failed) for key %s: %v", key, ferr)
+			}
+		}
+		if !fetched {
+			log.Printf(logPrefix+"warning: asset referenced by .tex not found in workspace or MinIO: %s", ref)
+		}
 	}
 
 	// Run docker container with the tectonic image
