@@ -25,6 +25,8 @@ import { useUpdateWorkingFile, useGetProject } from "@/src/graphql/generated";
 import { Document, Page, pdfjs } from "react-pdf";
 // Configure pdfjs worker to load from CDN. This is required for react-pdf to render.
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+import PDFViewer from "../components/PDFViewer";
+import CompileLogs from "../components/Editor/CompileLogs";
 
 interface CurrentFile {
   id: string;
@@ -62,6 +64,117 @@ const Editor: React.FC = () => {
   const [pdfObjectUrl, setPdfObjectUrl] = useState<string | null>(null);
   const pollerRef = useRef<number | null>(null);
   const abortPollRef = useRef<AbortController | null>(null);
+
+  // PDF viewer state: render page-wise, track total pages and current page,
+  // compute a fitted width based on the PDF container.
+  const pdfViewerRef = useRef<HTMLDivElement | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  // Base width is the computed container-fit width. pageWidth is derived from baseWidth * zoomLevel.
+  const [baseWidth, setBaseWidth] = useState<number>(800);
+  const [pageWidth, setPageWidth] = useState<number | undefined>(800);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+
+  // Update the page width to fit the container. Compute a base width (fit-to-container)
+  // and derive the rendered page width as baseWidth * zoomLevel. Also listen for
+  // Ctrl+wheel on the viewer to provide in-place zooming behavior.
+  useEffect(() => {
+    const updateWidth = () => {
+      const el = pdfViewerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+
+      // Keep a reasonable min/max base width so pages don't become extremely small or huge.
+      const MIN_BASE = 400;
+      const MAX_BASE = 1200;
+      const computedBase = Math.max(
+        MIN_BASE,
+        Math.min(MAX_BASE, Math.floor(rect.width - 32)),
+      );
+
+      setBaseWidth(computedBase);
+      setPageWidth(Math.max(200, Math.floor(computedBase * zoomLevel)));
+    };
+
+    // Wheel handler: Ctrl + wheel to zoom (prevents default zoom in browser).
+    const onWheel = (e: WheelEvent) => {
+      // Only perform zoom when Ctrl is held to avoid interfering with normal scrolling.
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const delta = e.deltaY;
+      const step = 0.1;
+      const newZoom = Math.max(
+        0.25,
+        Math.min(3, zoomLevel + (delta > 0 ? -step : step)),
+      );
+      setZoomLevel(newZoom);
+      // Use current baseWidth to compute new pageWidth
+      setPageWidth((prev) => {
+        const base =
+          baseWidth ||
+          Math.max(
+            400,
+            Math.floor(
+              (pdfViewerRef.current?.getBoundingClientRect().width || 800) - 32,
+            ),
+          );
+        return Math.max(200, Math.floor(base * newZoom));
+      });
+    };
+
+    // Keyboard handler: Ctrl + / Ctrl - (and Ctrl = which is often used for '+')
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return;
+      const key = e.key;
+      const step = 0.1;
+      if (key === "+" || key === "=") {
+        e.preventDefault();
+        const newZoom = Math.min(3, zoomLevel + step);
+        setZoomLevel(newZoom);
+        const el = pdfViewerRef.current;
+        const rect = el ? el.getBoundingClientRect() : null;
+        const base = rect
+          ? Math.max(400, Math.floor(rect.width - 32))
+          : baseWidth;
+        setPageWidth(Math.max(200, Math.floor(base * newZoom)));
+      } else if (key === "-") {
+        e.preventDefault();
+        const newZoom = Math.max(0.25, zoomLevel - step);
+        setZoomLevel(newZoom);
+        const el = pdfViewerRef.current;
+        const rect = el ? el.getBoundingClientRect() : null;
+        const base = rect
+          ? Math.max(400, Math.floor(rect.width - 32))
+          : baseWidth;
+        setPageWidth(Math.max(200, Math.floor(base * newZoom)));
+      }
+    };
+
+    updateWidth();
+    let raf: number | null = null;
+    const onResize = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        updateWidth();
+        raf = null;
+      });
+    };
+
+    window.addEventListener("resize", onResize);
+    window.addEventListener("keydown", onKeyDown);
+    const el = pdfViewerRef.current;
+    if (el) {
+      // prefer non-passive so we can call preventDefault inside the handler
+      el.addEventListener("wheel", onWheel as any, { passive: false });
+    }
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("keydown", onKeyDown);
+      if (raf) cancelAnimationFrame(raf);
+      if (el) el.removeEventListener("wheel", onWheel as any);
+    };
+  }, [pdfObjectUrl, zoomLevel, baseWidth]);
 
   // Use refs to always have the latest values
   const currentFileRef = useRef<CurrentFile | null>(null);
@@ -414,7 +527,9 @@ const Editor: React.FC = () => {
             ]);
           }
         } else {
+          // Job failed — record the failure and open the logs panel so the user can inspect the error.
           setLogs((prev) => [...prev, `[compile] Job ${jobId} failed`]);
+          setShowLogs(true);
         }
 
         setIsCompiling(false);
@@ -439,7 +554,7 @@ const Editor: React.FC = () => {
     setCompileJobId(null);
     setCompileLogs([]);
     setPdfObjectUrl(null);
-    setShowLogs(true);
+    // Do not auto-open logs on every compile. Only open when failures occur.
 
     // Build payload containing the whole project's files (full workspace)
     // Prefer the working content (server-side) but override with the editor's current unsaved content
@@ -503,6 +618,8 @@ const Editor: React.FC = () => {
           `[compile] Failed to enqueue job: ${res.status} ${txt}`,
         ]);
         setCompileStatus("unknown");
+        // Show logs panel when enqueue fails so the user can inspect the error.
+        setShowLogs(true);
         return;
       }
 
@@ -515,6 +632,8 @@ const Editor: React.FC = () => {
           ...prev,
           `[compile] Invalid response from compile-inline`,
         ]);
+        // Show logs panel when response is invalid
+        setShowLogs(true);
         return;
       }
 
@@ -526,6 +645,8 @@ const Editor: React.FC = () => {
       console.error("startCompile error", err);
       setIsCompiling(false);
       setLogs((prev) => [...prev, `[compile] Network error: ${String(err)}`]);
+      // show network errors in logs panel
+      setShowLogs(true);
     }
   };
 
@@ -704,7 +825,6 @@ const Editor: React.FC = () => {
           <div className="flex-1 flex-col h-full min-h-0 overflow-auto">
             {currentFile ? (
               <CMEditor
-                key={currentFile.id}
                 fileId={currentFile.id}
                 initialContent={currentFile.content}
                 onContentChange={handleContentChange}
@@ -770,11 +890,71 @@ const Editor: React.FC = () => {
 
             <div className="flex-1 overflow-auto p-6 relative">
               {pdfObjectUrl ? (
-                // Use react-pdf to render the compiled PDF for better UX
-                <div className="w-full h-full overflow-auto flex items-start justify-center p-4">
-                  <div className="w-full max-w-4xl">
+                // Continuous scroll: render all pages stacked. Add a small inline style block
+                // to hide PDF text and annotation layers in case pdf.js/react-pdf renders them,
+                // and ensure the canvas is displayed correctly.
+                <div
+                  className="w-full h-full overflow-auto flex items-start justify-center p-4"
+                  ref={pdfViewerRef}
+                >
+                  <style>{`
+                    /* Hide various pdf.js/react-pdf text and annotation layers to avoid
+                       duplicated HTML text rendering under/over the canvas. Disable
+                       pointer-events and visibility as extra safety. */
+                    .react-pdf__Page__textContent,
+                    .react-pdf__Page__textContent * ,
+                    .react-pdf__Page__annotations,
+                    .react-pdf__Page__annotationLayer,
+                    .annotationLayer,
+                    .textLayer,
+                    .rp__TextLayer,
+                    .rp__AnnotationLayer {
+                      display: none !important;
+                      visibility: hidden !important;
+                      pointer-events: none !important;
+                    }
+
+                    /* Ensure the canvas is displayed as a centered block with white background */
+                    .react-pdf__Page__canvas canvas,
+                    canvas.pdf-canvas {
+                      background: white !important;
+                      display: block !important;
+                      margin: 0 auto !important;
+                    }
+
+                    /* Make sure any absolute-positioned text layers don't affect layout */
+                    .react-pdf__Page__textContent {
+                      position: absolute !important;
+                      inset: 0 !important;
+                    }
+                  `}</style>
+
+                  <div className="w-full max-w-5xl flex flex-col items-center">
                     <Document
                       file={pdfObjectUrl}
+                      onLoadSuccess={(pdf) => {
+                        // pdf.numPages is available; set number of pages and compute initial width
+                        const n = (pdf && (pdf as any).numPages) || 0;
+                        setNumPages(n);
+                        // compute width immediately (effect also handles resize)
+                        const el = pdfViewerRef.current;
+                        if (el) {
+                          const rect = el.getBoundingClientRect();
+                          // Fit the PDF to the preview container: compute a sensible base width
+                          const MIN_BASE = 400;
+                          const MAX_BASE = 1200;
+                          const computedBase = Math.max(
+                            MIN_BASE,
+                            Math.min(MAX_BASE, Math.floor(rect.width - 32)),
+                          );
+                          // set base and zoom so the PDF initially fits the split preview area
+                          setBaseWidth(computedBase);
+                          setZoomLevel(1);
+                          setPageWidth(
+                            Math.max(200, Math.floor(computedBase * 1)),
+                          );
+                        }
+                      }}
                       onLoadError={(err) => {
                         console.error("Failed to load PDF:", err);
                         setLogs((prev) => [
@@ -793,11 +973,97 @@ const Editor: React.FC = () => {
                         </div>
                       }
                     >
-                      {/* Render the first page by default. You can extend to render all pages or add pagination controls. */}
-                      <Page pageNumber={1} width={800} />
+                      {/* Render all pages in a vertical, scrollable column.
+                          Disable the text and annotation layers at the component-level as well. */}
+                      <div className="w-full flex flex-col items-center">
+                        {Array.from({ length: numPages }).map((_, i) => {
+                          const pageNum = i + 1;
+                          return (
+                            <div
+                              key={pageNum}
+                              className="mb-2 w-full flex justify-center"
+                            >
+                              <Page
+                                pageNumber={pageNum}
+                                width={pageWidth}
+                                renderTextLayer={false}
+                                renderAnnotationLayer={false}
+                                loading={
+                                  <div className="text-center p-3 text-slate-500">
+                                    Rendering page…
+                                  </div>
+                                }
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
                     </Document>
 
-                    <div className="mt-4 text-right">
+                    <div className="mt-4 text-right w-full max-w-5xl flex items-center justify-end gap-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            const newZoom = Math.max(
+                              0.25,
+                              Math.max(0.1, zoomLevel - 0.1),
+                            );
+                            setZoomLevel(newZoom);
+                            const el = pdfViewerRef.current;
+                            if (el) {
+                              const rect = el.getBoundingClientRect();
+                              setPageWidth(
+                                Math.max(
+                                  200,
+                                  Math.floor((rect.width - 32) * newZoom),
+                                ),
+                              );
+                            }
+                          }}
+                          className="px-2 py-1 rounded border bg-white text-sm"
+                          title="Zoom out"
+                        >
+                          −
+                        </button>
+                        <button
+                          onClick={() => {
+                            const newZoom = Math.min(3, zoomLevel + 0.1);
+                            setZoomLevel(newZoom);
+                            const el = pdfViewerRef.current;
+                            if (el) {
+                              const rect = el.getBoundingClientRect();
+                              setPageWidth(
+                                Math.max(
+                                  200,
+                                  Math.floor((rect.width - 32) * newZoom),
+                                ),
+                              );
+                            }
+                          }}
+                          className="px-2 py-1 rounded border bg-white text-sm"
+                          title="Zoom in"
+                        >
+                          ＋
+                        </button>
+                        <button
+                          onClick={() => {
+                            const el = pdfViewerRef.current;
+                            if (el) {
+                              const rect = el.getBoundingClientRect();
+                              const base = Math.max(
+                                200,
+                                Math.floor(rect.width - 32),
+                              );
+                              setZoomLevel(1);
+                              setPageWidth(base);
+                            }
+                          }}
+                          className="px-2 py-1 rounded border bg-white text-sm"
+                          title="Fit width"
+                        >
+                          Fit
+                        </button>
+                      </div>
                       <button
                         onClick={handleOpenPdfInNewTab}
                         className="text-blue-600 underline text-sm"
@@ -836,40 +1102,13 @@ const Editor: React.FC = () => {
 
       {/* Logs Panel */}
       {showLogs && (
-        <div className="h-48 bg-slate-900 text-slate-300 border-t border-slate-700 flex flex-col">
-          <div className="h-10 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4">
-            <span className="text-sm font-medium text-slate-200">
-              Compilation Logs
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleDownloadLogs}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                Download
-              </button>
-              <button
-                onClick={() => setShowLogs(false)}
-                className="text-slate-500 hover:text-white transition-colors"
-              >
-                <Minimize2 size={16} />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-auto p-4 font-mono text-xs space-y-1">
-            {compileLogs.length > 0
-              ? compileLogs.map((log, i) => (
-                  <div key={i} className="text-slate-400">
-                    {log}
-                  </div>
-                ))
-              : logs.map((log, i) => (
-                  <div key={i} className="text-slate-400">
-                    {log}
-                  </div>
-                ))}
-          </div>
-        </div>
+        <CompileLogs
+          compileLogs={compileLogs}
+          logs={logs}
+          jobId={compileJobId}
+          onClose={() => setShowLogs(false)}
+          className="border-t-2 border-slate-600 rounded-t-md"
+        />
       )}
 
       {/* Footer */}
