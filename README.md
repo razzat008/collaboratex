@@ -1,47 +1,11 @@
-# gollaboratex
+# collaboratex
         
-      gollaborateX is a web-based editor 
+      collaboratex is a web-based editor 
 
-or\
-_gollaborateX is a web-based collaborative LaTeX editor designed for real-time document editing, project-based organization, and versioned workflows. It enables multiple users to work on the same LaTeX project simultaneously with live updates, file management, and restoreable versions._
-
-## ✨ Features
-
-### 🗂 Project Management
-
-* Create, delete, and manage LaTeX projects
-* Add and remove collaborators
-* Owner-based access control
-* Dashboard with project listing
-
-### 📁 File System
-
-* Multiple files per project
-* File creation, renaming, and deletion
-* Working file abstraction for live editing
-* Root file tracking
-
-### ✍️ Real-Time Collaboration
-
-* Live collaborative editing using **CRDT**
-* Real-time updates via GraphQL subscriptions
-* Conflict-free merging of document changes
-
-### 🕒 Versioning System
-
-* Create named versions (snapshots)
-* Restore project state from any version
-* Version-specific file history
-
-### 🔐 Authentication & Authorization
-
-* Auth middleware injects user into request context
-* Resolver-level access control
-* Only collaborators can mutate project data
 
 ---
 
-## 🏗 Architecture Overview
+##  Architecture Overview
 
 ```
 Client (React + Apollo)
@@ -60,7 +24,7 @@ Database
 
 ---
 
-## 🧱 Tech Stack
+##  Tech Stack
 
 ### Frontend
 
@@ -85,7 +49,7 @@ Database
 
 ---
 
-## 🔄 GraphQL API Design
+##  GraphQL API Design
 
 ### Core Concepts
 
@@ -108,7 +72,7 @@ mutation CreateProject($input: NewProjectInput!) {
 
 ---
 
-## 🔁 Real-Time Editing Flow
+##  Real-Time Editing Flow
 
 1. User edits file
 2. Client sends `updateWorkingFile` mutation
@@ -118,30 +82,10 @@ mutation CreateProject($input: NewProjectInput!) {
 
 ---
 
-## 🔐 Authentication Flow
+##  Authentication Flow
 
 1. User authenticates on frontend
 2. Auth middleware validates request
 3. User object injected into context
 4. Resolvers extract user via `GetUserFromContext`
 5. Authorization enforced at resolver level
-
----
-
-## 🚀 Running the Project
-
-### Backend
-
-```bash
-cd server
-go mod tidy
-go run cmd/server/main.go
-```
-
-### Frontend
-
-```bash
-cd client
-pnpm install
-pnpm run dev
-```
