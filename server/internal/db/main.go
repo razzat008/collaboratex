@@ -4,7 +4,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -14,26 +13,35 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
-func GetDatabase() (*mongo.Database, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Environment variable MONGODB_URI must be set")
+func GetDatabase() (*mongo.Client, *mongo.Database, error) {
+	// Load environment variables (if any)
+	if err := godotenv.Load(); err != nil {
+		return nil, nil, fmt.Errorf("environment variable MONGODB_URI must be set")
 	}
-	db_uri := os.Getenv("MONGODB_URI")
-	fmt.Print(db_uri)
+	dbURI := os.Getenv("MONGODB_URI")
+	fmt.Print(dbURI)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	// Create a context with timeout for ping operations (used for verifying connection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(options.Client().ApplyURI(db_uri))
+	// Prepare client options and connect.
+	// In mongo-driver v2 the Connect signature expects client options as the primary argument.
+	// We call Connect with the prepared options and then use a context to Ping the server.
+	clientOpts := options.Client().ApplyURI(dbURI)
+	client, err := mongo.Connect(clientOpts)
 	if err != nil {
-		log.Fatal("Error connecting to Mongodb", err)
+		return nil, nil, fmt.Errorf("error connecting to mongodb: %w", err)
 	}
+
+	// Verify connection with a ping
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		log.Fatal("Could not ping Mongodb:", err)
+		return nil, nil, fmt.Errorf("could not ping mongodb: %w", err)
 	}
+
 	fmt.Println("Connected to Mongodb")
 	database := client.Database("gollaboratex")
 	fmt.Println("Database connected:", database.Name())
-	return database, err
+
+	return client, database, nil
 }
