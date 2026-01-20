@@ -1,3 +1,4 @@
-<div align="center">
-<img width="500" height="475" alt="GHBanner" src="https://github.com/razzat008.png?raw=true" />
-</div>
+for more info
+visit: [https://collaboratex.manogyadahal.com.np](https://collaboratex.manogyadahal.com.np)
+
+_docs in progress_
