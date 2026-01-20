@@ -1,0 +1,864 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Collaboratex Documentation</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Technical documentation for Collaboratex">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-ef39e1bc.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-f01b6b22.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Collaboratex Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="introduction-to-collaboratex"><a class="header" href="#introduction-to-collaboratex">Introduction to Collaboratex</a></h1>
+<p><a href="https://github.com/razzat008/collaboratex">Collaboratex</a> is a web-based collaborative LaTeX editor designed for real-time document editing &amp; project-based organization.</p>
+<p>The project aims to remove limitations commonly found in existing collaborative LaTeX platforms, especially user count restrictions and lack of flexibility for academic environments.<br>This project was developed as a semester project at Kathmandu University and is also structured to support open source contributions.</p>
+<p>The documentation is written to serve both evaluators and future contributors.</p>
+<ul>
+<li>Free as in freedom and Open-Source</li>
+<li>Licensed under MIT</li>
+<li>Not so large codebase</li>
+<li>Simple UI design</li>
+<li>Minimal syntax highlighting</li>
+</ul>
+<h2 id="contribution"><a class="header" href="#contribution">Contribution</a></h2>
+<p>If you’re interested in fixing bugs implementing features or anything check <a href="#contributing-to-collaboratex">here</a>.</p>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>The Collaboratex is licensed under <a href="https://mit-license.org/">MIT License</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h1>
+<h2 id="component-breakdown"><a class="header" href="#component-breakdown">Component Breakdown</a></h2>
+<h3 id="frontend-react"><a class="header" href="#frontend-react">Frontend (React)</a></h3>
+<ul>
+<li><strong>CodeMirror Editor</strong> - Rich text editing with LaTeX support</li>
+<li><strong>Yjs Client</strong> - Local document state &amp; conflict resolution</li>
+<li><strong>Clerk Auth</strong> - User authentication &amp; session management</li>
+<li><strong>Real-time UI</strong> - Live cursor positions, user presence</li>
+</ul>
+<h3 id="backend-go"><a class="header" href="#backend-go">Backend (Go)</a></h3>
+<ul>
+<li><strong>Gin Web Server</strong> - HTTP/GraphQL API</li>
+<li><strong>Authentication</strong> - JWT verification with Clerk</li>
+<li><strong>Authorization</strong> - Project access control</li>
+<li><strong>File Management</strong> - Upload/download documents</li>
+</ul>
+<h3 id="real-time-layer-nodejs"><a class="header" href="#real-time-layer-nodejs">Real-Time Layer (Node.js)</a></h3>
+<ul>
+<li><strong>Y-WebSocket Server</strong> - Manages document rooms</li>
+<li><strong>Broadcast Hub</strong> - Distributes updates to clients</li>
+<li><strong>Awareness</strong> - Tracks user presence &amp; cursors</li>
+<li><strong>Persistence</strong> - Stores document snapshots</li>
+</ul>
+<h3 id="database-mongodbredisminio"><a class="header" href="#database-mongodbredisminio">Database (MongoDB,Redis,MinIO)</a></h3>
+<ul>
+<li><strong>Users</strong> - Account info &amp; Clerk integration</li>
+<li><strong>Projects</strong> - Document metadata, ownership, collaborators</li>
+<li><strong>Files</strong> - Document content storage</li>
+<li><strong>Snapshots</strong> - Periodic Y-doc backups</li>
+</ul>
+<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│                    Web Browsers                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │ User A       │  │ User B       │  │ User C       │    │
+│  │ (CodeMirror) │  │ (CodeMirror) │  │ (CodeMirror) │    │
+│  └──────┬───────┘  └───────┬──────┘  └────────┬─────┘    │
+└─────────┼──────────────────┼──────────────────┼──────────┘
+          │                  │                  │
+          │ HTTP/REST        │ HTTP/REST        │ HTTP/REST
+          │ GraphQL          │ GraphQL          │ GraphQL
+          │                  │                  │
+          └──────────────────┼──────────────────┘
+                             │
+                    ┌────────▼────────┐
+                    │  Backend Server │
+                    │  (Go + Gin)     │
+                    ├─────────────────┤
+                    │ • Auth &amp; JWT    │
+                    │ • GraphQL API   │
+                    │ • Rest API      │
+                    │ • Permissions   │
+                    │ • File/Zip ups  │
+                    └────────┬────────┘
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+          ▼                  ▼                  ▼
+     ┌─────────┐      ┌──────────────┐   ┌──────────┐
+     │ MongoDB │      │ Y-WebSocket  │   │  MinIO   │
+     │ (Users, │      │  Server      │   │ (Files)  │
+     │ Projects)      │ (Node.js)    │   │          │
+     └─────────┘      └──────┬───────┘   └──────────┘
+                             │
+          ┌──────────────────┘
+          │
+          │ WebSocket
+          │ (Real-time sync)
+          │
+          └──────────────────┬─────────────────┐
+                             │                 │
+                    ┌────────▼────────┐        │
+                    │    Yjs Docs     │        │
+                    │  (In Memory)    │        │
+                    └─────────────────┘        │
+                             ▲                 │
+                             │                 │
+                    All connected clients ◄────┘
+                    receive updates instantly
+</code></pre>
+<hr>
+<h2 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h2>
+<h3 id="document-edit--sync"><a class="header" href="#document-edit--sync">Document Edit → Sync</a></h3>
+<pre><code>User types in CodeMirror
+         │
+         ▼
+    Yjs detects change
+         │
+         ▼
+    WebSocket update sent
+         │
+         ▼
+   Y-Server receives
+         │
+         ▼
+ Broadcast to all users
+         │
+         ▼
+ All clients update live ✓
+</code></pre>
+<h3 id="project-access-flow"><a class="header" href="#project-access-flow">Project Access Flow</a></h3>
+<pre><code>User requests project
+         │
+         ▼
+  JWT token verified
+         │
+         ▼
+Check owner/collaborator
+         │
+    ├─ Owner → Full access ✓
+    ├─ Collaborator → Read/Write ✓
+    └─ Other → Denied ✗
+</code></pre>
+<hr><div style="break-before: page; page-break-before: always;"></div>
+<h1 id="technology-stack"><a class="header" href="#technology-stack">Technology Stack</a></h1>
+<p>The project uses the following technologies:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Frontend</strong></td><td>React, TypeScript, Tailwind</td><td>User interface &amp; editor</td></tr>
+<tr><td><strong>Backend</strong></td><td>Go, Gin, GraphQL</td><td>API &amp; business logic</td></tr>
+<tr><td><strong>Real-Time</strong></td><td>Node.js, Yjs, y-websocket</td><td>Document sync</td></tr>
+<tr><td><strong>Auth</strong></td><td>Clerk, JWT</td><td>User verification</td></tr>
+<tr><td><strong>Database</strong></td><td>MongoDB</td><td>Data persistence</td></tr>
+<tr><td><strong>Storage</strong></td><td>MinIO</td><td>File hosting</td></tr>
+<tr><td><strong>Queuing</strong></td><td>Redis</td><td>Compilation Pipeline</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<pre><code>┌─ HTTPS/WSS (encrypted transport)
+├─ JWT authentication (identity verification)
+├─ Authorization checks (ownership/access)
+├─ CORS (cross-origin protection)
+└─ Database validation (prevent injection)
+</code></pre>
+<p><em>this section needs to be populated</em></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h1>
+<pre><code class="language-bash">├── collaboratex-frontend # well this is the frontend, crazy right?
+│   ├── components
+│   ├── pages
+│   ├── public
+│   ├── src
+│   ├── App.tsx
+│   ├── codegen.yml
+│   ├── index.html
+│   ├── index.tsx
+│   └── ...
+├── server # gin as the server and router, contains auth and token validator
+│   ├── cmd
+│   ├── internal
+│   ├── go.mod
+│   ├── go.sum
+│   ├── gqlgen.yml
+│   └── server.go
+├── yjs-server # nodejs server runs on :1234, and syncs data between clients
+│   ├── package.json
+│   ├── pnpm-lock.yaml
+│   └── server.js
+├── docker-files...
+├── LICENSE
+└── README.md
+</code></pre>
+<p>See <a href="#installation">Installation Guide</a> for running up each section.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
+<p>Collaboratex uses a modular architecture, just like any other full-stack webapp, you’ll find\</p>
+<ul>
+<li>client side</li>
+<li>application layer(includes routes, middlewares)</li>
+<li>databases and services</li>
+</ul>
+<p>This should give you some idea about the system desiging part.</p>
+<p><a href="https://mermaid.live/edit#pako:eNp9Umtv2jAU_SuWP20aRQQIKdFUqcCqVYKWFfbOPjjkEkwTO3KcjQ7477vOg0SoLF_i-zjn3OvjPV3JAKhL15H8s9owpcly5AlPEPw-p6B-enQccRDao7-q_J2SQoMIsFYdSdH03lc3T8BWmrwjX7gGE49RYMaVkgqT37dpg2jEVs8FT3kit_N7sgD1G5SBPiC0vU0R92GXKEib2LGMIuYjFPUisuQxlCmpmOZSNGhQlHwFfyFRo7nHTIpQTkbIUZ5M8ww0C5hmZKGRKYRmPxf3j6bb_MmjvwVctGwz0FEk_ZQwXGM-uWvO-gQBT_NR8W86P2WQQd45llIFXOQjNxBTpmGHiClbwjdsihMe1WvxVa4Xmab4mbyZmM3U2wY-zfxQsWRT-lIkK0_J1dXNycSilB_OoLdJEvFVoTplL6BqlpPtyHT4uFzOjXHpoTL0QuPJg0Np1WXt6j2U26Y1Y1UxO5S2XSgal14v5T78XzxUMjNGKonqKRdhzZSjc57cpbpQjvNaKQ_Px2poF_dxfku1R7RFQ8UD6mqVQYvGoGJmQro3eI_qDcT4VF08BrBmWYTv3BNHhCVM_JAyrpC4Vrih7ppFKUZZgk8dJpzh4vEpq1AS1BgvQFO327VzEuru6Q7DwbDtWD3HsQe9vjOwBy36Ql2717auHduy-v1-Z2hdH1v0by7aaWO6g1_Xdobd_tCyj_8AxMpptg"><img src="https://mermaid.ink/img/pako:eNp9Umtv2jAU_SuWP20aRQQIKdFUqcCqVYKWFfbOPjjkEkwTO3KcjQ7477vOg0SoLF_i-zjn3OvjPV3JAKhL15H8s9owpcly5AlPEPw-p6B-enQccRDao7-q_J2SQoMIsFYdSdH03lc3T8BWmrwjX7gGE49RYMaVkgqT37dpg2jEVs8FT3kit_N7sgD1G5SBPiC0vU0R92GXKEib2LGMIuYjFPUisuQxlCmpmOZSNGhQlHwFfyFRo7nHTIpQTkbIUZ5M8ww0C5hmZKGRKYRmPxf3j6bb_MmjvwVctGwz0FEk_ZQwXGM-uWvO-gQBT_NR8W86P2WQQd45llIFXOQjNxBTpmGHiClbwjdsihMe1WvxVa4Xmab4mbyZmM3U2wY-zfxQsWRT-lIkK0_J1dXNycSilB_OoLdJEvFVoTplL6BqlpPtyHT4uFzOjXHpoTL0QuPJg0Np1WXt6j2U26Y1Y1UxO5S2XSgal14v5T78XzxUMjNGKonqKRdhzZSjc57cpbpQjvNaKQ_Px2poF_dxfku1R7RFQ8UD6mqVQYvGoGJmQro3eI_qDcT4VF08BrBmWYTv3BNHhCVM_JAyrpC4Vrih7ppFKUZZgk8dJpzh4vEpq1AS1BgvQFO327VzEuru6Q7DwbDtWD3HsQe9vjOwBy36Ql2717auHduy-v1-Z2hdH1v0by7aaWO6g1_Xdobd_tCyj_8AxMpptg?type=png" alt=""></a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="authentication-and-authorization"><a class="header" href="#authentication-and-authorization">Authentication and Authorization</a></h1>
+<p>A secure authentication system using <strong>Clerk</strong> for identity verification and <strong>MongoDB</strong> collection for storing userIds only. Ensures only authenticated and authorized users can access or modify documents.</p>
+<h2 id="authentication-flow"><a class="header" href="#authentication-flow">Authentication Flow</a></h2>
+<h3 id="user-login-to-access-document"><a class="header" href="#user-login-to-access-document">User Login to Access Document</a></h3>
+<pre><code>User Login
+   │
+   ▼
+┌─────────────────────────────────────┐
+│ Clerk OAuth/Email Sign-In           │
+│ (Frontend: @clerk/clerk-react)      │
+└─────────────────────┬───────────────┘
+                      │
+                      ▼
+           JWT Token Generated
+      (RS256 signed by Clerk)
+                      │
+                      ▼
+      ┌──────────────────────────────┐
+      │ Stored in HTTPOnly Cookie    │
+      │ Auto-included in all requests│
+      └──────────────────────────────┘
+                      │
+                      ▼
+GraphQl Resolvers -&gt; if User has project access
+</code></pre>
+<h2 id="request-authentication"><a class="header" href="#request-authentication">Request Authentication</a></h2>
+<h3 id="api-request-with-jwt-token"><a class="header" href="#api-request-with-jwt-token">API Request with JWT Token</a></h3>
+<p>User creation or validating flow.</p>
+<pre><code>Frontend Request
+      │
+      ▼
+┌──────────────────────────────────────┐
+│ Headers:                             │
+│ Authorization: Bearer eyJhbGc...     │
+│ Content-Type: application/json       │
+└────────────┬─────────────────────────┘
+             │
+             ▼ (HTTPS)
+┌──────────────────────────────────────┐
+│ Backend Middleware                   │
+│ GinClerkAuthMiddleware               │
+├──────────────────────────────────────┤
+│ 1. Extract token from header         │
+│ 2. Verify with Clerk public key      │
+│ 3. Check expiration                  │
+│ 4. Extract clerkUserID               │
+│ 5. Get/create user in MongoDB        │
+│ 6. Add user to context               │
+└────────────┬─────────────────────────┘
+             │
+             ▼
+      Request Authorized ✓
+      Proceed to resolver
+</code></pre>
+<h2 id="authorization-checks"><a class="header" href="#authorization-checks">Authorization Checks</a></h2>
+<h3 id="document-access-control"><a class="header" href="#document-access-control">Document Access Control</a></h3>
+<p>Flow of how a document is fetched through authorization.</p>
+<pre><code>User requests: GET /api/project/{projectId}
+      │
+      ▼
+┌──────────────────────────────────────┐
+│ 1. User authenticated? (JWT valid)   │
+│    ├─ YES → Continue                 │
+│    └─ NO → Return 401 Unauthorized   │
+└────────────┬─────────────────────────┘
+             │
+             ▼
+┌───────────────────────────────────────┐
+│ 2. Check project ownership/access     │
+│    Query: Project.ownerId == user.id  │
+│    OR user.id in Project.collaborators│
+├───────────────────────────────────────┤
+│    ├─ Owner → Full access             │
+│    ├─ Collaborator → Read/Write       │
+│    └─ Other → Return 403 Forbidden    │
+└────────────┬──────────────────────────┘
+             │
+             ▼
+      Authorization passed ✓
+      Return project data
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="real-time-collaboration-system"><a class="header" href="#real-time-collaboration-system">Real-Time Collaboration System</a></h1>
+<p>The real-time collaboration system allows multiple users to edit the same
+document simultaneously. Changes are instantly synchronized across all
+connected clients with Yjs handling the complexity of operational
+transformation and conflict resolution.</p>
+<h2 id="core-technologies"><a class="header" href="#core-technologies">Core Technologies</a></h2>
+<ul>
+<li><strong>Yjs</strong> - CRDT-based shared data structure for conflict-free collaboration</li>
+<li><strong>y-websocket</strong> - WebSocket provider for real-time synchronization</li>
+<li><strong>CodeMirror</strong> - Rich text editor with Yjs integration</li>
+<li><strong>Node.js WebSocket Server</strong> - Central hub for document synchronization</li>
+</ul>
+<hr>
+<h2 id="architecture-1"><a class="header" href="#architecture-1">Architecture</a></h2>
+<h3 id="system-components"><a class="header" href="#system-components">System Components</a></h3>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                    Web Browsers (Clients)                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────┐  │
+│  │   User A         │  │   User B         │  │ User C    │  │
+│  │  CodeMirror      │  │  CodeMirror      │  │ CodeMirror│  │
+│  │  + Yjs Doc       │  │  + Yjs Doc       │  │ + Yjs Doc │  │
+│  └────────┬─────────┘  └────────┬─────────┘  └─────┬─────┘  │
+│           │                     │                  │        │
+│           └─────────────────────┼──────────────────┘        │
+│                                 │                           │
+│                          WebSocket Updates                  │
+│                           (JSON/Binary)                     │
+└─────────────────────────────────┼───────────────────────────┘
+                                  │
+                    ┌─────────────▼──────────────┐
+                    │   WebSocket Server         │
+                    │   (Node.js + y-websocket)  │
+                    │                            │
+                    │  Document Rooms:           │
+                    │  - Room 1 (Project A)      │
+                    │  - Room 2 (Project B)      │
+                    │  - Room N (Project N)      │
+                    └────────────────────────────┘
+</code></pre>
+<hr>
+<h2 id="data-synchronization-flow"><a class="header" href="#data-synchronization-flow">Data Synchronization Flow</a></h2>
+<h3 id="single-edit-operation"><a class="header" href="#single-edit-operation">Single Edit Operation</a></h3>
+<pre><code>User A types "function" in CodeMirror
+         │
+         ▼
+Yjs detects text insertion at position 42
+         │
+         ▼
+Creates update event with operation metadata
+    {
+      type: "insert",
+      position: 42,
+      content: "function",
+      clientID: "user-a-xyz", 
+      clock: 1234
+    }
+         │
+         ▼
+WebSocket sends update to server
+         │
+         ▼
+Server broadcasts to all other clients (B, C, D, ...)
+         │
+         ▼
+Each client receives update
+         │
+         ▼
+Yjs applies update to local document state
+         │
+         ▼
+CodeMirror re-renders with new text
+         │
+         ▼
+✓ All clients see "function" at position 42
+</code></pre>
+<hr>
+<h2 id="concurrent-editing-example"><a class="header" href="#concurrent-editing-example">Concurrent Editing Example</a></h2>
+<h3 id="two-users-editing-simultaneously"><a class="header" href="#two-users-editing-simultaneously">Two Users Editing Simultaneously</a></h3>
+<p>Well, what happens when multiple user are on a single project, but different sections?<br>See below:</p>
+<p><strong>Initial State:</strong></p>
+<pre><code>Document: "Hello"
+Cursor positions: A at index 5, B at index 0
+</code></pre>
+<p><strong>Operations:</strong></p>
+<pre><code>User A (timestamp: T1)          User B (timestamp: T1)
+Inserts "!" at end              Inserts "&gt;&gt; " at start
+        │                               │
+        └───────────┬───────────────────┘
+                    │
+            Local operation applied
+            Local reorder: T1-A, T1-B
+                    │
+                    ▼
+         User A sees: "&gt;&gt; Hello!"
+         User B sees: "&gt;&gt; Hello!"
+</code></pre>
+<p><strong>Without Conflict Resolution (Bad):</strong></p>
+<pre><code>User A alone would see: "Hello!"
+User B alone would see: "&gt;&gt; Hello"
+Inconsistent state → ✗ BROKEN
+</code></pre>
+<p><strong>With Yjs CRDT (Good):</strong></p>
+<pre><code>Yjs uses client IDs and logical clocks
+Deterministic ordering: (clock, clientID)
+Both users converge to: "&gt;&gt; Hello!"
+Consistent state → ✓ WORKS
+</code></pre>
+<hr>
+<h2 id="real-time-update-propagation"><a class="header" href="#real-time-update-propagation">Real-Time Update Propagation</a></h2>
+<h3 id="multi-client-synchronization-timeline"><a class="header" href="#multi-client-synchronization-timeline">Multi-Client Synchronization Timeline</a></h3>
+<p>How does multi-Client synchronization happens?</p>
+<pre><code>T0:00 - User A connects to project "thesis-2024"
+        │
+        ├─ Handshake: Hello, I'm user-a-xyz
+        ├─ Server: Here's the current document state
+        └─ CodeMirror renders initial content
+
+T0:05 - User B connects to same project
+        │
+        ├─ Server sends full document state to B
+        ├─ Server notifies A that B joined
+        └─ Awareness layer shows "User B is editing..."
+
+T0:10 - User A types "Introduction"
+        │
+        ├─ Yjs creates update: insert(0, "Introduction")
+        ├─ WebSocket sends to server (~5-10ms latency)
+        ├─ Server broadcasts to B
+        ├─ B receives and applies update
+        └─ B's CodeMirror updates live ✓
+
+T0:15 - User B types "Section 1" (while A is still editing)
+        │
+        ├─ B's update goes to server
+        ├─ A receives B's update
+        ├─ Yjs merges both edits (no conflicts!)
+        ├─ Both see same final text
+        └─ Automatic sync ✓
+
+T0:20 - User A disconnects
+        │
+        ├─ Server marks A as offline
+        ├─ B can continue editing
+        └─ When A reconnects, gets full sync
+
+T0:25 - User C connects
+        │
+        ├─ Server sends full document state
+        ├─ C gets all A and B's edits
+        └─ C's document is immediately current ✓
+</code></pre>
+<hr>
+<h2 id="conflict-resolution"><a class="header" href="#conflict-resolution">Conflict Resolution</a></h2>
+<h3 id="automatic-crdt-merging"><a class="header" href="#automatic-crdt-merging">Automatic CRDT Merging</a></h3>
+<pre><code>SCENARIO: Two users insert at same position simultaneously
+
+Initial: "Hello world"
+
+User A: Insert "beautiful " at position 6
+        Result intention: "Hello beautiful world"
+
+User B: Insert "amazing " at position 6
+        Result intention: "Hello amazing world"
+
+════════════════════════════════════════════════════════════
+
+WITHOUT YEJS (Simple Last-Write-Wins):
+├─ User A's update arrives first: "Hello beautiful world"
+├─ User B's update arrives second: "Hello amazing world"
+└─ Result: B's text overwrites A's → DATA LOSS ✗
+
+════════════════════════════════════════════════════════════
+
+WITH YEJS (CRDT - Conflict-Free Replicated Data Type):
+├─ A's insert: (position: 6, clientID: A, clock: 1)
+├─ B's insert: (position: 6, clientID: B, clock: 1)
+├─ Deterministic ordering by (clock, clientID)
+│  → clientID: A &lt; B (alphabetically)
+│  → A's insert happens first in canonical order
+└─ Result: "Hello beautiful amazing world"
+   Both A and B converge to SAME final state ✓
+   NO DATA LOSS ✓
+</code></pre>
+<hr>
+<h2 id="awareness-state"><a class="header" href="#awareness-state">Awareness State</a></h2>
+<h3 id="seeing-whos-online"><a class="header" href="#seeing-whos-online">Seeing Who’s Online</a></h3>
+<pre><code>┌─────────────────────────────────────────────────┐
+│ Document: "thesis-2024/main.tex"                │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│ Online Users:                                   │
+│ ┌──────────────────────────────────────────┐    │
+│ │ 🔴 Alice (you)          Editing Line 42  │    │
+│ │ 🟢 Bob                  Idle for 30s     │    │
+│ │ 🟡 Carol                Editing Line 128 │    │
+│ └──────────────────────────────────────────┘    │
+│                                                 │
+│ Cursor Positions:                               │
+│ │                                               │
+│ │  Alice's cursor 🔴                            │
+│ │  Bob's cursor           🟢                    │
+│ │  Carol's cursor                      🟡       │
+│ │                                               │
+│ └─ Each user sees others' cursors in real-time  │
+│                                                 │
+└─────────────────────────────────────────────────┘
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p><em>Currently our project itself hasn’t been hosted so what you’ll find here is a way to use this locally.</em><br>With that being said, let’s start the installation.</p>
+<p>Clone the github repository</p>
+<pre><code class="language-bash">git clone https://github.com/razzat008/collaboratex
+cd collaboratex
+</code></pre>
+<h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
+<p>Grab the required dependencies
+for the servers:</p>
+<pre><code class="language-bash"># for the gin server
+cd server
+go mod tidy
+# for the yjs-server
+cd yjs-server
+pnpm install
+</code></pre>
+<p>and the client:</p>
+<pre><code class="language-bash">cd collaboratex-frontend 
+pnpm install
+</code></pre>
+<h2 id="setting-up-docker"><a class="header" href="#setting-up-docker">Setting up Docker</a></h2>
+<p>We have separate containers for each database/service. (don’t ask us why)
+Make sure you have docker installed and privileges setup beforehand.</p>
+<pre><code class="language-bash">sudo pacman -S docker
+# start the docker daemon
+sudo systemctl start --now docker.service
+# check if the daemon is running
+systemctl status docker.service
+</code></pre>
+<h3 id="docker-minioyml"><a class="header" href="#docker-minioyml">docker-minio.yml</a></h3>
+<p>This docker image is responsible for launching up an instance of MinIO server. MinIO server is used to store assets like BLOBs, images(for now).
+Make sure to add the .env variables before spinning up an instance.<br><em>This is default for now.</em></p>
+<pre><code class="language-env">MINIO_PASS=minioadmin
+MINIO_USERNAME=minioadmin
+</code></pre>
+<p>Run the container</p>
+<pre><code class="language-bash">docker compose -f docker-minio.yml up -d 
+</code></pre>
+<h3 id="docker-redisyml"><a class="header" href="#docker-redisyml">docker-redis.yml</a></h3>
+<p>This is for running up a redis-server docker instance.</p>
+<pre><code class="language-bash">docker compose -f docker-redis.yml up -d 
+</code></pre>
+<h3 id="docker-composeyml"><a class="header" href="#docker-composeyml">docker-compose.yml</a></h3>
+<p>This is to spin-up the MongoDB server.</p>
+<pre><code class="language-bash">docker compose -f docker-compose.yml up -d 
+</code></pre>
+<h3 id="docker-texliveyml"><a class="header" href="#docker-texliveyml">docker-texlive.yml</a></h3>
+<p>This is for running the actual compilation of LaTeX files into pdf.</p>
+<pre><code class="language-bash">docker compose -f docker-texlive.yml up -d 
+</code></pre>
+<h3 id="dockerfile"><a class="header" href="#dockerfile">Dockerfile</a></h3>
+<p>This is for installing the necessary, dependencies and libraries for running the <code>latexmk</code>(for pdf compilation).</p>
+<pre><code class="language-bash">docker compose -f Dockerfile up -d 
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="running-the-project-locally"><a class="header" href="#running-the-project-locally">Running the Project Locally</a></h1>
+<p>If you haven’t installed anything then, check <a href="#installation">here</a>.
+Ensure docker instances are running, see <a href="#setting-up-docker">here</a> on how to start one up.</p>
+<p>Make sure:</p>
+<ul>
+<li>
+<p><code>.env</code> vars are set</p>
+</li>
+<li>
+<p>Backend server is running</p>
+</li>
+</ul>
+<pre><code class="language-bash">cd server
+go run cmd/server/main.go # run the server(gin)
+</code></pre>
+<ul>
+<li>React client is running</li>
+</ul>
+<pre><code class="language-bash">cd collaboratex-frontend
+pnpm dev # react frontend
+</code></pre>
+<ul>
+<li>WebSocket services</li>
+</ul>
+<pre><code class="language-bash">cd yjs-server
+node server.js
+</code></pre>
+<p>Then open your browser, head where frontend is running, Signup and enjoy.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="future-work"><a class="header" href="#future-work">Future Work</a></h1>
+<p>This project was a bit rushed, due to the never stopping marching of time, that’ll end all of us.</p>
+<p>Well, what can be improved/added for this project?</p>
+<ul>
+<li>Version history and document rollback</li>
+<li>Both of us working on this project are not frontend developers, so the UI/UX sucks</li>
+<li>Role based access control</li>
+<li>Link sharing and all</li>
+</ul>
+<p>Loved reading? Feel free to leave a <a href="https://github.com/razzat008/collaboratex">star💫</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="contributing-to-collaboratex"><a class="header" href="#contributing-to-collaboratex">Contributing to Collaboratex</a></h1>
+<h2 id="how-to-get-started"><a class="header" href="#how-to-get-started">How to get started?</a></h2>
+<p>well, what do we have here??</p>
+<h2 id="fork--clone"><a class="header" href="#fork--clone">Fork &amp; Clone</a></h2>
+<pre><code>1. Fork the repository on GitHub
+   github.com/yourusername/collaboratex
+
+2. Clone your fork
+   git clone https://github.com/yourusername/collaboratex.git
+   cd collaboratex
+
+3. Add upstream remote
+   git remote add upstream https://github.com/original/collaboratex.git
+</code></pre>
+<h3 id="create-feature-branch"><a class="header" href="#create-feature-branch">Create Feature Branch</a></h3>
+<pre><code>git checkout -b feature/your-feature-name
+
+Branch naming:
+├─ feature/add-dark-mode
+├─ fix/websocket-reconnection
+├─ docs/update-readme
+├─ refactor/optimize-sync
+└─ test/add-unit-tests
+</code></pre>
+<h2 id="development-setup"><a class="header" href="#development-setup">Development Setup</a></h2>
+<p>For Development setup see <a href="#running-the-project-locally">this</a></p>
+<h2 id="commit-guidelines"><a class="header" href="#commit-guidelines">Commit Guidelines</a></h2>
+<h3 id="commit-messages"><a class="header" href="#commit-messages">Commit Messages</a></h3>
+<pre><code>Good commit messages:
+- fix: resolve websocket reconnection timeout issue
+- feat: add dark mode toggle to editor
+- docs: update authentication flow diagram
+- refactor: optimize yjs update batching
+- test: add unit tests for addCollaborator resolver
+
+Format: type(scope): brief description
+- Keep under 50 characters
+- Use imperative mood ("add" not "added")
+- No period at end
+</code></pre>
+<h2 id="pull-request-process"><a class="header" href="#pull-request-process">Pull Request Process</a></h2>
+<h3 id="before-submitting"><a class="header" href="#before-submitting">Before Submitting</a></h3>
+<p>Make sure you’re on latest upstream</p>
+<pre><code>1. Sync with upstream
+   git fetch upstream
+   git rebase upstream/main
+
+2. Push to your fork
+   git push origin feature/your-feature
+
+3. Go to GitHub and create PR
+</code></pre>
+<hr>
+<p>Have a nice day!!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
