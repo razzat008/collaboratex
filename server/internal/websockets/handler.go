@@ -2,11 +2,11 @@ package websockets
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
-	"strings"
 	"strconv"
-	"math/rand"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
