@@ -2,6 +2,7 @@ package websockets
 
 import (
 	"sync"
+	"encoding/json"
 )
 
 /* Hub manager manages all the hubs */
@@ -40,8 +41,8 @@ type Hub struct {
 
 // Messages to be sent
 type BroadcastMessage struct {
-	Sender *Client
-	Data   []byte
+	Sender *Client 					`json:"-"` //ignore this part 
+	Data   json.RawMessage  `json:"content"`
 }
 
 // Initializes a new hub manager
@@ -72,6 +73,7 @@ func (h *Hub) Run() {
 		case c := <-h.unregister:
 			delete(h.clients, c)
 			close(c.send)
+			if len(h.clients) == 0 { delete(h.hubManager.hubs, h.roomId) }
 
 			// handle broadcast events. support either:
 			// - BroadcastMessage{Sender, Data}: forward to all clients except Sender
