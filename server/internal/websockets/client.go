@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"encoding/json"
 	"github.com/gorilla/websocket"
 )
 
@@ -45,18 +46,23 @@ func (c *Client) Read() {
 
 	for {
 		// reading data from client's websocket
-		msgtype, data, err := c.connection.ReadMessage()
+		_, data, err := c.connection.ReadMessage()
 		if err != nil {
 			log.Println("err:", "while reading from connection", err)
 			break
 		}
 
-		if msgtype == websocket.BinaryMessage {
+			var message BroadcastMessage
+			if err := json.Unmarshal(data, &message); err != nil {
+				log.Println("error while unmarshaling",err)
+				continue
+			}
+			message.Sender = c	//adding client's info 
+
 			select {
-			case c.hub.broadcast <- BroadcastMessage{Sender: c, Data: data}:
+			case c.hub.broadcast <- message:
 			default:
 				log.Println("warning: dropping broadcast message, hub channel full")
-			}
 		}
 	}
 }
@@ -80,9 +86,7 @@ func (c *Client) Write() {
 				return
 			}
 
-			// Write each outgoing message as its own BinaryMessage frame.
-			// This preserves message boundaries which Yjs and awareness payloads rely on.
-			if err := c.connection.WriteMessage(websocket.BinaryMessage, message); err != nil {
+			if err := c.connection.WriteMessage(websocket.TextMessage , message); err != nil {
 				log.Println("err:", "while writing message to the connection", err)
 				return
 			}
