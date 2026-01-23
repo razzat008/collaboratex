@@ -1,8 +1,8 @@
 package websockets
 
 import (
-	"sync"
 	"encoding/json"
+	"sync"
 )
 
 /* Hub manager manages all the hubs */
@@ -30,7 +30,7 @@ type Hub struct {
 	unregister chan *Client
 
 	//broadcast incoming messages
-	broadcast chan BroadcastMessage 
+	broadcast chan BroadcastMessage
 
 	//Hub manager
 	hubManager *HubManager
@@ -41,8 +41,9 @@ type Hub struct {
 
 // Messages to be sent
 type BroadcastMessage struct {
-	Sender *Client 					`json:"-"` //ignore this part 
-	Data   json.RawMessage  `json:"content"`
+	Sender   *Client `json:"-"`       //ignore this part
+	UserName string  `json:"sender"` //client sends the name to display 
+	Data     string  `json:"content"`
 }
 
 // Initializes a new hub manager
@@ -73,27 +74,32 @@ func (h *Hub) Run() {
 		case c := <-h.unregister:
 			delete(h.clients, c)
 			close(c.send)
-			if len(h.clients) == 0 { delete(h.hubManager.hubs, h.roomId) }
+			if len(h.clients) == 0 {
+				delete(h.hubManager.hubs, h.roomId)
+			}
 
-			// handle broadcast events. support either:
-			// - BroadcastMessage{Sender, Data}: forward to all clients except Sender
+		// handle broadcast events. support either:
+		// - BroadcastMessage{Sender, Data}: forward to all clients except Sender
 		case msg := <-h.broadcast:
 			for client := range h.clients {
-				if client.id == msg.Sender.id{continue} 
-				client.send <- msg.Data
-			}
+			if msg.Sender == client{ continue }
+			 
+			data, err := json.Marshal(msg)
+			//don't send the json string if an error occured to the client
+			if err != nil { continue }
+			client.send <- data
 		}
 	}
 }
-
-func (hm *HubManager) GetExistingHubOrNewHub(roomId string) (*Hub) {
+}
+func (hm *HubManager) GetExistingHubOrNewHub(roomId string) *Hub {
 	// Handle create explicitly respecting provided roomId; otherwise generate new id.
-		var h *Hub
-		if h, ok := hm.hubs[roomId]; ok {
-			return h
-		}
-		h = hm.CreateNewHub(roomId)
+	var h *Hub
+	if h, ok := hm.hubs[roomId]; ok {
 		return h
+	}
+	h = hm.CreateNewHub(roomId)
+	return h
 }
 
 // This sets up hub and sends new goroutine to run main hub loop
