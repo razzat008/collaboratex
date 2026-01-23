@@ -50,7 +50,7 @@ const Editor: React.FC = () => {
   const projectName = searchParams.get("name") || "Project Workspace";
 
   // UI State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const [isPdfVisible, setIsPdfVisible] = useState(true);
   const [showLogs, setShowLogs] = useState(false);
