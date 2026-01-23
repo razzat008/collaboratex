@@ -12,6 +12,7 @@ import (
 	"gollaboratex/server/internal/api/handlers"
 	"gollaboratex/server/internal/api/handlers/download"
 	"gollaboratex/server/internal/middleware"
+	"gollaboratex/server/internal/websockets"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -217,7 +218,7 @@ func main() {
 	// Add to main.go for testing
 	api := r.Group("/api")
 
-	// hm := websockets.NewHubManager()
+	hm := websockets.NewHubManager()
 	api.Use(middleware.GinClerkAuthMiddleware(database))
 	{
 		api.GET("/", gin.WrapF(playground.Handler("GraphQL playground", "/api/query")))
@@ -232,6 +233,7 @@ func main() {
 	// {
 	// 	ws.GET("/:room", websockets.AuthenticatedWSHandler(hm))
 	// }
+	r.GET("ws/:room", websockets.AuthenticatedWSHandler(hm))
 
 	uploads := api.Group("/uploads")
 	{

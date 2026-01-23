@@ -2,11 +2,11 @@ package websockets
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
-	"strings"
 	"strconv"
-	"math/rand"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -63,75 +63,36 @@ var upgrader = &websocket.Upgrader{
 /* websocket handler that is used to initiate the websocket connection */
 func AuthenticatedWSHandler(hm *HubManager) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// Require that authentication middleware has already populated request context.
-		// We use the same user type placed into the context by middleware.GinClerkAuthMiddleware.
-		// user, err := middleware.GetUserFromContext(ctx.Request.Context())
-		// if err != nil {
-		// 	log.Println("WS auth failed: user not found in context")
-		// 	ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthenticated"})
-		// 	return
-		// }
-
-		// checking if the request for websocket is upgrade or not
-		// Log basic request info to help debugging handshake failures.
-		log.Println("WS handler invoked:", "Method=", ctx.Request.Method, "URL=", ctx.Request.URL.String(), "RemoteAddr=", ctx.Request.RemoteAddr)
-		log.Println("WS headers: Origin=", ctx.Request.Header.Get("Origin"), "Host=", ctx.Request.Host, "Upgrade=", ctx.Request.Header.Get("Upgrade"))
+		//check for websocket upgrade
 		if !websocket.IsWebSocketUpgrade(ctx.Request) {
 			log.Println("WS upgrade refused: not a websocket upgrade")
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Expected websocket upgrade"})
 			return
 		}
 
-		// Prefer an explicit display name provided by the client, otherwise derive from authenticated user.
-		//once Need to get the username
-		var name string
-			// if user.ClerkUserID != "" {
-			// 	name = user.ClerkUserID
-			// } 
-			if name ==""{
-				name = "Anynomous"
-			}
+		//for every user just give the anynomous name
+		name := "Anynomous"
 		log.Println("Connecting client name:", name)
 
-		// Use authenticated user's ClerkUserID as the client id (stable across connections).
-		// id := user.ClerkUserID
+		//Assigining random Id to client
 		id := strconv.FormatInt(rand.Int63(), 10)
 		log.Println("Assigned client id:", id)
 
-		// Determine canonical room/project id.
-		// Prefer a value injected by upstream middleware (e.g. project lookup middleware).
-		var roomId string
-		if v, ok := ctx.Get("project_id"); ok {
-			if s, ok2 := v.(string); ok2 {
-				roomId = s
-			}
-		}
-		// Fallbacks: path param then query param
-		if roomId == "" {
-			roomId = ctx.Param("room")
-		}
-		if roomId == "" {
-			roomId = ctx.Query("room_id")
-		}
-		if roomId == "" {
-			roomId = "testRoomId"
-		}
+		// room Is just project id since
+		roomId := ctx.Param("room")
 
 		// Log selected room id for debugging
 		log.Println("Requested room id:", roomId)
 
-		// Validate and obtain hub using canonical room id (resolved/authorized by middleware if available).
+		// Validate and obtain hub using canonical room id.
 		hub := hm.GetExistingHubOrNewHub(roomId)
 		log.Println("Obtained hub for room:", hub.roomId)
 
 		// Attempt to upgrade the HTTP request to a websocket connection.
-		// Log the incoming request details to help debug handshake failures.
 		log.Printf("Attempting WS upgrade: Path=%s RemoteAddr=%s Origin=%s", ctx.Request.URL.Path, ctx.Request.RemoteAddr, ctx.Request.Header.Get("Origin"))
 		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 		if err != nil {
-			// Log the upgrade failure with details so developers can diagnose issues
 			log.Printf("WebSocket upgrade failed: RemoteAddr=%s Origin=%s Error=%v", ctx.Request.RemoteAddr, ctx.Request.Header.Get("Origin"), err)
-			// Handshake failed — return a 400 to the client. Do not write JSON after upgrade attempt.
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
