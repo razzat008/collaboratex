@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react'; // ✅ Use your actual Clerk import
+import { useUser } from '@clerk/clerk-react';
 
 interface ChatMessage {
   sender: string;
   content: string;
+  isOwn?: boolean; 
 }
 
 interface ChatPopupProps {
@@ -13,7 +14,7 @@ interface ChatPopupProps {
   wsUrl?: string;
   isOpen: boolean;
   onToggle: () => void;
-  onNewMessage?: () => void; // ✅ Callback when new message arrives
+  onNewMessage?: () => void;
 }
 
 const ChatPopup: React.FC<ChatPopupProps> = ({ 
@@ -123,6 +124,13 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
       sender: userName,
       content: inputMessage.trim()
     };
+
+    const optimisticMessage: ChatMessage = {
+      sender: userName,
+      content: inputMessage.trim(),
+      isOwn: true
+    };
+		setMessages(prev => [...prev, optimisticMessage]);
 
     wsRef.current.send(JSON.stringify(message));
     setInputMessage('');
