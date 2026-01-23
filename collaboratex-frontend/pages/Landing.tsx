@@ -33,7 +33,7 @@ const Landing: React.FC = () => {
               <button onClick={() => scrollTo('features')} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Features</button>
               <button onClick={() => scrollTo('opensource')} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Open Source</button>
               <button onClick={() => scrollTo('templates')} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Templates</button>
-              <a href="https://github.com/razzat008/gollaboratex" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Github</a>
+              <a href="https://github.com/razzat008/collaboratex" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Github</a>
             </div>
 
             <div className="flex items-center gap-3">
