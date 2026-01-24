@@ -27,7 +27,6 @@ const Dashboard: React.FC = () => {
   const { data, loading, error, refetch } = useGetProjects();
   const [deleteProject] = useDeleteProject();
   const [createProject] = useCreateProject();
-  const apolloClient = useApolloClient();
 
   useEffect(() => {
     if (!data?.projects) {
