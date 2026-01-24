@@ -194,10 +194,10 @@ const PDFPanel: React.FC<PDFPanelProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6 relative">
+      <div className="flex-1 overflow-auto p-0 relative">
         {pdfObjectUrl ? (
           <div
-            className="w-full h-full overflow-auto flex items-start justify-center p-4"
+            className="w-full h-full overflow-auto flex items-start justify-center p-1"
             ref={pdfViewerRef}
           >
             <div className="w-full max-w-5xl flex flex-col items-center">
@@ -208,12 +208,12 @@ const PDFPanel: React.FC<PDFPanelProps> = ({
                   onNumPagesChange(n);
                 }}
                 loading={
-                  <div className="text-center text-slate-500 p-8">
+                  <div className="text-center text-slate-500 p-1">
                     Loading PDF…
                   </div>
                 }
                 noData={
-                  <div className="text-center text-slate-500 p-8">
+                  <div className="text-center text-slate-500 p-1">
                     No PDF available
                   </div>
                 }
@@ -227,7 +227,7 @@ const PDFPanel: React.FC<PDFPanelProps> = ({
                         renderTextLayer={false}
                         renderAnnotationLayer={false}
                         loading={
-                          <div className="text-center p-3 text-slate-500">
+                          <div className="text-center p-1 text-slate-500">
                             Rendering page…
                           </div>
                         }
@@ -253,12 +253,6 @@ const PDFPanel: React.FC<PDFPanelProps> = ({
           </div>
         )}
 
-        {isCompiling && (
-          <div className="absolute bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-            <Loader2 size={16} className="animate-spin" />
-            Compiling...
-          </div>
-        )}
       </div>
     </div>
   );

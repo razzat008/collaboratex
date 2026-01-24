@@ -10,6 +10,7 @@ import EditorPanel from "../components/Editor/EditorPanel";
 import PDFPanel from "../components/Editor/PDFPanel";
 import ChatPopup from "../components/Editor/ChatPopup";
 import { useUpdateWorkingFile, useGetProject } from "@/src/graphql/generated";
+import { useAuth } from "@clerk/clerk-react";
 
 interface CurrentFile {
   id: string;
@@ -22,31 +23,11 @@ type JobStatus = "queued" | "running" | "success" | "failed" | "unknown";
 // Constants
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 60;
-
-// Log extraction helper
-const extractLogsFromJob = (jobData: any): string[] => {
-  if (Array.isArray(jobData.logLines) && jobData.logLines.length > 0) {
-    return jobData.logLines.filter((line: string) => line && line.length > 0);
-  }
-  if (typeof jobData.logs === "string" && jobData.logs.length > 0) {
-    return jobData.logs
-      .split("\n")
-      .filter((line: string) => line && line.length > 0);
-  }
-  if (
-    jobData.output &&
-    jobData.output.logText &&
-    typeof jobData.output.logText === "string"
-  ) {
-    return jobData.output.logText
-      .split("\n")
-      .filter((line: string) => line && line.length > 0);
-  }
-  return [];
-};
+const API_BASE_URL = "http://localhost:8080";
 
 const Editor: React.FC = () => {
   const { id } = useParams();
+  const { getToken } = useAuth();
   const [searchParams] = useSearchParams();
   const projectName = searchParams.get("name") || "Project Workspace";
 
@@ -68,10 +49,30 @@ const Editor: React.FC = () => {
   const [compileStatus, setCompileStatus] = useState<JobStatus>("unknown");
   const [compileLogs, setCompileLogs] = useState<string[]>([]);
   const [pdfObjectUrl, setPdfObjectUrl] = useState<string | null>(null);
-
-	//chat popup
+  //chat popup
 	const [isChatOpen, setIsChatOpen] = useState(false);
 	const [hasUnreadChat, setHasUnreadChat] = useState(false);
+
+  // Load PDF from cache on mount
+  useEffect(() => {
+    if (!id) return;
+    
+    const cachedJobId = localStorage.getItem(`pdf_jobId_${id}`);
+    if (cachedJobId) {
+      // Try to fetch the cached PDF
+      fetchPDF(cachedJobId).then((blob) => {
+        if (blob) {
+          const objUrl = URL.createObjectURL(blob);
+          setPdfObjectUrl(objUrl);
+          setCompileJobId(cachedJobId);
+          setLogs((prev) => [...prev, `[system] Restored PDF from last compilation`]);
+        } else {
+          // PDF no longer available, clear cache
+          localStorage.removeItem(`pdf_jobId_${id}`);
+        }
+      });
+    }
+  }, [id]);
 
   // Polling refs
   const pollAttemptsRef = useRef<number>(0);
@@ -129,11 +130,11 @@ const Editor: React.FC = () => {
     getCurrentContentRef.current = () => "";
 
     setCurrentFile(file);
-    setHasUnsavedChanges(false);
+    setHasUnsavedChanges(false); // File just loaded, no unsaved changes
     setIsInitialLoad(false);
     setLogs((prev) => [...prev, `[file] Opened ${fileName}`]);
 
-    setTimeout(() => handleRecompile(false, content), 100);
+    // Don't auto-compile on file select
   };
 
   const handleAssetSelect = (assetPath: string) => {
@@ -179,6 +180,9 @@ const Editor: React.FC = () => {
             },
           },
         });
+        
+        // Update the current file's base content after successful save
+        setCurrentFile((prev) => prev ? { ...prev, content } : prev);
         setHasUnsavedChanges(false);
         setLogs((prev) => [...prev, `[save] Saved ${file.name}`]);
       } catch (error) {
@@ -200,10 +204,14 @@ const Editor: React.FC = () => {
     (value: string) => {
       if (!currentFileRef.current) return;
 
-      setHasUnsavedChanges(true);
+      // Only mark as unsaved if content actually changed from what we loaded
+      const hasChanged = value !== currentFileRef.current.content;
+      setHasUnsavedChanges(hasChanged);
+      
+      // Update current file content (but don't replace the original)
       setCurrentFile((prev) => (prev ? { ...prev, content: value } : prev));
 
-      if (autoSaveRef.current) {
+      if (autoSaveRef.current && hasChanged) {
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current);
         }
@@ -276,10 +284,11 @@ const Editor: React.FC = () => {
     pollAttemptsRef.current = 0;
   };
 
+  // NEW: Simplified status fetcher - now returns status + logs in one call
   const fetchJobStatus = async (jobId: string) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/compile/${encodeURIComponent(jobId)}`,
+        `${API_BASE_URL}/api/compile/${encodeURIComponent(jobId)}`,
         {
           method: "GET",
           headers: {
@@ -288,20 +297,13 @@ const Editor: React.FC = () => {
         }
       );
 
-      // FIX: Check content-type before parsing
-      const contentType = res.headers.get("content-type");
-      const isJson = contentType && contentType.includes("application/json");
-
       if (!res.ok) {
-        console.warn(
-          "Status fetch failed:",
-          res.status,
-          isJson ? "JSON response" : "Non-JSON response"
-        );
+        console.warn("Status fetch failed:", res.status);
         return null;
       }
 
-      if (!isJson) {
+      const contentType = res.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
         console.warn("Status response is not JSON");
         return null;
       }
@@ -312,6 +314,37 @@ const Editor: React.FC = () => {
       return null;
     }
   };
+
+  // NEW: Fetch PDF directly from the new endpoint
+  const fetchPDF = useCallback(async (jobId: string): Promise<Blob | null> => {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/compile/${encodeURIComponent(jobId)}/pdf`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/pdf",
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.warn("PDF fetch failed:", res.status);
+        return null;
+      }
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType?.includes("application/pdf")) {
+        console.warn("PDF response is not a PDF:", contentType);
+        return null;
+      }
+
+      return await res.blob();
+    } catch (err) {
+      console.error("fetchPDF error", err);
+      return null;
+    }
+  }, []);
 
   const pollJob = (jobId: string) => {
     stopPolling();
@@ -333,6 +366,7 @@ const Editor: React.FC = () => {
         return;
       }
 
+      // NEW: Get status + logs in one call
       const job: any = await fetchJobStatus(jobId);
       if (!job) {
         console.warn(
@@ -344,114 +378,61 @@ const Editor: React.FC = () => {
       const status: JobStatus = job.status || "unknown";
       setCompileStatus(status);
 
-      // FIX: Get logs from the job document (backend stores them inline)
-      // Priority 1: logLines array (already split by backend)
-      let logsArray: string[] = [];
-      
-      if (Array.isArray(job.logLines) && job.logLines.length > 0) {
-        logsArray = job.logLines.filter((line: string) => line && line.length > 0);
-      } 
-      // Priority 2: logs as string (split locally)
-      else if (typeof job.logs === "string" && job.logs.length > 0) {
-        logsArray = job.logs
+      // NEW: Logs are now directly in the response (from Redis)
+      if (job.logs && typeof job.logs === "string") {
+        const logsArray = job.logs
           .split("\n")
-          .filter((line: string) => line && line.length > 0);
-      }
-      // Priority 3: Try fetching from logUrl as last resort
-      else if (job.logUrl && typeof job.logUrl === "string") {
-        try {
-          const logRes = await fetch(job.logUrl);
-          const logContentType = logRes.headers.get("content-type");
-          const isLogText = logContentType && logContentType.includes("text/plain");
-
-          if (logRes.ok && isLogText) {
-            const logText = await logRes.text();
-            logsArray = logText
-              .split("\n")
-              .filter((line) => line && line.length > 0);
-          } else {
-            console.debug(
-              "Log fetch: invalid response format or status",
-              logRes.status
-            );
-          }
-        } catch (logErr) {
-          console.debug("Log fetch error (will retry next poll)", logErr);
+          .filter((line: string) => line && line.trim().length > 0);
+        
+        if (logsArray.length > 0) {
+          setCompileLogs(logsArray);
         }
       }
 
-      if (logsArray.length > 0) {
-        setCompileLogs(logsArray);
-      }
-
+      // Terminal states
       if (status === "success" || status === "failed") {
         stopPolling();
         setIsCompiling(false);
 
         if (status === "success") {
-          const pdfUrl: string | undefined =
-            job.outputPdfUrl || (job.output && job.output.pdfUrl);
+          // NEW: Fetch PDF from the new direct endpoint
+          const pdfBlob = await fetchPDF(jobId);
 
-          if (pdfUrl && typeof pdfUrl === "string") {
-            try {
-              const pdfRes = await fetch(pdfUrl);
-
-              // FIX: Check content-type for PDF
-              const pdfContentType = pdfRes.headers.get("content-type");
-              const isPdf = pdfContentType && pdfContentType.includes("application/pdf");
-
-              if (pdfRes.ok && isPdf) {
-                const blob = await pdfRes.blob();
-
-                if (pdfObjectUrl) {
-                  URL.revokeObjectURL(pdfObjectUrl);
-                }
-
-                const objUrl = URL.createObjectURL(blob);
-                setPdfObjectUrl(objUrl);
-
-                const durationSec = Math.round(
-                  (pollAttemptsRef.current * POLL_INTERVAL_MS) / 1000
-                );
-                setLogs((prev) => [
-                  ...prev,
-                  `[compile] ✓ PDF ready (compilation took ${durationSec}s)`,
-                ]);
-
-                setTimeout(() => {
-                  setShowLogs(false);
-                }, 2000);
-              } else if (!isPdf) {
-                setLogs((prev) => [
-                  ...prev,
-                  `[compile] ✗ PDF response is not valid PDF (received ${pdfContentType})`,
-                ]);
-                setShowLogs(true);
-              } else {
-                setLogs((prev) => [
-                  ...prev,
-                  `[compile] ✗ Failed to fetch PDF: HTTP ${pdfRes.status}`,
-                ]);
-                setShowLogs(true);
-              }
-            } catch (err) {
-              console.error("Failed to fetch PDF blob", err);
-              const errorMsg = err instanceof Error ? err.message : String(err);
-              setLogs((prev) => [
-                ...prev,
-                `[compile] ✗ Error fetching PDF: ${errorMsg}`,
-              ]);
-              setShowLogs(true);
+          if (pdfBlob) {
+            // Clean up old PDF URL
+            if (pdfObjectUrl) {
+              URL.revokeObjectURL(pdfObjectUrl);
             }
+
+            const objUrl = URL.createObjectURL(pdfBlob);
+            setPdfObjectUrl(objUrl);
+
+            // Cache the job ID for page refresh persistence
+            if (id) {
+              localStorage.setItem(`pdf_jobId_${id}`, jobId);
+            }
+
+            const durationSec = Math.round(
+              (pollAttemptsRef.current * POLL_INTERVAL_MS) / 1000
+            );
+            setLogs((prev) => [
+              ...prev,
+              `[compile] ✓ PDF ready (compilation took ${durationSec}s)`,
+            ]);
+
+            // Auto-hide logs after success
+            setTimeout(() => {
+              setShowLogs(false);
+            }, 2000);
           } else {
             setLogs((prev) => [
               ...prev,
-              `[compile] ✗ No PDF URL returned by server`,
+              `[compile] ✗ Failed to fetch PDF from server`,
             ]);
             setShowLogs(true);
           }
         } else if (status === "failed") {
-          const errorMsg = job.errorMessage || "Unknown error";
+          const errorMsg = job.error || "Unknown error";
           setLogs((prev) => [
             ...prev,
             `[compile] ✗ Compilation failed: ${errorMsg}`,
@@ -464,6 +445,7 @@ const Editor: React.FC = () => {
 
   const startCompile = async () => {
     const file = currentFileRef.current;
+    const token = await getToken();
     if (!file) {
       setLogs((prev) => [...prev, "[compile] ✗ No file open to compile"]);
       setShowLogs(true);
@@ -474,7 +456,12 @@ const Editor: React.FC = () => {
     setCompileStatus("queued");
     setCompileJobId(null);
     setCompileLogs([]);
-    setPdfObjectUrl(null);
+    
+    // Clean up old PDF
+    if (pdfObjectUrl) {
+      URL.revokeObjectURL(pdfObjectUrl);
+      setPdfObjectUrl(null);
+    }
 
     const projectFiles = projectData?.project?.files || [];
 
@@ -512,18 +499,18 @@ const Editor: React.FC = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:8080/api/compile-inline", {
+      const res = await fetch(`${API_BASE_URL}/api/compile-inline`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
-      // FIX: Check content-type before parsing
       const contentType = res.headers.get("content-type");
-      const isJson = contentType && contentType.includes("application/json");
+      const isJson = contentType?.includes("application/json");
 
       if (!res.ok) {
         let errorMessage = "Unknown error";
@@ -532,12 +519,11 @@ const Editor: React.FC = () => {
           try {
             const errorData = await res.json();
             errorMessage =
-              errorData.error || errorData.message || JSON.stringify(errorData);
+              errorData.error || errorData.details || JSON.stringify(errorData);
           } catch (e) {
             errorMessage = `Server error: HTTP ${res.status}`;
           }
         } else {
-          // Server returned HTML or other non-JSON response
           errorMessage = `Server error: HTTP ${res.status} (Invalid response format)`;
         }
 
@@ -552,7 +538,6 @@ const Editor: React.FC = () => {
         return;
       }
 
-      // FIX: Verify response is JSON before parsing
       if (!isJson) {
         setIsCompiling(false);
         setCompileStatus("failed");
@@ -680,7 +665,7 @@ const Editor: React.FC = () => {
             className="flex flex-1"
             sizes={[50, 50]}
             minSize={[300, 300]}
-            gutterSize={4}
+            gutterSize={10}
             gutterAlign="center"
             snapOffset={30}
             dragInterval={1}
