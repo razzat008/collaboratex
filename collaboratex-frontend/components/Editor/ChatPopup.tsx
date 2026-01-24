@@ -5,7 +5,7 @@ import { useUser } from '@clerk/clerk-react';
 interface ChatMessage {
   sender: string;
   content: string;
-  isOwn?: boolean; 
+  isOwn?: boolean;
 }
 
 interface ChatPopupProps {
@@ -47,11 +47,17 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
   }, [messages]);
 
   const connectWebSocket = () => {
+    // Close existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
     try {
       const ws = new WebSocket(`${wsUrl}/ws/${roomId}`);
       
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected chat poput');
         setIsConnected(true);
         
         const joinMsg = {
@@ -66,7 +72,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
           const data = JSON.parse(event.data);
           const newMessage: ChatMessage = {
             sender: data.sender || 'Unknown',
-            content: data.content || '',
+            content: data.content || ''
           };
           
           setMessages(prev => [...prev, newMessage]);
@@ -103,6 +109,12 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
   };
 
   useEffect(() => {
+    // Prevent creating multiple connections
+    if (wsRef.current?.readyState === WebSocket.OPEN || 
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      return;
+    }
+
     connectWebSocket();
 
     return () => {
@@ -111,9 +123,10 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
       }
       if (wsRef.current) {
         wsRef.current.close();
+        wsRef.current = null;
       }
     };
-  }, [roomId]);
+  }, [roomId, wsUrl]);
 
   const sendMessage = () => {
     if (!inputMessage.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
@@ -125,13 +138,16 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
       content: inputMessage.trim()
     };
 
+    // Optimistically add message to UI immediately
     const optimisticMessage: ChatMessage = {
       sender: userName,
       content: inputMessage.trim(),
       isOwn: true
     };
-		setMessages(prev => [...prev, optimisticMessage]);
+    
+    setMessages(prev => [...prev, optimisticMessage]);
 
+    // Send through WebSocket
     wsRef.current.send(JSON.stringify(message));
     setInputMessage('');
   };
@@ -177,11 +193,11 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
                         : 'bg-white border border-slate-200 text-slate-800'
                     }`}
                   >
-                    <div className={`text-xs font-semibold mb-1 ${
-                      msg.isOwn ? 'text-blue-100' : 'text-blue-600'
-                    }`}>
-                      {msg.sender}
-                    </div>
+                    {!msg.isOwn && (
+                      <div className="text-xs font-semibold mb-1 text-blue-600">
+                        {msg.sender}
+                      </div>
+                    )}
                     <div className="text-sm break-words whitespace-pre-wrap">
                       {msg.content}
                     </div>
