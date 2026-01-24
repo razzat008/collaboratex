@@ -17,7 +17,7 @@ interface ChatPopupProps {
   onNewMessage?: () => void;
 }
 
-const ChatPopup: React.FC<ChatPopupProps> = ({ 
+const ChatPopup: React.FC<ChatPopupProps> = ({
   roomId,
   projectName,
   wsUrl = 'ws://localhost:8080',
@@ -28,14 +28,14 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  
+
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const { user, isSignedIn } = useUser();
-  const userName = isSignedIn && user 
-    ? `${user.firstName} ${user.lastName}`.trim() 
+  const userName = isSignedIn && user
+    ? `${user.firstName ? user.firstName : 'Falano'} ${user.lastName ? user.lastName : ''}`
     : 'Anonymous';
 
   const scrollToBottom = () => {
@@ -55,11 +55,11 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
 
     try {
       const ws = new WebSocket(`${wsUrl}/ws/${roomId}`);
-      
+
       ws.onopen = () => {
         console.log('WebSocket connected chat poput');
         setIsConnected(true);
-        
+
         const joinMsg = {
           sender: userName,
           content: `${userName} joined the chat`
@@ -74,9 +74,9 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
             sender: data.sender || 'Unknown',
             content: data.content || ''
           };
-          
+
           setMessages(prev => [...prev, newMessage]);
-          
+
           // Notify parent about new message
           if (!isOpen && onNewMessage) {
             onNewMessage();
@@ -94,7 +94,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
       ws.onclose = () => {
         console.log('WebSocket disconnected');
         setIsConnected(false);
-        
+
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log('Attempting to reconnect...');
           connectWebSocket();
@@ -110,8 +110,8 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
 
   useEffect(() => {
     // Prevent creating multiple connections
-    if (wsRef.current?.readyState === WebSocket.OPEN || 
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
+    if (wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
@@ -144,7 +144,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
       content: inputMessage.trim(),
       isOwn: true
     };
-    
+
     setMessages(prev => [...prev, optimisticMessage]);
 
     // Send through WebSocket
@@ -187,11 +187,10 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
                   className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                      msg.isOwn
+                    className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.isOwn
                         ? 'bg-blue-600 text-white'
                         : 'bg-white border border-slate-200 text-slate-800'
-                    }`}
+                      }`}
                   >
                     {!msg.isOwn && (
                       <div className="text-xs font-semibold mb-1 text-blue-600">
@@ -201,9 +200,8 @@ const ChatPopup: React.FC<ChatPopupProps> = ({
                     <div className="text-sm break-words whitespace-pre-wrap">
                       {msg.content}
                     </div>
-                    <div className={`text-xs mt-1 ${
-                      msg.isOwn ? 'text-blue-200' : 'text-slate-400'
-                    }`}>
+                    <div className={`text-xs mt-1 ${msg.isOwn ? 'text-blue-200' : 'text-slate-400'
+                      }`}>
                     </div>
                   </div>
                 </div>
