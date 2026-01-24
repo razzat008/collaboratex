@@ -114,7 +114,14 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
             basicSetup,
             latex(),
             yCollab(yText, provider.awareness),
-            EditorView.lineWrapping,
+            EditorView.theme({
+              "&": { height: "100%" },
+              ".cm-scroller": { overflowX: "hidden" },
+              ".cm-content": {
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              },
+            }), EditorView.lineWrapping
           ],
         });
 

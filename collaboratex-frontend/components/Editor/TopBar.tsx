@@ -1,10 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { UserButton } from "@clerk/clerk-react";
 import {
   ChevronLeft,
   Play,
   Save,
   Loader2,
+  User,
 } from "lucide-react";
 
 interface TopBarProps {
@@ -71,7 +73,6 @@ const TopBar: React.FC<TopBarProps> = ({
         {!isSaving && hasUnsavedChanges && (
           <div className="flex items-center gap-2 text-xs text-amber-600">
             <div className="w-2 h-2 bg-amber-600 rounded-full animate-pulse" />
-            Unsaved changes
           </div>
         )}
 
@@ -86,7 +87,7 @@ const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         {/* Auto Save Toggle */}
-        <div className="flex items-center gap-2 px-2 py-1 text-xs text-slate-700 border border-slate-200 rounded-lg">
+        <div className="flex items-center gap-1 px-1 py-1 text-xs text-slate-700 border border-slate-200 rounded-lg">
           <span>Auto Save</span>
           <button
             onClick={onAutoSaveToggle}
@@ -101,27 +102,27 @@ const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         {/* Auto Compile Toggle */}
-        {/* <div className="flex items-center gap-2 px-2 py-1 text-xs text-slate-700 border border-slate-200 rounded-lg"> */}
-        {/*   <span>Auto Compile</span> */}
-        {/*   <button */}
-        {/*     onClick={onAutoCompileToggle} */}
-        {/*     className={`w-8 h-4 rounded-full transition-colors relative ${ */}
-        {/*       autoCompile ? "bg-green-600" : "bg-slate-300" */}
-        {/*     }`} */}
-        {/*   > */}
-        {/*     <div */}
-        {/*       className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${ */}
-        {/*         autoCompile ? "translate-x-4" : "" */}
-        {/*       }`} */}
-        {/*     /> */}
-        {/*   </button> */}
-        {/* </div> */}
+        <div className="flex items-center gap-2 px-2 py-1 text-xs text-slate-700 border border-slate-200 rounded-lg">
+          <span>Auto Compile</span>
+          <button
+            onClick={onAutoCompileToggle}
+            className={`w-8 h-4 rounded-full transition-colors relative ${
+              autoCompile ? "bg-green-600" : "bg-slate-300"
+            }`}
+          >
+            <div
+              className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${
+                autoCompile ? "translate-x-4" : ""
+              }`}
+            />
+          </button>
+        </div>
 
         {/* Compile Button */}
         <button
           onClick={onCompile}
           disabled={compileState.disabled}
-          className="flex items-center gap-2 px-4 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-70"
+          className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-70"
           title={
             compileState.disabled
               ? "Select a file to compile"
@@ -135,6 +136,7 @@ const TopBar: React.FC<TopBarProps> = ({
           )}
           {compileState.text}
         </button>
+        <UserButton/>
       </div>
     </div>
   );
