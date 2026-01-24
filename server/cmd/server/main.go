@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"gollaboratex/server/internal/api/graph"
@@ -156,7 +155,6 @@ func main() {
 		RedisQueueName:  "compile:queue",
 		MongoDatabase:   database.Name(),
 		JobCollection:   "compile_jobs",
-		MinioBucketLogs: "compile-logs",
 		MinioBucketPDFs: "compiled-pdfs",
 		DockerImage:     dockerImage,
 		MemoryBytes:     750 << 20,
@@ -181,12 +179,12 @@ func main() {
 		Upgrader: websocket.Upgrader{
 			// In upgrader
 			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
+				// origin := r.Header.Get("Origin")
 				// For development, allow all
-				if strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1") {
-					return true
-				}
-				return false
+				// if strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1") {
+				// return true
+				// }
+				return true
 			},
 		},
 	})
@@ -266,20 +264,34 @@ func main() {
 	// or add the middleware if you want them protected).
 	// Ensure the job collection name matches workerCfg.JobCollection.
 	jobColl := database.Collection(workerCfg.JobCollection)
-	compileHandler := worker.NewHandler(redisClient, minioClient, jobColl, workerCfg.RedisQueueName, workerCfg.MinioBucketLogs, workerCfg.MinioBucketPDFs)
+	compileHandler := worker.NewHandler(
+		redisClient,
+		minioClient,
+		jobColl,
+		workerCfg.RedisQueueName,
+		workerCfg.MinioBucketPDFs, // Removed logsBucket parameter
+	)
 
 	// Register compile endpoints directly under /api paths (public).
 	// Doing direct registrations avoids potential router group ordering issues.
-	r.POST("/api/compile-inline", compileHandler.EnqueueCompileInline)
-	r.POST("/api/compile", compileHandler.EnqueueCompile)
-	r.GET("/api/compile/:id", compileHandler.GetJobStatus)
-
+		r.POST("/api/compile-inline", compileHandler.EnqueueCompileInline)
+		r.POST("/api/compile", compileHandler.EnqueueCompile)
+		r.GET("/api/compile/:id", compileHandler.GetJobStatus)
+		r.GET("/api/:id/logs", compileHandler.GetJobLogs) // New: Get logs separately
+		r.GET("/api/compile/:id/pdf", compileHandler.DownloadPDF) // New: Download PDF directly
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
+		// Test Redis connection
+		redisStatus := "disconnected"
+		if err := redisClient.Ping(context.Background()).Err(); err == nil {
+			redisStatus = "connected"
+		}
+
 		c.JSON(200, gin.H{
 			"status":   "ok",
 			"database": "connected",
 			"minio":    "connected",
+			"redis":    redisStatus,
 		})
 	})
 
