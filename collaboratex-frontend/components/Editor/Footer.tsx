@@ -6,6 +6,9 @@ interface FooterProps {
   autoSave: boolean;
   hasUnsavedChanges: boolean;
   onToggleLogs: () => void;
+  onToggleChat: () => void;  
+  isChatOpen: boolean;        
+  hasUnreadChat: boolean;   
 }
 
 const Footer: React.FC<FooterProps> = ({
@@ -13,6 +16,9 @@ const Footer: React.FC<FooterProps> = ({
   autoSave,
   hasUnsavedChanges,
   onToggleLogs,
+  onToggleChat,      
+  isChatOpen,        
+  hasUnreadChat,
 }) => {
   return (
     <div className="h-8 bg-slate-800 text-slate-400 text-xs flex items-center justify-between px-4">
@@ -52,9 +58,15 @@ const Footer: React.FC<FooterProps> = ({
         <span>UTF-8</span>
 
         {/* Chat Button */}
-        <button className="hover:text-white transition-colors flex items-center gap-1">
+       <button 
+          onClick={onToggleChat}
+          className="hover:text-white transition-colors flex items-center gap-1 relative"
+        >
           <MessageSquare size={12} />
           Chat
+          {hasUnreadChat && !isChatOpen && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+          )}
         </button>
       </div>
     </div>
