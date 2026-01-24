@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	containertypes "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/go-redis/redis/v8"
@@ -59,7 +59,7 @@ func Run(ctx context.Context, cfg Config, redisClient *redis.Client, mongoClient
 	}
 
 	jobColl := mongoClient.Database(cfg.MongoDatabase).Collection(cfg.JobCollection)
-
+	
 	// Create handler for status/log updates
 	handler := NewHandler(redisClient, minioClient, jobColl, cfg.RedisQueueName, cfg.MinioBucketPDFs)
 
@@ -149,7 +149,7 @@ func processJob(ctx context.Context, job JobPayload, cfg Config, dockerCli *clie
 
 	// Run compilation
 	stdoutStderr, exitCode, err := runTectonicContainer(ctx, dockerCli, cfg, workspace, mainFile)
-
+	
 	// Store logs in Redis (always, even on success)
 	_ = handler.StoreLogs(ctx, job.JobID, stdoutStderr)
 
@@ -398,7 +398,8 @@ func uploadFileToMinio(ctx context.Context, minioClient *minio.Client, bucket, o
 }
 
 func runTectonicContainer(ctx context.Context, dockerCli *client.Client, cfg Config, workspace, mainFile string) (string, int, error) {
-	reader, err := dockerCli.ImagePull(ctx, cfg.DockerImage, types.ImagePullOptions{})
+	// Pull image if needed
+	reader, err := dockerCli.ImagePull(ctx, cfg.DockerImage, image.PullOptions{})
 	if err == nil && reader != nil {
 		io.Copy(io.Discard, reader)
 		reader.Close()
@@ -406,14 +407,14 @@ func runTectonicContainer(ctx context.Context, dockerCli *client.Client, cfg Con
 
 	containerName := fmt.Sprintf("tectonic-%d", time.Now().UnixNano())
 	cmdStr := fmt.Sprintf("ls -la /workspace && if command -v tectonic >/dev/null 2>&1; then tectonic --outdir=/workspace %s; else latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape %s; fi", mainFile, mainFile)
-
-	config := &containertypes.Config{
+	
+	config := &container.Config{
 		Image:      cfg.DockerImage,
 		Cmd:        []string{"/bin/sh", "-c", cmdStr},
 		WorkingDir: "/workspace",
 	}
 
-	hostConfig := &containertypes.HostConfig{
+	hostConfig := &container.HostConfig{
 		NetworkMode:    "none",
 		ReadonlyRootfs: true,
 		Tmpfs: map[string]string{
@@ -434,7 +435,7 @@ func runTectonicContainer(ctx context.Context, dockerCli *client.Client, cfg Con
 				ReadOnly: false,
 			},
 		},
-		Resources: containertypes.Resources{
+		Resources: container.Resources{
 			Memory:   cfg.MemoryBytes,
 			NanoCPUs: cfg.NanoCPUs,
 		},
@@ -452,16 +453,21 @@ func runTectonicContainer(ctx context.Context, dockerCli *client.Client, cfg Con
 	containerID := resp.ID
 
 	defer func() {
-		timeout := 2 * time.Second
-		_ = dockerCli.ContainerRemove(context.Background(), containerID, types.ContainerRemoveOptions{Force: true, RemoveVolumes: true})
-		_ = dockerCli.ContainerStop(context.Background(), containerID, &timeout)
+		timeout := 2
+		_ = dockerCli.ContainerRemove(context.Background(), containerID, container.RemoveOptions{
+			Force:         true,
+			RemoveVolumes: true,
+		})
+		_ = dockerCli.ContainerStop(context.Background(), containerID, container.StopOptions{
+			Timeout: &timeout,
+		})
 	}()
 
-	if err := dockerCli.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
+	if err := dockerCli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
 		return "", -1, fmt.Errorf("container start: %w", err)
 	}
 
-	statusCh, errCh := dockerCli.ContainerWait(ctx, containerID, containertypes.WaitConditionNotRunning)
+	statusCh, errCh := dockerCli.ContainerWait(ctx, containerID, container.WaitConditionNotRunning)
 	var exitCode int64
 	select {
 	case err := <-errCh:
@@ -522,7 +528,7 @@ func runTectonicContainerDockerCLI(ctx context.Context, cfg Config, workspace, m
 }
 
 func readContainerLogs(ctx context.Context, dockerCli *client.Client, containerID string) (string, error) {
-	opts := types.ContainerLogsOptions{
+	opts := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Timestamps: false,
