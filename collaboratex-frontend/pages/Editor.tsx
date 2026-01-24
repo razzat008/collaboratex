@@ -8,6 +8,7 @@ import TopBar from "../components/Editor/TopBar";
 import Footer from "../components/Editor/Footer";
 import EditorPanel from "../components/Editor/EditorPanel";
 import PDFPanel from "../components/Editor/PDFPanel";
+import ChatPopup from "../components/Editor/ChatPopup";
 import { useUpdateWorkingFile, useGetProject } from "@/src/graphql/generated";
 import { useAuth } from "@clerk/clerk-react";
 
@@ -48,6 +49,9 @@ const Editor: React.FC = () => {
   const [compileStatus, setCompileStatus] = useState<JobStatus>("unknown");
   const [compileLogs, setCompileLogs] = useState<string[]>([]);
   const [pdfObjectUrl, setPdfObjectUrl] = useState<string | null>(null);
+  //chat popup
+	const [isChatOpen, setIsChatOpen] = useState(false);
+	const [hasUnreadChat, setHasUnreadChat] = useState(false);
 
   // Load PDF from cache on mount
   useEffect(() => {
@@ -88,6 +92,7 @@ const Editor: React.FC = () => {
   const lastCompiledContentRef = useRef<string | null>(null);
   const getCurrentContentRef = useRef<() => string>(() => "");
   const autoSaveRef = useRef<boolean>(autoSave);
+
 
   useEffect(() => {
     autoSaveRef.current = autoSave;
@@ -764,12 +769,27 @@ const Editor: React.FC = () => {
       )}
 
       {/* Footer */}
-      <Footer
-        showLogs={showLogs}
-        autoSave={autoSave}
-        hasUnsavedChanges={hasUnsavedChanges}
-        onToggleLogs={() => setShowLogs(!showLogs)}
-      />
+			<Footer
+			showLogs={showLogs}
+			autoSave={autoSave}
+			hasUnsavedChanges={hasUnsavedChanges}
+			onToggleLogs={() => setShowLogs(!showLogs)}
+			onToggleChat={() => {
+				setIsChatOpen(!isChatOpen);
+				if (!isChatOpen) setHasUnreadChat(false); // Clear unread when opening
+			}}
+			isChatOpen={isChatOpen}
+			hasUnreadChat={hasUnreadChat}
+			/>
+
+			{/* Chat Popup */}
+			<ChatPopup
+			roomId={id as string}
+			projectName={projectName}
+			isOpen={isChatOpen}
+			onToggle={() => setIsChatOpen(!isChatOpen)}
+			onNewMessage={() => setHasUnreadChat(true)}
+			/>
     </div>
   );
 };
