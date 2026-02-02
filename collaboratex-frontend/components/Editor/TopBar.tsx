@@ -26,6 +26,9 @@ interface TopBarProps {
   onAutoSaveToggle: () => void;
   onAutoCompileToggle: () => void;
   onCompile: () => void;
+  // Called after a version restore completes and TopBar has refetched project data.
+  // Optional for consumers that need to run extra logic (e.g. update editor state).
+  onAfterRestore?: () => Promise<void> | void;
 }
 
 const TopBar: React.FC<TopBarProps> = ({
@@ -42,6 +45,7 @@ const TopBar: React.FC<TopBarProps> = ({
   onAutoSaveToggle,
   onAutoCompileToggle,
   onCompile,
+  onAfterRestore,
 }) => {
   // Versions / Snapshot GraphQL hooks
   const { data: versionsData, refetch } = useGetProjectWithoutContent({
@@ -116,6 +120,7 @@ const TopBar: React.FC<TopBarProps> = ({
           onRestore={async (versionId: string) => {
             await restoreVersion({ variables: { versionId } });
             await refetch();
+            if (onAfterRestore) await onAfterRestore();
           }}
         />
 

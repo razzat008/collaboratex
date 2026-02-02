@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Flag, ChevronDown } from "lucide-react";
+import { useCreateVersion, useRestoreVersion } from "@/src/graphql/generated";
 
 type Version = {
   id: string;
@@ -9,8 +10,11 @@ type Version = {
 
 type Props = {
   versions?: Version[]; // list most-recent-first is preferred
-  onCreate: (message?: string) => Promise<void> | void;
-  onRestore: (id: string) => Promise<void> | void;
+  // Parent callbacks are optional. If not provided, SnapshotControl will call GraphQL mutations directly.
+  onCreate?: (message?: string) => Promise<void> | void;
+  onRestore?: (id: string) => Promise<void> | void;
+  // If parent callbacks are not provided, `projectId` is required to run the mutations internally.
+  projectId?: string;
   // Optional UI tweaks
   maxWidthClass?: string; // Tailwind width class, e.g. "w-80"
   showCount?: boolean;
@@ -21,18 +25,22 @@ type Props = {
 /**
  * SnapshotControl
  *
- * - Clicking the flag (🚩) opens a small message input popup to label the snapshot, then calls `onCreate(message)`.
+ * - Clicking the flag (🚩) opens a small message input popup to label the snapshot, then calls `onCreate(message)` if provided,
+ *   otherwise it will call the GraphQL `createVersion` mutation (requires `projectId` prop).
  * - Clicking the "v" toggles the versions dropdown. The dropdown only opens/closes via clicks (not hover).
  * - The dropdown will hide when the mouse leaves the dropdown area (with a small delay to avoid flicker).
- * - Each version entry shows its created time and optional message and has a Restore button which calls `onRestore(id)`.
+ * - Each version entry shows its created time and optional message and has a Restore button which calls `onRestore(id)` if provided,
+ *   otherwise it will call the GraphQL `restoreVersion` mutation (requires `projectId` prop to be set for context).
  *
- * This is a presentational component — it does not talk to GraphQL directly.
- * The parent should pass `versions`, `onCreate`, and `onRestore`.
+ * This component can be used either:
+ *  - purely presentational (parent provides `onCreate` and `onRestore`), or
+ *  - as a self-contained control (parent omits callbacks but supplies `projectId`).
  */
 export default function SnapshotControl({
   versions = [],
   onCreate,
   onRestore,
+  projectId,
   maxWidthClass = "w-80",
   showCount = true,
   closeDelayMs = 150,
@@ -44,6 +52,10 @@ export default function SnapshotControl({
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
+
+  // GraphQL hooks: used only when parent doesn't provide callbacks
+  const [createVersionMutation] = useCreateVersion();
+  const [restoreVersionMutation] = useRestoreVersion();
 
   // Close dropdown on Escape
   useEffect(() => {
@@ -97,7 +109,26 @@ export default function SnapshotControl({
   const submitCreate = async () => {
     try {
       setIsCreating(true);
-      await onCreate(message.trim() === "" ? undefined : message.trim());
+      const payloadMessage = message.trim() === "" ? undefined : message.trim();
+
+      if (onCreate) {
+        // Parent will handle creation
+        await onCreate(payloadMessage);
+      } else {
+        // Try to call GraphQL mutation directly
+        if (!projectId) {
+          // No-op but surface a warning for developers
+          // eslint-disable-next-line no-console
+          console.warn(
+            "SnapshotControl: missing `projectId` - cannot create version without projectId or onCreate callback.",
+          );
+        } else {
+          await createVersionMutation({
+            variables: { input: { projectId, message: payloadMessage } },
+          });
+        }
+      }
+
       // reset UI
       setMessage("");
       setShowMessageInput(false);
@@ -107,7 +138,20 @@ export default function SnapshotControl({
   };
 
   const handleRestore = async (id: string) => {
-    await onRestore(id);
+    if (onRestore) {
+      await onRestore(id);
+    } else {
+      if (!projectId) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          "SnapshotControl: missing `projectId` - cannot restore version without projectId or onRestore callback.",
+        );
+      } else {
+        await restoreVersionMutation({
+          variables: { versionId: id },
+        });
+      }
+    }
     setOpen(false);
   };
 
