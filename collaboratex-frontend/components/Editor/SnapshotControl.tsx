@@ -140,7 +140,7 @@ export default function SnapshotControl({
           className="flex items-center gap-2"
         >
           <span className="sr-only">Save snapshot</span>
-          <Flag size={16} />    |
+          <Flag size={16} /> |
         </button>
 
         <button
