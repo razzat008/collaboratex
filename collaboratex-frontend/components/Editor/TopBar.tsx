@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
-import { ChevronLeft, Play, Save, Loader2, User } from "lucide-react";
+import { ChevronLeft, Play, Save, Loader2 } from "lucide-react";
 import SnapshotControl from "./SnapshotControl";
 import {
   useCreateVersion,
