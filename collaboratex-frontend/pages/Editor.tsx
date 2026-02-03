@@ -50,13 +50,13 @@ const Editor: React.FC = () => {
   const [compileLogs, setCompileLogs] = useState<string[]>([]);
   const [pdfObjectUrl, setPdfObjectUrl] = useState<string | null>(null);
   //chat popup
-	const [isChatOpen, setIsChatOpen] = useState(false);
-	const [hasUnreadChat, setHasUnreadChat] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [hasUnreadChat, setHasUnreadChat] = useState(false);
 
   // Load PDF from cache on mount
   useEffect(() => {
     if (!id) return;
-    
+
     const cachedJobId = localStorage.getItem(`pdf_jobId_${id}`);
     if (cachedJobId) {
       // Try to fetch the cached PDF
@@ -65,7 +65,10 @@ const Editor: React.FC = () => {
           const objUrl = URL.createObjectURL(blob);
           setPdfObjectUrl(objUrl);
           setCompileJobId(cachedJobId);
-          setLogs((prev) => [...prev, `[system] Restored PDF from last compilation`]);
+          setLogs((prev) => [
+            ...prev,
+            `[system] Restored PDF from last compilation`,
+          ]);
         } else {
           // PDF no longer available, clear cache
           localStorage.removeItem(`pdf_jobId_${id}`);
@@ -92,7 +95,10 @@ const Editor: React.FC = () => {
   const lastCompiledContentRef = useRef<string | null>(null);
   const getCurrentContentRef = useRef<() => string>(() => "");
   const autoSaveRef = useRef<boolean>(autoSave);
-
+  // Track the base (last loaded or saved) content for the currently-open file.
+  // Unsaved-change detection should compare against this base value instead of
+  // the ephemeral currentFile.content which may change as the editor updates.
+  const baseContentRef = useRef<string | null>(null);
 
   useEffect(() => {
     autoSaveRef.current = autoSave;
@@ -105,7 +111,7 @@ const Editor: React.FC = () => {
   ]);
 
   const [updateWorkingFile] = useUpdateWorkingFile();
-  const { data: projectData } = useGetProject({
+  const { data: projectData, refetch: refetchProject } = useGetProject({
     variables: { id: id as string },
     skip: !id,
   });
@@ -114,11 +120,39 @@ const Editor: React.FC = () => {
     currentFileRef.current = currentFile;
   }, [currentFile]);
 
+  // Called after a version restore completes. This will refetch the project
+  // data and update the currently-open file (if any) with the restored working-file content
+  // so the editor updates without a manual page refresh.
+  const handleAfterRestore = async () => {
+    try {
+      if (typeof refetchProject === "function") {
+        const res = await refetchProject();
+        const proj = res?.data?.project;
+        if (proj && currentFile) {
+          const updated = (proj.files || []).find(
+            (f: any) => f.id === currentFile.id,
+          );
+          if (updated) {
+            const content = updated.workingFile?.content ?? "";
+            // Update the editor's current file and set the base content to the restored value
+            setCurrentFile({ id: updated.id, name: updated.name, content });
+            baseContentRef.current = content;
+            setHasUnsavedChanges(false);
+            setLogs((prev) => [...prev, `[system] Restored ${updated.name}`]);
+          }
+        }
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("Error refetching project after restore", e);
+    }
+  };
+
   // File selection
   const handleFileSelect = (
     fileId: string,
     fileName: string,
-    content: string
+    content: string,
   ) => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -129,7 +163,9 @@ const Editor: React.FC = () => {
     lastCompiledContentRef.current = null;
     getCurrentContentRef.current = () => "";
 
+    // Set current file and establish the base content (no unsaved changes immediately)
     setCurrentFile(file);
+    baseContentRef.current = content;
     setHasUnsavedChanges(false); // File just loaded, no unsaved changes
     setIsInitialLoad(false);
     setLogs((prev) => [...prev, `[file] Opened ${fileName}`]);
@@ -143,7 +179,7 @@ const Editor: React.FC = () => {
 
   const handleFilesLoaded = (
     files: Array<{ id: string; name: string }>,
-    rootFileId?: string
+    rootFileId?: string,
   ) => {
     if (!isInitialLoad || files.length === 0) return;
 
@@ -180,9 +216,11 @@ const Editor: React.FC = () => {
             },
           },
         });
-        
+
         // Update the current file's base content after successful save
-        setCurrentFile((prev) => prev ? { ...prev, content } : prev);
+        setCurrentFile((prev) => (prev ? { ...prev, content } : prev));
+        // Update the baseContentRef so future edits compare against the saved content
+        baseContentRef.current = content;
         setHasUnsavedChanges(false);
         setLogs((prev) => [...prev, `[save] Saved ${file.name}`]);
       } catch (error) {
@@ -192,7 +230,7 @@ const Editor: React.FC = () => {
         setIsSaving(false);
       }
     },
-    [updateWorkingFile]
+    [updateWorkingFile],
   );
 
   const saveFileRef = useRef(autoSave);
@@ -204,11 +242,23 @@ const Editor: React.FC = () => {
     (value: string) => {
       if (!currentFileRef.current) return;
 
-      // Only mark as unsaved if content actually changed from what we loaded
-      const hasChanged = value !== currentFileRef.current.content;
+      // If baseContentRef hasn't been initialized yet (e.g. during initial CRDT sync),
+      // update the current file content shown in the editor but do NOT mark the editor
+      // as having unsaved changes. This prevents spurious "unsaved changes" immediately
+      // after the editor syncs its initial content from the server/CRDT.
+      if (baseContentRef.current === null) {
+        setCurrentFile((prev) => (prev ? { ...prev, content: value } : prev));
+        return;
+      }
+
+      // Only mark as unsaved if content actually changed from the base content
+      // (baseContentRef is set when a file is loaded, after a successful save, or after a restore)
+      const base =
+        baseContentRef.current ?? currentFileRef.current?.content ?? "";
+      const hasChanged = value !== base;
       setHasUnsavedChanges(hasChanged);
-      
-      // Update current file content (but don't replace the original)
+
+      // Update current file content (but don't replace the original base)
       setCurrentFile((prev) => (prev ? { ...prev, content: value } : prev));
 
       if (autoSaveRef.current && hasChanged) {
@@ -221,7 +271,7 @@ const Editor: React.FC = () => {
         }, 2000);
       }
     },
-    [saveFile]
+    [saveFile],
   );
 
   const handleEditorReady = useCallback((getCurrentContent: () => string) => {
@@ -262,7 +312,7 @@ const Editor: React.FC = () => {
         }
       }, 300);
     },
-    [currentFile?.content]
+    [currentFile?.content],
   );
 
   useEffect(() => {
@@ -294,7 +344,7 @@ const Editor: React.FC = () => {
           headers: {
             Accept: "application/json",
           },
-        }
+        },
       );
 
       if (!res.ok) {
@@ -325,7 +375,7 @@ const Editor: React.FC = () => {
           headers: {
             Accept: "application/pdf",
           },
-        }
+        },
       );
 
       if (!res.ok) {
@@ -370,7 +420,7 @@ const Editor: React.FC = () => {
       const job: any = await fetchJobStatus(jobId);
       if (!job) {
         console.warn(
-          `Poll attempt ${pollAttemptsRef.current}/${MAX_POLL_ATTEMPTS}: no response`
+          `Poll attempt ${pollAttemptsRef.current}/${MAX_POLL_ATTEMPTS}: no response`,
         );
         return;
       }
@@ -383,7 +433,7 @@ const Editor: React.FC = () => {
         const logsArray = job.logs
           .split("\n")
           .filter((line: string) => line && line.trim().length > 0);
-        
+
         if (logsArray.length > 0) {
           setCompileLogs(logsArray);
         }
@@ -413,7 +463,7 @@ const Editor: React.FC = () => {
             }
 
             const durationSec = Math.round(
-              (pollAttemptsRef.current * POLL_INTERVAL_MS) / 1000
+              (pollAttemptsRef.current * POLL_INTERVAL_MS) / 1000,
             );
             setLogs((prev) => [
               ...prev,
@@ -456,7 +506,7 @@ const Editor: React.FC = () => {
     setCompileStatus("queued");
     setCompileJobId(null);
     setCompileLogs([]);
-    
+
     // Clean up old PDF
     if (pdfObjectUrl) {
       URL.revokeObjectURL(pdfObjectUrl);
@@ -484,7 +534,7 @@ const Editor: React.FC = () => {
 
     let mainFileName = file.name;
     const hasMainTex = filesPayload.some(
-      (f: { name: string }) => f.name.toLowerCase() === "main.tex"
+      (f: { name: string }) => f.name.toLowerCase() === "main.tex",
     );
     if (hasMainTex) {
       mainFileName = "main.tex";
@@ -594,7 +644,7 @@ const Editor: React.FC = () => {
   const getCompileButtonState = () => {
     if (isCompiling) {
       const elapsedSec = Math.round(
-        (pollAttemptsRef.current * POLL_INTERVAL_MS) / 1000
+        (pollAttemptsRef.current * POLL_INTERVAL_MS) / 1000,
       );
       return {
         disabled: true,
@@ -631,6 +681,7 @@ const Editor: React.FC = () => {
         onAutoSaveToggle={() => setAutoSave(!autoSave)}
         onAutoCompileToggle={() => setAutoCompile(!autoCompile)}
         onCompile={() => startCompile()}
+        onAfterRestore={handleAfterRestore}
       />
 
       {/* Main Content with React-Split */}
@@ -682,6 +733,7 @@ const Editor: React.FC = () => {
                   <CMEditor
                     fileId={currentFile.id}
                     initialContent={currentFile.content}
+                    externalContent={currentFile.content}
                     onContentChange={handleContentChange}
                     onReady={handleEditorReady}
                   />
@@ -725,6 +777,7 @@ const Editor: React.FC = () => {
                   <CMEditor
                     fileId={currentFile.id}
                     initialContent={currentFile.content}
+                    externalContent={currentFile.content}
                     onContentChange={handleContentChange}
                     onReady={handleEditorReady}
                   />
@@ -769,27 +822,27 @@ const Editor: React.FC = () => {
       )}
 
       {/* Footer */}
-			<Footer
-			showLogs={showLogs}
-			autoSave={autoSave}
-			hasUnsavedChanges={hasUnsavedChanges}
-			onToggleLogs={() => setShowLogs(!showLogs)}
-			onToggleChat={() => {
-				setIsChatOpen(!isChatOpen);
-				if (!isChatOpen) setHasUnreadChat(false); // Clear unread when opening
-			}}
-			isChatOpen={isChatOpen}
-			hasUnreadChat={hasUnreadChat}
-			/>
+      <Footer
+        showLogs={showLogs}
+        autoSave={autoSave}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onToggleLogs={() => setShowLogs(!showLogs)}
+        onToggleChat={() => {
+          setIsChatOpen(!isChatOpen);
+          if (!isChatOpen) setHasUnreadChat(false); // Clear unread when opening
+        }}
+        isChatOpen={isChatOpen}
+        hasUnreadChat={hasUnreadChat}
+      />
 
-			{/* Chat Popup */}
-			<ChatPopup
-			roomId={id as string}
-			projectName={projectName}
-			isOpen={isChatOpen}
-			onToggle={() => setIsChatOpen(!isChatOpen)}
-			onNewMessage={() => setHasUnreadChat(true)}
-			/>
+      {/* Chat Popup */}
+      <ChatPopup
+        roomId={id as string}
+        projectName={projectName}
+        isOpen={isChatOpen}
+        onToggle={() => setIsChatOpen(!isChatOpen)}
+        onNewMessage={() => setHasUnreadChat(true)}
+      />
     </div>
   );
 };

@@ -18,12 +18,21 @@ function randomColor(): string {
 interface CMEditorProps {
   fileId: string;
   initialContent: string;
+  // externalContent: optional prop which, when changed by the parent (e.g. after a restore/refetch),
+  // will replace the CRDT Y.Text contents in the editor so the editor reflects the new working-file content.
+  externalContent?: string;
   onContentChange?: (content: string) => void;
   onReady?: (getCurrentContent: () => string) => void; // ✅ Add this
 }
 
 /* ------------------ editor ------------------ */
-export default function CMEditor({ fileId, initialContent, onContentChange, onReady }: CMEditorProps) {
+export default function CMEditor({
+  fileId,
+  initialContent,
+  onContentChange,
+  onReady,
+  externalContent,
+}: CMEditorProps) {
   const { id: projectId } = useParams<{ id: string }>();
   const editorRef = useRef<HTMLDivElement | null>(null);
   const { user, isLoaded } = useUser();
@@ -33,17 +42,20 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
   const yTextRef = useRef<Y.Text | null>(null);
   const observerRef = useRef<((event: Y.YTextEvent) => void) | null>(null);
   const onContentChangeRef = useRef<((content: string) => void) | null>(null);
-
+  // When applying external content programmatically we temporarily suppress invoking
+  // the parent's onContentChange callback to avoid marking the editor as having
+  // unsaved changes from this automated update.
+  const applyingExternalRef = useRef<boolean>(false);
 
   useEffect(() => {
     onContentChangeRef.current = onContentChange ?? null;
   }, [onContentChange]);
 
   useEffect(() => {
-    console.log('[CMEditor] Mounting for fileId:', fileId);
+    console.log("[CMEditor] Mounting for fileId:", fileId);
 
     if (!editorRef.current || !projectId || !isLoaded || !fileId) {
-      console.log('[CMEditor] Skipping init - missing requirements');
+      console.log("[CMEditor] Skipping init - missing requirements");
       return;
     }
 
@@ -56,7 +68,7 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
       try {
         const token = await getToken({ skipCache: true });
         if (cancelled || !token) {
-          console.log('[CMEditor] Init cancelled or no token');
+          console.log("[CMEditor] Init cancelled or no token");
           return;
         }
 
@@ -67,17 +79,12 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
         yTextRef.current = yText; // ✅ Store reference
 
         // Create WebSocket provider FIRST (before setting content)
-        provider = new WebsocketProvider(
-          "ws://localhost:1234",
-          docName,
-          ydoc,
-          {
-            params: { token },
-            connect: true,
-          }
-        );
+        provider = new WebsocketProvider("ws://localhost:1234", docName, ydoc, {
+          params: { token },
+          connect: true,
+        });
 
-        console.log('[CMEditor] Provider created for:', docName);
+        console.log("[CMEditor] Provider created for:", docName);
 
         // Set awareness
         provider.awareness.setLocalStateField("user", {
@@ -86,22 +93,22 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
         });
 
         // Event listeners
-        provider.on('status', (event: { status: string }) => {
+        provider.on("status", (event: { status: string }) => {
           console.log(`[YJS] Status: ${event.status}`);
         });
 
-        provider.on('sync', (isSynced: boolean) => {
+        provider.on("sync", (isSynced: boolean) => {
           console.log(`[YJS] Synced: ${isSynced}`);
 
           // Only set initial content AFTER first sync AND if doc is empty
           if (isSynced && yText.length === 0 && initialContent) {
-            console.log('[CMEditor] Setting initial content after sync');
+            console.log("[CMEditor] Setting initial content after sync");
             yText.insert(0, initialContent);
           }
         });
 
         if (cancelled) {
-          console.log('[CMEditor] Cancelled before editor creation');
+          console.log("[CMEditor] Cancelled before editor creation");
           provider.destroy();
           ydoc.destroy();
           return;
@@ -121,7 +128,8 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               },
-            }), EditorView.lineWrapping
+            }),
+            EditorView.lineWrapping,
           ],
         });
 
@@ -130,11 +138,16 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
           parent: editorRef.current!,
         });
 
-        console.log('[CMEditor] Editor created successfully');
+        console.log("[CMEditor] Editor created successfully");
 
         // Observe changes for parent callback using ref
         const observer = () => {
           const content = yText.toString();
+          // If we are applying external content programmatically, suppress the
+          // parent callback to avoid spurious unsaved-change state.
+          if (applyingExternalRef.current) {
+            return;
+          }
           // Use ref to get latest callback
           if (onContentChangeRef.current) {
             onContentChangeRef.current(content);
@@ -147,16 +160,15 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
         if (onReady) {
           onReady(() => yText.toString());
         }
-
       } catch (error) {
-        console.error('[CMEditor] Init error:', error);
+        console.error("[CMEditor] Init error:", error);
       }
     };
 
     init();
 
     return () => {
-      console.log('[CMEditor] Cleanup for fileId:', fileId);
+      console.log("[CMEditor] Cleanup for fileId:", fileId);
       cancelled = true;
 
       // Clear yText reference
@@ -177,6 +189,61 @@ export default function CMEditor({ fileId, initialContent, onContentChange, onRe
       ydoc = null;
     };
   }, [projectId, fileId, isLoaded]); // CRITICAL: Only these dependencies
+
+  // Apply external content updates (e.g. after a version restore + refetch).
+  // If the parent supplies `externalContent`, and it differs from the current Y.Text contents,
+  // replace the Y.Text contents so the editor reflects the new working-file content.
+  useEffect(() => {
+    if (typeof externalContent === "undefined" || externalContent === null) {
+      // Nothing to apply
+      return;
+    }
+
+    const yText = yTextRef.current;
+    if (!yText) {
+      // Provider / document not yet initialized; skip. When the provider syncs it will
+      // set initial content from `initialContent` and subsequent changes will be reflected.
+      return;
+    }
+
+    try {
+      const current = yText.toString();
+      if (current === externalContent) {
+        // Already in sync; nothing to do
+        return;
+      }
+
+      // Use a transaction so the change is atomic and propagates to other collaborators
+      const doc = yText.doc;
+
+      // Mark that we're applying external content so the observer doesn't treat this
+      // programmatic update as a user edit (which would set hasUnsavedChanges).
+      applyingExternalRef.current = true;
+      try {
+        if (doc) {
+          doc.transact(() => {
+            yText.delete(0, yText.length);
+            if (externalContent) yText.insert(0, externalContent);
+          });
+        } else {
+          // Fallback when doc isn't available (shouldn't normally happen)
+          yText.delete(0, yText.length);
+          if (externalContent) yText.insert(0, externalContent);
+        }
+
+        console.log("[CMEditor] externalContent applied to yText");
+      } finally {
+        // Ensure suppression flag is cleared even if the transaction throws
+        applyingExternalRef.current = false;
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[CMEditor] Failed to apply externalContent", err);
+      // clear flag in case of unexpected exception
+      applyingExternalRef.current = false;
+    }
+    // Only re-run when externalContent changes
+  }, [externalContent]);
 
   return (
     <div style={{ height: "100%", width: "100%" }}>

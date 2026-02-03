@@ -1,13 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
+import { ChevronLeft, Play, Save, Loader2 } from "lucide-react";
+import SnapshotControl from "./SnapshotControl";
 import {
-  ChevronLeft,
-  Play,
-  Save,
-  Loader2,
-  User,
-} from "lucide-react";
+  useCreateVersion,
+  useRestoreVersion,
+  useGetProjectWithoutContent,
+} from "../../src/graphql/generated";
 
 interface TopBarProps {
   projectName: string;
@@ -26,6 +26,9 @@ interface TopBarProps {
   onAutoSaveToggle: () => void;
   onAutoCompileToggle: () => void;
   onCompile: () => void;
+  // Called after a version restore completes and TopBar has refetched project data.
+  // Optional for consumers that need to run extra logic (e.g. update editor state).
+  onAfterRestore?: () => Promise<void> | void;
 }
 
 const TopBar: React.FC<TopBarProps> = ({
@@ -42,7 +45,25 @@ const TopBar: React.FC<TopBarProps> = ({
   onAutoSaveToggle,
   onAutoCompileToggle,
   onCompile,
+  onAfterRestore,
 }) => {
+  // Versions / Snapshot GraphQL hooks
+  const { data: versionsData, refetch } = useGetProjectWithoutContent({
+    variables: { id: projectId ?? "" },
+    skip: !projectId,
+    fetchPolicy: "network-only",
+  });
+
+  const [createVersion] = useCreateVersion();
+  const [restoreVersion] = useRestoreVersion();
+
+  const versions =
+    (versionsData?.project?.versions ?? []).map((v: any) => ({
+      id: v.id,
+      createdAt: v.createdAt,
+      message: v.message,
+    })) ?? [];
+
   return (
     <div className="h-10 bg-white border-b border-slate-200 flex items-center justify-between px-2 shadow-sm">
       {/* Left: Project Info */}
@@ -86,17 +107,36 @@ const TopBar: React.FC<TopBarProps> = ({
           Save
         </button>
 
+        {/* Snapshot / Versions control */}
+        <SnapshotControl
+          versions={versions}
+          onCreate={async (message?: string) => {
+            if (!projectId) return;
+            await createVersion({
+              variables: { input: { projectId, message } },
+            });
+            await refetch();
+          }}
+          onRestore={async (versionId: string) => {
+            await restoreVersion({ variables: { versionId } });
+            await refetch();
+            if (onAfterRestore) await onAfterRestore();
+          }}
+        />
+
         {/* Auto Save Toggle */}
         <div className="flex items-center gap-1 px-1 py-1 text-xs text-slate-700 border border-slate-200 rounded-lg">
           <span>Auto Save</span>
           <button
             onClick={onAutoSaveToggle}
-            className={`w-8 h-4 rounded-full transition-colors relative ${autoSave ? "bg-green-600" : "bg-slate-300"
-              }`}
+            className={`w-8 h-4 rounded-full transition-colors relative ${
+              autoSave ? "bg-green-600" : "bg-slate-300"
+            }`}
           >
             <div
-              className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${autoSave ? "translate-x-4" : ""
-                }`}
+              className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${
+                autoSave ? "translate-x-4" : ""
+              }`}
             />
           </button>
         </div>
@@ -136,7 +176,7 @@ const TopBar: React.FC<TopBarProps> = ({
           )}
           {compileState.text}
         </button>
-        <UserButton/>
+        <UserButton />
       </div>
     </div>
   );
