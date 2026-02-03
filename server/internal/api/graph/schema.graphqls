@@ -25,6 +25,41 @@ type User {
 }
 
 # ---------------------------------------
+# Templates
+# ---------------------------------------
+type Template {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: String!
+
+  authorId: ID!
+  isPublic: Boolean!
+
+  previewImage: String
+  tags: [String!]!
+
+  files: [TemplateFile!]!
+  assets: [TemplateAsset!]!
+}
+
+type TemplateFile {
+  id: ID!
+  templateId: ID!
+  name: String!
+  type: FileType!
+  content: String!
+}
+
+type TemplateAsset {
+  id: ID!
+  templateId: ID!
+  path: String!
+  mimeType: String!
+  size: Int!
+  createdAt: String!
+}
+# ---------------------------------------
 # Files
 # ---------------------------------------
 
@@ -137,6 +172,13 @@ input CreateAssetInput {
   size: Int!
 }
 
+input CreateTemplateInput {
+  name: String!
+  description: String
+  isPublic: Boolean!
+  tags: [String!]!
+}
+
 # ---------------------------------------
 # Mutations
 # ---------------------------------------
@@ -145,6 +187,9 @@ type Mutation {
   # Projects
   createProject(input: NewProjectInput!): Project!
   deleteProject(projectId: ID!): Boolean!
+
+  # Templates
+  createTemplate(input: CreateTemplateInput!): Template!
 
   addCollaborator(projectId: ID!, userId: ID!): Project!
   removeCollaborator(projectId: ID!, userId: ID!): Project!

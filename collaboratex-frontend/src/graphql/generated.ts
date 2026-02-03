@@ -41,6 +41,20 @@ export type Asset = {
   size: Scalars["Int"]["output"];
 };
 
+export type CreateAssetInput = {
+  mimeType: Scalars["String"]["input"];
+  path: Scalars["String"]["input"];
+  projectId: Scalars["ID"]["input"];
+  size: Scalars["Int"]["input"];
+};
+
+export type CreateTemplateInput = {
+  description?: InputMaybe<Scalars["String"]["input"]>;
+  isPublic: Scalars["Boolean"]["input"];
+  name: Scalars["String"]["input"];
+  tags: Array<Scalars["String"]["input"]>;
+};
+
 export type CreateVersionInput = {
   message?: InputMaybe<Scalars["String"]["input"]>;
   projectId: Scalars["ID"]["input"];
@@ -69,8 +83,10 @@ export type FileType =
 export type Mutation = {
   __typename?: "Mutation";
   addCollaborator: Project;
+  createAsset: Asset;
   createFile: File;
   createProject: Project;
+  createTemplate: Template;
   createVersion: Version;
   deleteFile: Scalars["Boolean"]["output"];
   deleteProject: Scalars["Boolean"]["output"];
@@ -85,12 +101,20 @@ export type MutationAddCollaboratorArgs = {
   userId: Scalars["ID"]["input"];
 };
 
+export type MutationCreateAssetArgs = {
+  input: CreateAssetInput;
+};
+
 export type MutationCreateFileArgs = {
   input: NewFileInput;
 };
 
 export type MutationCreateProjectArgs = {
   input: NewProjectInput;
+};
+
+export type MutationCreateTemplateArgs = {
+  input: CreateTemplateInput;
 };
 
 export type MutationCreateVersionArgs = {
@@ -184,6 +208,39 @@ export type SubscriptionProjectUpdatedArgs = {
 
 export type SubscriptionWorkingFileUpdatedArgs = {
   projectId: Scalars["ID"]["input"];
+};
+
+export type Template = {
+  __typename?: "Template";
+  assets: Array<TemplateAsset>;
+  authorId: Scalars["ID"]["output"];
+  createdAt: Scalars["String"]["output"];
+  description?: Maybe<Scalars["String"]["output"]>;
+  files: Array<TemplateFile>;
+  id: Scalars["ID"]["output"];
+  isPublic: Scalars["Boolean"]["output"];
+  name: Scalars["String"]["output"];
+  previewImage?: Maybe<Scalars["String"]["output"]>;
+  tags: Array<Scalars["String"]["output"]>;
+};
+
+export type TemplateAsset = {
+  __typename?: "TemplateAsset";
+  createdAt: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  mimeType: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
+  size: Scalars["Int"]["output"];
+  templateId: Scalars["ID"]["output"];
+};
+
+export type TemplateFile = {
+  __typename?: "TemplateFile";
+  content: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
+  templateId: Scalars["ID"]["output"];
+  type: FileType;
 };
 
 export type UpdateWorkingFileInput = {
