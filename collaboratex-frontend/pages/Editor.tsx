@@ -178,15 +178,28 @@ const Editor: React.FC = () => {
   };
 
   const handleFilesLoaded = (
-    files: Array<{ id: string; name: string }>,
+    files: Array<{ id: string; name: string; workingFile?: { content: string } }>,
     rootFileId?: string,
   ) => {
     if (!isInitialLoad || files.length === 0) return;
 
-    let defaultFile = files.find((f) => f.name.toLowerCase() === "main.tex");
+    // 1. Get all .tex files
+    const texFiles = files.filter((f) => f.name.toLowerCase().endsWith(".tex"));
+
+    // 2. Find the one that actually has content (prioritize the template over the empty ghost file)
+    let defaultFile = texFiles.find((f) => (f.workingFile?.content?.length ?? 0) > 0);
+
+    // 3. Fallback to rootFileId if content check fails
     if (!defaultFile && rootFileId) {
       defaultFile = files.find((f) => f.id === rootFileId);
     }
+
+    // 4. Fallback to just any .tex file
+    if (!defaultFile && texFiles.length > 0) {
+      defaultFile = texFiles[0];
+    }
+
+    // 5. Absolute fallback
     if (!defaultFile) {
       defaultFile = files[0];
     }
@@ -532,15 +545,12 @@ const Editor: React.FC = () => {
       }
     }
 
-    let mainFileName = file.name;
-    const hasMainTex = filesPayload.some(
-      (f: { name: string }) => f.name.toLowerCase() === "main.tex",
+    const texFile = filesPayload.find((f: { name: string }) =>
+      f.name.toLowerCase().endsWith(".tex")
     );
-    if (hasMainTex) {
-      mainFileName = "main.tex";
-    } else if (!mainFileName.toLowerCase().endsWith(".tex")) {
-      mainFileName = mainFileName + ".tex";
-    }
+
+    const mainFileName = texFile ? texFile.name : file.name;
+
 
     const payload = {
       files: filesPayload,
@@ -688,9 +698,8 @@ const Editor: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar with toggle button */}
         <div
-          className={`bg-white border-r border-slate-200 transition-all duration-300 relative ${
-            isSidebarOpen ? "w-64" : "w-0"
-          }`}
+          className={`bg-white border-r border-slate-200 transition-all duration-300 relative ${isSidebarOpen ? "w-64" : "w-0"
+            }`}
         >
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}

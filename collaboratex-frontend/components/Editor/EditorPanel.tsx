@@ -23,7 +23,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 }) => {
   return (
     <div
-      className="flex flex-col bg-white border-r border-slate-200 transition-all duration-150"
+      className="flex h-full flex-col bg-white border-r border-slate-200 transition-all duration-150"
       style={{
         width:
           isPdfVisible ? `${splitRatio}%` : "100%",
