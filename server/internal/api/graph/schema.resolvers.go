@@ -1007,34 +1007,33 @@ func (r *queryResolver) Template(ctx context.Context, id string) (*model.Templat
 }
 
 func (r *Resolver) TemplateDocToModelWithPresignedURL(ctx context.Context, t *TemplateDoc) *model.Template {
-	var previewImageURL *string
+    var previewImageURL *string
 
-	// Generate presigned URL if preview image path exists
-	if *t.PreviewImage != "" {
-		presignedURL, err := r.Minio.PresignedGetObject(
-			ctx,
-			r.Bucket,
-			*t.PreviewImage,
-			7*24*time.Hour, // Valid for 7 days
-			nil,
-		)
-		if err == nil {
-			urlStr := presignedURL.String()
-			previewImageURL = &urlStr
-		}
-		// If error generating URL, previewImageURL remains nil
-	}
+    // 1. Check if the pointer exists AND if the string it points to is not empty
+    if t.PreviewImage != nil && *t.PreviewImage != "" {
+        presignedURL, err := r.Minio.PresignedGetObject(
+            ctx,
+            r.Bucket,
+            *t.PreviewImage,
+            7*24*time.Hour,
+            nil,
+        )
+        if err == nil {
+            urlStr := presignedURL.String()
+            previewImageURL = &urlStr
+        }
+    }
 
-	return &model.Template{
-		ID:           t.ID.Hex(),
-		Name:         t.Name,
-		Description:  t.Description,
-		AuthorID:     t.AuthorID.Hex(),
-		IsPublic:     t.IsPublic,
-		Tags:         t.Tags,
-		PreviewImage: previewImageURL, // This is now the full presigned URL
-		CreatedAt:    t.CreatedAt.Format(time.RFC3339),
-	}
+    return &model.Template{
+        ID:           t.ID.Hex(),
+        Name:         t.Name,
+        Description:  t.Description,
+        AuthorID:     t.AuthorID.Hex(),
+        IsPublic:     t.IsPublic,
+        Tags:         t.Tags,
+        PreviewImage: previewImageURL,
+        CreatedAt:    t.CreatedAt.Format(time.RFC3339),
+    }
 }
 
 // PublicTemplates is the resolver for the publicTemplates field.

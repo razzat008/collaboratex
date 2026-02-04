@@ -270,56 +270,80 @@ func findMainFile(workspace, requested, logPrefix string) (string, error) {
 }
 
 func fetchMissingAssets(ctx context.Context, minioClient *minio.Client, workspace string, job JobPayload, logPrefix string) {
-	graphicsRe := regexp.MustCompile(`\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}`)
+	// regex to find dependencies in \includegraphics, \input, and \include
+	graphicsRe := regexp.MustCompile(`\\(?:includegraphics|input|include)(?:\[[^\]]*\])?\{([^}]+)\}`)
 	refs := map[string]struct{}{}
 
+	// 1. Scan .tex, .cls, and .sty files for all requested paths
 	_ = filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || (!strings.HasSuffix(strings.ToLower(path), ".tex") && !strings.HasSuffix(strings.ToLower(path), ".cls")) {
+		if err != nil || d.IsDir() {
 			return nil
 		}
-		b, rerr := os.ReadFile(path)
-		if rerr != nil {
-			return nil
-		}
-		matches := graphicsRe.FindAllStringSubmatch(string(b), -1)
-		for _, m := range matches {
-			if len(m) >= 2 {
-				refs[m[1]] = struct{}{}
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext == ".tex" || ext == ".cls" || ext == ".sty" {
+			b, _ := os.ReadFile(path)
+			matches := graphicsRe.FindAllStringSubmatch(string(b), -1)
+			for _, m := range matches {
+				if len(m) >= 2 {
+					refs[m[1]] = struct{}{}
+				}
 			}
 		}
 		return nil
 	})
 
 	for ref := range refs {
-		ref = strings.TrimPrefix(ref, "./")
-		targetPath := filepath.Join(workspace, ref)
-		if _, statErr := os.Stat(targetPath); statErr == nil {
+		// Normalizing the path (e.g., "images/1.png" -> "images/1.png")
+		cleanRef := strings.TrimPrefix(ref, "./")
+		
+		// 2. Determine target local path and ensure subdirectories exist
+		targetPath := filepath.Join(workspace, cleanRef)
+		targetDir := filepath.Dir(targetPath)
+		if _, err := os.Stat(targetDir); os.IsNotExist(err) {
+			_ = os.MkdirAll(targetDir, 0755)
+		}
+
+		// Skip if file already exists locally
+		if _, err := os.Stat(targetPath); err == nil {
 			continue
 		}
 
-		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
-			continue
+		found := false
+		// We try to find the file in MinIO. 
+		// If the LaTeX ref is "images/1.png", we check for "1.png" in the project's assets.
+		fileNameOnly := filepath.Base(cleanRef)
+		
+		// Common extensions to try if the reference in LaTeX lacks one
+		extensions := []string{""} 
+		if filepath.Ext(fileNameOnly) == "" {
+			extensions = append(extensions, ".png", ".jpg", ".jpeg", ".pdf")
 		}
 
-		candidates := []string{ref}
-		if job.UserID != "" {
-			candidates = append(candidates, filepath.Join(job.UserID, ref))
-			candidates = append(candidates, filepath.Join(job.UserID, "assets", filepath.Base(ref)))
-		}
-		if job.DocID != "" {
-			candidates = append(candidates, filepath.Join("project", job.DocID, ref))
-			candidates = append(candidates, filepath.Join("project", job.DocID, "assets", filepath.Base(ref)))
-		}
+		for _, ext := range extensions {
+			searchName := fileNameOnly + ext
+			
+			// Potential paths in MinIO storage
+			candidates := []string{
+				filepath.Join("project", job.DocID, "assets", searchName),
+				filepath.Join("project", job.DocID, searchName),
+			}
 
-		for _, key := range candidates {
-			if key == "" {
-				continue
+			for _, key := range candidates {
+				// If the user asked for images/1.png, we save it exactly there
+				// but we ensure we add the extension if we found it via the extension loop
+				localSavePath := targetPath
+				if filepath.Ext(localSavePath) == "" && ext != "" {
+					localSavePath += ext
+				}
+
+				if ferr := minioClient.FGetObject(ctx, "assets", key, localSavePath, minio.GetObjectOptions{}); ferr == nil {
+					_ = os.Chmod(localSavePath, 0644)
+					log.Printf(logPrefix+"Found and Downloaded: %s -> %s", key, localSavePath)
+					found = true
+					break
+				}
 			}
-			if ferr := minioClient.FGetObject(ctx, "assets", key, targetPath, minio.GetObjectOptions{}); ferr == nil {
-				_ = os.Chmod(targetPath, 0644)
-				log.Printf(logPrefix+"fetched asset: %s -> %s", key, targetPath)
-				break
-			}
+			if found { break }
 		}
 	}
 }
