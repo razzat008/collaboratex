@@ -70,6 +70,38 @@ fragment VersionFileFields on VersionFile {
 }
 
 # ---------------------------------------
+# Template Fragments
+# ---------------------------------------
+
+fragment TemplateFields on Template {
+  id
+  name
+  description
+  createdAt
+  authorId
+  isPublic
+  previewImage
+  tags
+}
+
+fragment TemplateFileFields on TemplateFile {
+  id
+  templateId
+  name
+  type
+  content
+}
+
+fragment TemplateAssetFields on TemplateAsset {
+  id
+  templateId
+  path
+  mimeType
+  size
+  createdAt
+}
+
+# ---------------------------------------
 # Queries
 # ---------------------------------------
 query GetProjects {
@@ -78,7 +110,6 @@ query GetProjects {
   }
 }
 
-# Updated: Now includes file contents
 query GetProject($id: ID!) {
   project(id: $id) {
     ...ProjectFields
@@ -91,7 +122,6 @@ query GetProject($id: ID!) {
   }
 }
 
-# NEW: Get project with files but WITHOUT content (lighter query for file list)
 query GetProjectWithoutContent($id: ID!) {
   project(id: $id) {
     ...ProjectFields
@@ -124,6 +154,40 @@ query GetVersion($id: ID!) {
     ...VersionFields
     files {
       ...VersionFileFields
+    }
+  }
+}
+
+# ---------------------------------------
+# Queries - Templates
+# ---------------------------------------
+
+query GetTemplates {
+  templates {
+    ...TemplateFields
+  }
+}
+
+query GetPublicTemplates {
+  publicTemplates {
+    ...TemplateFields
+  }
+}
+
+query GetMyTemplates {
+  myTemplates {
+    ...TemplateFields
+  }
+}
+
+query GetTemplate($id: ID!) {
+  template(id: $id) {
+    ...TemplateFields
+    files {
+      ...TemplateFileFields
+    }
+    assets {
+      ...TemplateAssetFields
     }
   }
 }
@@ -208,6 +272,35 @@ mutation RestoreVersion($versionId: ID!) {
       ...FileWithContentFields
     }
   }
+}
+
+# ---------------------------------------
+# Mutations - Templates
+# ---------------------------------------
+
+mutation CreateTemplate(
+  $projectId: ID!
+  $input: CreateTemplateInput!
+) {
+  createTemplate(projectId: $projectId, input: $input) {
+    ...TemplateFields
+  }
+}
+
+mutation UseTemplate(
+  $templateId: ID!
+  $projectName: String!
+) {
+  useTemplate(templateId: $templateId, projectName: $projectName) {
+    ...ProjectFields
+    files {
+      ...FileWithContentFields
+    }
+  }
+}
+
+mutation DeleteTemplate($templateId: ID!) {
+  deleteTemplate(templateId: $templateId)
 }
 
 # ---------------------------------------
