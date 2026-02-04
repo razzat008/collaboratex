@@ -68,3 +68,10 @@ models:
     fields:
       files:
         resolver: true
+
+  Template:
+    fields:
+      files:
+        resolver: true
+      assets:
+        resolver: true
