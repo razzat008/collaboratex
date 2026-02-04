@@ -59,7 +59,7 @@ func Run(ctx context.Context, cfg Config, redisClient *redis.Client, mongoClient
 	}
 
 	jobColl := mongoClient.Database(cfg.MongoDatabase).Collection(cfg.JobCollection)
-	
+
 	// Create handler for status/log updates
 	handler := NewHandler(redisClient, minioClient, jobColl, cfg.RedisQueueName, cfg.MinioBucketPDFs)
 
@@ -149,7 +149,7 @@ func processJob(ctx context.Context, job JobPayload, cfg Config, dockerCli *clie
 
 	// Run compilation
 	stdoutStderr, exitCode, err := runTectonicContainer(ctx, dockerCli, cfg, workspace, mainFile)
-	
+
 	// Store logs in Redis (always, even on success)
 	_ = handler.StoreLogs(ctx, job.JobID, stdoutStderr)
 
@@ -274,7 +274,7 @@ func fetchMissingAssets(ctx context.Context, minioClient *minio.Client, workspac
 	refs := map[string]struct{}{}
 
 	_ = filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(strings.ToLower(path), ".tex") {
+		if err != nil || d.IsDir() || (!strings.HasSuffix(strings.ToLower(path), ".tex") && !strings.HasSuffix(strings.ToLower(path), ".cls")) {
 			return nil
 		}
 		b, rerr := os.ReadFile(path)
@@ -406,8 +406,8 @@ func runTectonicContainer(ctx context.Context, dockerCli *client.Client, cfg Con
 	}
 
 	containerName := fmt.Sprintf("tectonic-%d", time.Now().UnixNano())
-	cmdStr := fmt.Sprintf("ls -la /workspace && if command -v tectonic >/dev/null 2>&1; then tectonic --outdir=/workspace %s; else latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape %s; fi", mainFile, mainFile)
-	
+	cmdStr := fmt.Sprintf("ls -la /workspace && if command -v tectonic >/dev/null 2>&1; then tectonic --outdir=/workspace %s; else latexmk -pdf -f -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape %s; fi", mainFile, mainFile)
+
 	config := &container.Config{
 		Image:      cfg.DockerImage,
 		Cmd:        []string{"/bin/sh", "-c", cmdStr},
@@ -508,7 +508,7 @@ func runTectonicContainerDockerCLI(ctx context.Context, cfg Config, workspace, m
 		args = append(args, "--cpus", fmt.Sprintf("%g", cpus))
 	}
 
-	cmdStr := fmt.Sprintf("ls -la /workspace && if command -v tectonic >/dev/null 2>&1; then tectonic --outdir=/workspace %s; else latexmk -pdf -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape %s; fi", mainFile, mainFile)
+	cmdStr := fmt.Sprintf("ls -la /workspace && if command -v tectonic >/dev/null 2>&1; then tectonic --outdir=/workspace %s; else latexmk -pdf -f -interaction=nonstopmode -halt-on-error -file-line-error -no-shell-escape %s; fi", mainFile, mainFile)
 	args = append(args, "--entrypoint", "/bin/sh", cfg.DockerImage, "-c", cmdStr)
 
 	cmd := exec.CommandContext(ctx, "docker", args...)
