@@ -81,7 +81,7 @@ const Landing: React.FC = () => {
             </a>
           </div>
           <div className="mt-20 rounded-2xl border border-slate-200 shadow-2xl overflow-hidden bg-slate-50">
-            <img src="/output.jpg" alt="Editor Preview" className="w-full h-auto opacity-100" />
+            <img src="/editor-preview.png" alt="Editor Preview" className="w-full h-auto opacity-100" />
           </div>
         </div>
       </section>

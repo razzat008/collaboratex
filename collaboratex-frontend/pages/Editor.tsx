@@ -507,8 +507,9 @@ const Editor: React.FC = () => {
   };
 
   const startCompile = async () => {
-    const file = currentFileRef.current;
+    const file = currentFileRef.current; // The file currently in the editor
     const token = await getToken();
+
     if (!file) {
       setLogs((prev) => [...prev, "[compile] ✗ No file open to compile"]);
       setShowLogs(true);
@@ -526,48 +527,56 @@ const Editor: React.FC = () => {
       setPdfObjectUrl(null);
     }
 
+    // 1. Prepare all project files
     const projectFiles = projectData?.project?.files || [];
-
     const filesPayload = projectFiles.map((f: any) => ({
       name: f.name,
       content: f.workingFile?.content ?? f.content ?? "",
     }));
 
-    if (file) {
-      const currentContent = getCurrentContentRef.current
-        ? getCurrentContentRef.current()
-        : file.content;
-      const idx = filesPayload.findIndex((p) => p.name === file.name);
-      if (idx >= 0) {
-        filesPayload[idx].content = currentContent;
-      } else {
-        filesPayload.push({ name: file.name, content: currentContent });
-      }
+    // 2. IMPORTANT: Get the most recent content from the Editor's buffer
+    // This ensures that even unsaved changes in the current file are compiled.
+    const currentBufferContent = getCurrentContentRef.current
+      ? getCurrentContentRef.current()
+      : file.content;
+
+    // 3. Inject/Update the current file into the payload
+    const idx = filesPayload.findIndex((p) => p.name === file.name);
+    if (idx >= 0) {
+      filesPayload[idx].content = currentBufferContent;
+    } else {
+      filesPayload.push({ name: file.name, content: currentBufferContent });
     }
 
-    const texFile = filesPayload.find((f: { name: string }) =>
-      f.name.toLowerCase().endsWith(".tex")
-    );
-
-    const mainFileName = texFile ? texFile.name : file.name;
-
+    // 4. Set the Main File explicitly to the currently active file
+    // If the active file is NOT a .tex file (e.g. a .cls or .bib), 
+    // we fall back to searching for one, but otherwise, the selected file is King.
+    let mainFileName = file.name;
+    if (!mainFileName.toLowerCase().endsWith(".tex")) {
+      const fallbackTex = filesPayload.find(f => f.name.toLowerCase().endsWith(".tex"));
+      mainFileName = fallbackTex ? fallbackTex.name : file.name;
+    }
 
     const payload = {
       files: filesPayload,
-      mainFile: mainFileName,
+      mainFile: mainFileName, // Sent to backend as 'mainFile'
       docId: id,
     };
 
     try {
+      setLogs((prev) => [...prev, `[compile] 🚀 Starting compilation with ${mainFileName}...`]);
+
       const res = await fetch(`${API_BASE_URL}/api/compile-inline`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
+
+      // ... rest of your existing error handling and polling logic ...
 
       const contentType = res.headers.get("content-type");
       const isJson = contentType?.includes("application/json");
@@ -799,21 +808,23 @@ const Editor: React.FC = () => {
                 )}
               </EditorPanel>
             ) : (
-              <PDFPanel
-                pdfObjectUrl={pdfObjectUrl}
-                isCompiling={isCompiling}
-                isPreviewExpanded={isPreviewExpanded}
-                numPages={numPages}
-                pageWidth={pageWidth}
-                zoomLevel={zoomLevel}
-                pdfViewerRef={pdfViewerRef}
-                onToggleExpand={() => setIsPreviewExpanded(!isPreviewExpanded)}
-                onOpenInTab={handleOpenPdfInNewTab}
-                onNumPagesChange={setNumPages}
-                onPageWidthChange={setPageWidth}
-                onZoomChange={setZoomLevel}
-                onBaseWidthChange={setBaseWidth}
-              />
+              <div className="flex flex-col h-full min-h-0 overflow-auto">
+                <PDFPanel
+                  pdfObjectUrl={pdfObjectUrl}
+                  isCompiling={isCompiling}
+                  isPreviewExpanded={isPreviewExpanded}
+                  numPages={numPages}
+                  pageWidth={pageWidth}
+                  zoomLevel={zoomLevel}
+                  pdfViewerRef={pdfViewerRef}
+                  onToggleExpand={() => setIsPreviewExpanded(!isPreviewExpanded)}
+                  onOpenInTab={handleOpenPdfInNewTab}
+                  onNumPagesChange={setNumPages}
+                  onPageWidthChange={setPageWidth}
+                  onZoomChange={setZoomLevel}
+                  onBaseWidthChange={setBaseWidth}
+                />
+              </div>
             )}
           </div>
         )}
