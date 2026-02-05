@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Technology Stack - Collaboratex Documentation</title>
+        <title>Real Time Chat system - Collaboratex Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -174,42 +174,109 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="technology-stack"><a class="header" href="#technology-stack">Technology Stack</a></h1>
-<p>The project uses the following technologies:</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
-</thead>
-<tbody>
-<tr><td><strong>Frontend</strong></td><td>React, TypeScript, Tailwind</td><td>User interface &amp; editor</td></tr>
-<tr><td><strong>Backend</strong></td><td>Go, Gin, GraphQL</td><td>API &amp; business logic</td></tr>
-<tr><td><strong>Real-Time</strong></td><td>Node.js, Yjs, y-websocket</td><td>Document sync</td></tr>
-<tr><td><strong>Auth</strong></td><td>Clerk, JWT</td><td>User verification</td></tr>
-<tr><td><strong>Database</strong></td><td>MongoDB</td><td>Data persistence</td></tr>
-<tr><td><strong>Storage</strong></td><td>MinIO</td><td>File hosting</td></tr>
-<tr><td><strong>Queuing</strong></td><td>Redis</td><td>Compilation Pipeline</td></tr>
-</tbody>
-</table>
-</div>
+                        <h1 id="real-time-in-editor-chat-system"><a class="header" href="#real-time-in-editor-chat-system">Real-Time In-Editor Chat System</a></h1>
+<p>The in-editor chat system allows collaborators working on the same project
+to communicate instantly without leaving the editor. The chat is <strong>session-based</strong>
+and exists only while users are actively connected to the project.</p>
+<p>When a project is opened, the user is automatically connected to the chat
+room associated with that project.</p>
 <hr>
-<pre><code>┌─ HTTPS/WSS (encrypted transport)
-├─ JWT authentication (identity verification)
-├─ Authorization checks (ownership/access)
-├─ CORS (cross-origin protection)
-└─ Database validation (prevent injection)
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<ul>
+<li>One chat room per project</li>
+<li>Users are connected automatically</li>
+<li>Messages are delivered instantly</li>
+<li>Chat history is <strong>not stored</strong></li>
+<li>Messages disappear when all users leave</li>
+</ul>
+<p>The chat is designed for <strong>quick coordination</strong>, not long-term discussion.</p>
+<hr>
+<h2 id="technology-used"><a class="header" href="#technology-used">Technology Used</a></h2>
+<p>The chat backend is implemented using:</p>
+<ul>
+<li><strong>Go</strong> for the server</li>
+<li><strong>Gorilla WebSocket</strong> for real-time communication</li>
+<li><strong>WebSockets</strong> for low-latency message delivery</li>
+</ul>
+<p>This setup allows fast, reliable message exchange between all collaborators
+in a project.</p>
+<hr>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<h3 id="automatic-connection"><a class="header" href="#automatic-connection">Automatic Connection</a></h3>
+<pre><code>User opens a project
+        │
+        ▼
+Client connects to chat server
+        │
+        ▼
+User joins the project chat room
+        │
+        ▼
+Chat is ready to use instantly
 </code></pre>
-<p><em>this section needs to be populated</em></p>
+<p>No manual “join” action is required.</p>
+<hr>
+<h2 id="sending-messages"><a class="header" href="#sending-messages">Sending Messages</a></h2>
+<pre><code>User types a message
+        │
+        ▼
+Message is sent to the server
+        │
+        ▼
+Server relays message to all users in the project
+        │
+        ▼
+Everyone sees the message instantly
+</code></pre>
+<p>Messages are shared only with users who are currently online in the same
+project(collaborators).</p>
+<hr>
+<h2 id="ephemeral-chat-behavior"><a class="header" href="#ephemeral-chat-behavior">Ephemeral Chat Behavior</a></h2>
+<p>The chat system does <strong>not store messages</strong>.</p>
+<pre><code>All users leave the project
+        │
+        ▼
+Chat room becomes empty
+        │
+        ▼
+All messages are discarded
+</code></pre>
+<p>If a user refreshes the page or reconnects later, the chat starts fresh.</p>
+<hr>
+<h2 id="join-and-leave-indicators"><a class="header" href="#join-and-leave-indicators">Join and Leave Indicators</a></h2>
+<p>Users can see when others join or leave the chat in real time.</p>
+<pre><code>🟢 Alice joined the chat
+🔴 Bob left the chat
+</code></pre>
+<p>This helps collaborators stay aware of who is currently active.</p>
+<hr>
+<h2 id="typical-use-cases"><a class="header" href="#typical-use-cases">Typical Use Cases</a></h2>
+<ul>
+<li>Coordinating edits in real time</li>
+<li>Asking quick questions</li>
+<li>Notifying others about changes</li>
+<li>Live discussion during collaboration</li>
+</ul>
+<p>The chat is intended to <strong>support editing</strong>, not replace structured
+communication tools.</p>
+<hr>
+<h2 id="separation-from-document-editing"><a class="header" href="#separation-from-document-editing">Separation from Document Editing</a></h2>
+<p>The chat system is independent from document editing:</p>
+<ul>
+<li>Document changes are handled by the collaboration engine</li>
+<li>Chat messages are handled by the chat server</li>
+</ul>
+<p>This ensures that chat issues never affect document synchronization.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="system_overview.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="realtime.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="project_structure.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="installation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -219,11 +286,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="system_overview.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="realtime.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="project_structure.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="installation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

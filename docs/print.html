@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-13883ea5.js";
+            window.path_to_searchindex_js = "searchindex-3f990fd1.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-f01b6b22.js"></script>
+        <script src="toc-e42e860c.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -665,6 +665,100 @@ WITH YEJS (CRDT - Conflict-Free Replicated Data Type):
 │                                                 │
 └─────────────────────────────────────────────────┘
 </code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="real-time-in-editor-chat-system"><a class="header" href="#real-time-in-editor-chat-system">Real-Time In-Editor Chat System</a></h1>
+<p>The in-editor chat system allows collaborators working on the same project
+to communicate instantly without leaving the editor. The chat is <strong>session-based</strong>
+and exists only while users are actively connected to the project.</p>
+<p>When a project is opened, the user is automatically connected to the chat
+room associated with that project.</p>
+<hr>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<ul>
+<li>One chat room per project</li>
+<li>Users are connected automatically</li>
+<li>Messages are delivered instantly</li>
+<li>Chat history is <strong>not stored</strong></li>
+<li>Messages disappear when all users leave</li>
+</ul>
+<p>The chat is designed for <strong>quick coordination</strong>, not long-term discussion.</p>
+<hr>
+<h2 id="technology-used"><a class="header" href="#technology-used">Technology Used</a></h2>
+<p>The chat backend is implemented using:</p>
+<ul>
+<li><strong>Go</strong> for the server</li>
+<li><strong>Gorilla WebSocket</strong> for real-time communication</li>
+<li><strong>WebSockets</strong> for low-latency message delivery</li>
+</ul>
+<p>This setup allows fast, reliable message exchange between all collaborators
+in a project.</p>
+<hr>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<h3 id="automatic-connection"><a class="header" href="#automatic-connection">Automatic Connection</a></h3>
+<pre><code>User opens a project
+        │
+        ▼
+Client connects to chat server
+        │
+        ▼
+User joins the project chat room
+        │
+        ▼
+Chat is ready to use instantly
+</code></pre>
+<p>No manual “join” action is required.</p>
+<hr>
+<h2 id="sending-messages"><a class="header" href="#sending-messages">Sending Messages</a></h2>
+<pre><code>User types a message
+        │
+        ▼
+Message is sent to the server
+        │
+        ▼
+Server relays message to all users in the project
+        │
+        ▼
+Everyone sees the message instantly
+</code></pre>
+<p>Messages are shared only with users who are currently online in the same
+project(collaborators).</p>
+<hr>
+<h2 id="ephemeral-chat-behavior"><a class="header" href="#ephemeral-chat-behavior">Ephemeral Chat Behavior</a></h2>
+<p>The chat system does <strong>not store messages</strong>.</p>
+<pre><code>All users leave the project
+        │
+        ▼
+Chat room becomes empty
+        │
+        ▼
+All messages are discarded
+</code></pre>
+<p>If a user refreshes the page or reconnects later, the chat starts fresh.</p>
+<hr>
+<h2 id="join-and-leave-indicators"><a class="header" href="#join-and-leave-indicators">Join and Leave Indicators</a></h2>
+<p>Users can see when others join or leave the chat in real time.</p>
+<pre><code>🟢 Alice joined the chat
+🔴 Bob left the chat
+</code></pre>
+<p>This helps collaborators stay aware of who is currently active.</p>
+<hr>
+<h2 id="typical-use-cases"><a class="header" href="#typical-use-cases">Typical Use Cases</a></h2>
+<ul>
+<li>Coordinating edits in real time</li>
+<li>Asking quick questions</li>
+<li>Notifying others about changes</li>
+<li>Live discussion during collaboration</li>
+</ul>
+<p>The chat is intended to <strong>support editing</strong>, not replace structured
+communication tools.</p>
+<hr>
+<h2 id="separation-from-document-editing"><a class="header" href="#separation-from-document-editing">Separation from Document Editing</a></h2>
+<p>The chat system is independent from document editing:</p>
+<ul>
+<li>Document changes are handled by the collaboration engine</li>
+<li>Chat messages are handled by the chat server</li>
+</ul>
+<p>This ensures that chat issues never affect document synchronization.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <p><em>Currently our project itself hasn’t been hosted so what you’ll find here is a way to use this locally.</em><br>With that being said, let’s start the installation.</p>
