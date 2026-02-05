@@ -178,15 +178,28 @@ const Editor: React.FC = () => {
   };
 
   const handleFilesLoaded = (
-    files: Array<{ id: string; name: string }>,
+    files: Array<{ id: string; name: string; workingFile?: { content: string } }>,
     rootFileId?: string,
   ) => {
     if (!isInitialLoad || files.length === 0) return;
 
-    let defaultFile = files.find((f) => f.name.toLowerCase() === "main.tex");
+    // 1. Get all .tex files
+    const texFiles = files.filter((f) => f.name.toLowerCase().endsWith(".tex"));
+
+    // 2. Find the one that actually has content (prioritize the template over the empty ghost file)
+    let defaultFile = texFiles.find((f) => (f.workingFile?.content?.length ?? 0) > 0);
+
+    // 3. Fallback to rootFileId if content check fails
     if (!defaultFile && rootFileId) {
       defaultFile = files.find((f) => f.id === rootFileId);
     }
+
+    // 4. Fallback to just any .tex file
+    if (!defaultFile && texFiles.length > 0) {
+      defaultFile = texFiles[0];
+    }
+
+    // 5. Absolute fallback
     if (!defaultFile) {
       defaultFile = files[0];
     }
@@ -494,8 +507,9 @@ const Editor: React.FC = () => {
   };
 
   const startCompile = async () => {
-    const file = currentFileRef.current;
+    const file = currentFileRef.current; // The file currently in the editor
     const token = await getToken();
+
     if (!file) {
       setLogs((prev) => [...prev, "[compile] ✗ No file open to compile"]);
       setShowLogs(true);
@@ -513,51 +527,56 @@ const Editor: React.FC = () => {
       setPdfObjectUrl(null);
     }
 
+    // 1. Prepare all project files
     const projectFiles = projectData?.project?.files || [];
-
     const filesPayload = projectFiles.map((f: any) => ({
       name: f.name,
       content: f.workingFile?.content ?? f.content ?? "",
     }));
 
-    if (file) {
-      const currentContent = getCurrentContentRef.current
-        ? getCurrentContentRef.current()
-        : file.content;
-      const idx = filesPayload.findIndex((p) => p.name === file.name);
-      if (idx >= 0) {
-        filesPayload[idx].content = currentContent;
-      } else {
-        filesPayload.push({ name: file.name, content: currentContent });
-      }
+    // 2. IMPORTANT: Get the most recent content from the Editor's buffer
+    // This ensures that even unsaved changes in the current file are compiled.
+    const currentBufferContent = getCurrentContentRef.current
+      ? getCurrentContentRef.current()
+      : file.content;
+
+    // 3. Inject/Update the current file into the payload
+    const idx = filesPayload.findIndex((p) => p.name === file.name);
+    if (idx >= 0) {
+      filesPayload[idx].content = currentBufferContent;
+    } else {
+      filesPayload.push({ name: file.name, content: currentBufferContent });
     }
 
+    // 4. Set the Main File explicitly to the currently active file
+    // If the active file is NOT a .tex file (e.g. a .cls or .bib), 
+    // we fall back to searching for one, but otherwise, the selected file is King.
     let mainFileName = file.name;
-    const hasMainTex = filesPayload.some(
-      (f: { name: string }) => f.name.toLowerCase() === "main.tex",
-    );
-    if (hasMainTex) {
-      mainFileName = "main.tex";
-    } else if (!mainFileName.toLowerCase().endsWith(".tex")) {
-      mainFileName = mainFileName + ".tex";
+    if (!mainFileName.toLowerCase().endsWith(".tex")) {
+      const fallbackTex = filesPayload.find(f => f.name.toLowerCase().endsWith(".tex"));
+      mainFileName = fallbackTex ? fallbackTex.name : file.name;
     }
 
     const payload = {
       files: filesPayload,
-      mainFile: mainFileName,
+      mainFile: mainFileName, // Sent to backend as 'mainFile'
       docId: id,
     };
 
     try {
+      setLogs((prev) => [...prev, `[compile] 🚀 Starting compilation with ${mainFileName}...`]);
+
       const res = await fetch(`${API_BASE_URL}/api/compile-inline`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
+
+      // ... rest of your existing error handling and polling logic ...
 
       const contentType = res.headers.get("content-type");
       const isJson = contentType?.includes("application/json");
@@ -688,9 +707,8 @@ const Editor: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar with toggle button */}
         <div
-          className={`bg-white border-r border-slate-200 transition-all duration-300 relative ${
-            isSidebarOpen ? "w-64" : "w-0"
-          }`}
+          className={`bg-white border-r border-slate-200 transition-all duration-300 relative ${isSidebarOpen ? "w-64" : "w-0"
+            }`}
         >
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -790,21 +808,23 @@ const Editor: React.FC = () => {
                 )}
               </EditorPanel>
             ) : (
-              <PDFPanel
-                pdfObjectUrl={pdfObjectUrl}
-                isCompiling={isCompiling}
-                isPreviewExpanded={isPreviewExpanded}
-                numPages={numPages}
-                pageWidth={pageWidth}
-                zoomLevel={zoomLevel}
-                pdfViewerRef={pdfViewerRef}
-                onToggleExpand={() => setIsPreviewExpanded(!isPreviewExpanded)}
-                onOpenInTab={handleOpenPdfInNewTab}
-                onNumPagesChange={setNumPages}
-                onPageWidthChange={setPageWidth}
-                onZoomChange={setZoomLevel}
-                onBaseWidthChange={setBaseWidth}
-              />
+              <div className="flex flex-col h-full min-h-0 overflow-auto">
+                <PDFPanel
+                  pdfObjectUrl={pdfObjectUrl}
+                  isCompiling={isCompiling}
+                  isPreviewExpanded={isPreviewExpanded}
+                  numPages={numPages}
+                  pageWidth={pageWidth}
+                  zoomLevel={zoomLevel}
+                  pdfViewerRef={pdfViewerRef}
+                  onToggleExpand={() => setIsPreviewExpanded(!isPreviewExpanded)}
+                  onOpenInTab={handleOpenPdfInNewTab}
+                  onNumPagesChange={setNumPages}
+                  onPageWidthChange={setPageWidth}
+                  onZoomChange={setZoomLevel}
+                  onBaseWidthChange={setBaseWidth}
+                />
+              </div>
             )}
           </div>
         )}

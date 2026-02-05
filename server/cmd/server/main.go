@@ -108,7 +108,11 @@ func main() {
 	}
 
 	// Create GraphQL resolver
-	resolver := graph.NewResolver(database)
+resolver := &graph.Resolver{
+	DB:     database,
+	Minio:  minioClient,
+	Bucket: bucketName,
+}
 
 	// upload handler instance
 	uploadHandler := &handlers.UploadHandler{

@@ -1,18 +1,15 @@
-# ---------------------------------------
+# =============================================
 # Core Types
-# ---------------------------------------
+# =============================================
 
 type Project {
   id: ID!
   projectName: String!
   createdAt: String!
   lastEditedAt: String!
-
   ownerId: ID!
   collaboratorIds: [ID!]!
-
   rootFileId: ID!
-
   files: [File!]!
   assets: [Asset!]!
   versions: [Version!]!
@@ -24,21 +21,19 @@ type User {
   createdAt: String!
 }
 
-# ---------------------------------------
+# =============================================
 # Templates
-# ---------------------------------------
+# =============================================
+
 type Template {
   id: ID!
   name: String!
   description: String
   createdAt: String!
-
   authorId: ID!
   isPublic: Boolean!
-
   previewImage: String
   tags: [String!]!
-
   files: [TemplateFile!]!
   assets: [TemplateAsset!]!
 }
@@ -59,9 +54,10 @@ type TemplateAsset {
   size: Int!
   createdAt: String!
 }
-# ---------------------------------------
+
+# =============================================
 # Files
-# ---------------------------------------
+# =============================================
 
 type File {
   id: ID!
@@ -70,11 +66,9 @@ type File {
   type: FileType!
   createdAt: String!
   updatedAt: String!
-
   workingFile: WorkingFile!
 }
 
-# unstructured data | BLOBs
 type Asset {
   id: ID!
   projectId: ID!
@@ -92,7 +86,6 @@ type WorkingFile {
   updatedAt: String!
 }
 
-
 enum FileType {
   TEX
   BIB
@@ -102,9 +95,9 @@ enum FileType {
   OTHER
 }
 
-# ---------------------------------------
+# =============================================
 # Versioning
-# ---------------------------------------
+# =============================================
 
 type Version {
   id: ID!
@@ -123,27 +116,32 @@ type VersionFile {
   content: String!
 }
 
-# ---------------------------------------
+# =============================================
 # Queries
-# ---------------------------------------
+# =============================================
 
 type Query {
   # Projects
   projects: [Project!]!
   project(id: ID!): Project
-
+  
   # Files
   file(id: ID!): File
   workingFile(fileId: ID!): WorkingFile
-
+  
   # Versions
   version(id: ID!): Version
+  
+  # Templates
+  templates: [Template!]!
+  template(id: ID!): Template
+  publicTemplates: [Template!]!
+  myTemplates: [Template!]!
 }
 
-
-# ---------------------------------------
+# =============================================
 # Inputs
-# ---------------------------------------
+# =============================================
 
 input NewProjectInput {
   projectName: String!
@@ -177,43 +175,46 @@ input CreateTemplateInput {
   description: String
   isPublic: Boolean!
   tags: [String!]!
+  previewImage: String
 }
 
-# ---------------------------------------
+# =============================================
 # Mutations
-# ---------------------------------------
+# =============================================
 
 type Mutation {
   # Projects
   createProject(input: NewProjectInput!): Project!
   deleteProject(projectId: ID!): Boolean!
-
-  # Templates
-  createTemplate(input: CreateTemplateInput!): Template!
-
+  
+  # Collaborators
   addCollaborator(projectId: ID!, userId: ID!): Project!
   removeCollaborator(projectId: ID!, userId: ID!): Project!
-
+  
   # Files
   createFile(input: NewFileInput!): File!
   renameFile(fileId: ID!, name: String!): File!
   deleteFile(fileId: ID!): Boolean!
-
+  
   # Working Tree
   updateWorkingFile(input: UpdateWorkingFileInput!): WorkingFile!
-
+  
   # Versioning
   createVersion(input: CreateVersionInput!): Version!
   restoreVersion(versionId: ID!): Project!
-
+  
   # Assets
   createAsset(input: CreateAssetInput!): Asset!
-
+  
+  # Templates
+  createTemplate(projectId: ID!, input: CreateTemplateInput!): Template!
+  useTemplate(templateId: ID!, projectName: String!): Project!
+  deleteTemplate(templateId: ID!): Boolean!
 }
 
-# ---------------------------------------
+# =============================================
 # Subscriptions (optional)
-# ---------------------------------------
+# =============================================
 
 type Subscription {
   workingFileUpdated(projectId: ID!): WorkingFile!

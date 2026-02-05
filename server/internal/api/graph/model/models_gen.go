@@ -25,6 +25,14 @@ type CreateAssetInput struct {
 	Size      int32  `json:"size"`
 }
 
+type CreateTemplateInput struct {
+	Name         string   `json:"name"`
+	Description  *string  `json:"description,omitempty"`
+	IsPublic     bool     `json:"isPublic"`
+	Tags         []string `json:"tags"`
+	PreviewImage *string  `json:"previewImage,omitempty"`
+}
+
 type CreateVersionInput struct {
 	ProjectID string  `json:"projectId"`
 	Message   *string `json:"message,omitempty"`
@@ -70,6 +78,36 @@ type Query struct {
 }
 
 type Subscription struct {
+}
+
+type Template struct {
+	ID           string           `json:"id"`
+	Name         string           `json:"name"`
+	Description  *string          `json:"description,omitempty"`
+	CreatedAt    string           `json:"createdAt"`
+	AuthorID     string           `json:"authorId"`
+	IsPublic     bool             `json:"isPublic"`
+	PreviewImage *string          `json:"previewImage,omitempty"`
+	Tags         []string         `json:"tags"`
+	Files        []*TemplateFile  `json:"files"`
+	Assets       []*TemplateAsset `json:"assets"`
+}
+
+type TemplateAsset struct {
+	ID         string `json:"id"`
+	TemplateID string `json:"templateId"`
+	Path       string `json:"path"`
+	MimeType   string `json:"mimeType"`
+	Size       int32  `json:"size"`
+	CreatedAt  string `json:"createdAt"`
+}
+
+type TemplateFile struct {
+	ID         string   `json:"id"`
+	TemplateID string   `json:"templateId"`
+	Name       string   `json:"name"`
+	Type       FileType `json:"type"`
+	Content    string   `json:"content"`
 }
 
 type UpdateWorkingFileInput struct {

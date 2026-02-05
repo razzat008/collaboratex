@@ -8,12 +8,37 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 	"gollaboratex/server/internal/api/graph/model"
 	"gollaboratex/server/internal/middleware"
+	"path/filepath"
 	"time"
 
+	"github.com/minio/minio-go/v7"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
+
+// WorkingFile is the resolver for the workingFile field.
+func (r *fileResolver) WorkingFile(ctx context.Context, obj *model.File) (*model.WorkingFile, error) {
+	fileOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var workingFile WorkingFileDoc
+	err = r.DB.Collection("working_files").FindOne(ctx, bson.M{"fileId": fileOID}).Decode(&workingFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.WorkingFile{
+		ID:        workingFile.ID.Hex(),
+		FileID:    workingFile.FileID.Hex(),
+		ProjectID: workingFile.ProjectID.Hex(),
+		Content:   workingFile.Content,
+		UpdatedAt: workingFile.UpdatedAt.Format(time.RFC3339),
+	}, nil
+}
 
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewProjectInput) (*model.Project, error) {
@@ -23,23 +48,42 @@ func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewPro
 	}
 
 	now := time.Now()
+	projectID := bson.NewObjectID() // Pre-generate the ID
 
-	// Create root file first
-	rootFile := FileDoc{
-		Name:      "main.tex",
-		Type:      "TEX",
-		CreatedAt: now,
-		UpdatedAt: now,
+	var rootFileID bson.ObjectID
+
+	// For now, if you just want to stop the double file:
+	// Only create "main.tex" if no files are being provided in this flow.
+	createDefaultFile := true
+
+	if createDefaultFile {
+		rootFile := FileDoc{
+			ProjectID: projectID, // Set this immediately
+			Name:      "main.tex",
+			Type:      "TEX",
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+
+		rootFileResult, err := r.DB.Collection("files").InsertOne(ctx, rootFile)
+		if err != nil {
+			return nil, err
+		}
+		rootFileID = rootFileResult.InsertedID.(bson.ObjectID)
+
+		// Create the working file (the empty one)
+		workingFile := WorkingFileDoc{
+			FileID:    rootFileID,
+			ProjectID: projectID,
+			Content:   "",
+			UpdatedAt: now,
+		}
+		r.DB.Collection("working_files").InsertOne(ctx, workingFile)
 	}
 
-	rootFileResult, err := r.DB.Collection("files").InsertOne(ctx, rootFile)
-	if err != nil {
-		return nil, err
-	}
-	rootFileID := rootFileResult.InsertedID.(bson.ObjectID)
-
-	// Create project
+	// Create project using the pre-generated projectID
 	project := ProjectDoc{
+		ID:              projectID,
 		ProjectName:     input.ProjectName,
 		OwnerID:         user.ID,
 		CollaboratorIDs: []bson.ObjectID{},
@@ -48,11 +92,10 @@ func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewPro
 		CreatedAt:       now,
 	}
 
-	projectResult, err := r.DB.Collection("projects").InsertOne(ctx, project)
+	_, err = r.DB.Collection("projects").InsertOne(ctx, project)
 	if err != nil {
 		return nil, err
 	}
-	project.ID = projectResult.InsertedID.(bson.ObjectID)
 
 	// Update root file with projectId
 	r.DB.Collection("files").UpdateOne(ctx,
@@ -134,6 +177,7 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID string) 
 	return true, nil
 }
 
+// AddCollaborator is the resolver for the addCollaborator field.
 func (r *mutationResolver) AddCollaborator(ctx context.Context, projectID string, userID string) (*model.Project, error) {
 	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
@@ -569,28 +613,6 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input model.CreateAs
 	}, nil
 }
 
-// WorkingFile is the resolver for the workingFile field.
-func (r *fileResolver) WorkingFile(ctx context.Context, obj *model.File) (*model.WorkingFile, error) {
-	fileOID, err := toObjectID(obj.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	var workingFile WorkingFileDoc
-	err = r.DB.Collection("working_files").FindOne(ctx, bson.M{"fileId": fileOID}).Decode(&workingFile)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.WorkingFile{
-		ID:        workingFile.ID.Hex(),
-		FileID:    workingFile.FileID.Hex(),
-		ProjectID: workingFile.ProjectID.Hex(),
-		Content:   workingFile.Content,
-		UpdatedAt: workingFile.UpdatedAt.Format(time.RFC3339),
-	}, nil
-}
-
 // Files is the resolver for the files field.
 func (r *projectResolver) Files(ctx context.Context, obj *model.Project) ([]*model.File, error) {
 	projectOID, err := toObjectID(obj.ID)
@@ -686,39 +708,6 @@ func (r *projectResolver) Versions(ctx context.Context, obj *model.Project) ([]*
 	}
 
 	return versions, nil
-}
-
-// Files is the resolver for the files field.
-func (r *versionResolver) Files(ctx context.Context, obj *model.Version) ([]*model.VersionFile, error) {
-	versionOID, err := toObjectID(obj.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	cursor, err := r.DB.Collection("version_files").Find(ctx, bson.M{"versionId": versionOID})
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var versionFileDocs []VersionFileDoc
-	if err = cursor.All(ctx, &versionFileDocs); err != nil {
-		return nil, err
-	}
-
-	files := make([]*model.VersionFile, len(versionFileDocs))
-	for i, vf := range versionFileDocs {
-		files[i] = &model.VersionFile{
-			ID:        vf.ID.Hex(),
-			VersionID: vf.VersionID.Hex(),
-			FileID:    vf.FileID.Hex(),
-			Name:      vf.Name,
-			Type:      stringToFileType(vf.Type),
-			Content:   vf.Content,
-		}
-	}
-
-	return files, nil
 }
 
 // Projects is the resolver for the projects field.
@@ -939,4 +928,539 @@ func (r *subscriptionResolver) ProjectUpdated(ctx context.Context, projectID str
 	}()
 
 	return ch, nil
+}
+
+// Files is the resolver for the files field.
+func (r *versionResolver) Files(ctx context.Context, obj *model.Version) ([]*model.VersionFile, error) {
+	versionOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cursor, err := r.DB.Collection("version_files").Find(ctx, bson.M{"versionId": versionOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var versionFileDocs []VersionFileDoc
+	if err = cursor.All(ctx, &versionFileDocs); err != nil {
+		return nil, err
+	}
+
+	files := make([]*model.VersionFile, len(versionFileDocs))
+	for i, vf := range versionFileDocs {
+		files[i] = &model.VersionFile{
+			ID:        vf.ID.Hex(),
+			VersionID: vf.VersionID.Hex(),
+			FileID:    vf.FileID.Hex(),
+			Name:      vf.Name,
+			Type:      stringToFileType(vf.Type),
+			Content:   vf.Content,
+		}
+	}
+
+	return files, nil
+}
+
+// Templates
+// ============================================================================
+// QUERY RESOLVERS
+// ============================================================================
+
+// Templates is the resolver for the templates field.
+func (r *queryResolver) Templates(ctx context.Context) ([]*model.Template, error) {
+	cursor, err := r.DB.Collection("templates").Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var templateDocs []TemplateDoc
+	if err = cursor.All(ctx, &templateDocs); err != nil {
+		return nil, err
+	}
+
+	templates := make([]*model.Template, len(templateDocs))
+	for i, t := range templateDocs {
+		templates[i] = r.TemplateDocToModel(ctx, &t)
+	}
+
+	return templates, nil
+}
+
+// Template is the resolver for the template field.
+// Template is the resolver for the template field.
+func (r *queryResolver) Template(ctx context.Context, id string) (*model.Template, error) {
+	templateOID, err := toObjectID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid template ID: %w", err)
+	}
+
+	var template TemplateDoc
+	err = r.DB.Collection("templates").FindOne(ctx, bson.M{"_id": templateOID}).Decode(&template)
+	if err != nil {
+		return nil, fmt.Errorf("template not found: %w", err)
+	}
+
+	return r.TemplateDocToModelWithPresignedURL(ctx, &template), nil
+}
+
+func (r *Resolver) TemplateDocToModelWithPresignedURL(ctx context.Context, t *TemplateDoc) *model.Template {
+    var previewImageURL *string
+
+    // 1. Check if the pointer exists AND if the string it points to is not empty
+    if t.PreviewImage != nil && *t.PreviewImage != "" {
+        presignedURL, err := r.Minio.PresignedGetObject(
+            ctx,
+            r.Bucket,
+            *t.PreviewImage,
+            7*24*time.Hour,
+            nil,
+        )
+        if err == nil {
+            urlStr := presignedURL.String()
+            previewImageURL = &urlStr
+        }
+    }
+
+    return &model.Template{
+        ID:           t.ID.Hex(),
+        Name:         t.Name,
+        Description:  t.Description,
+        AuthorID:     t.AuthorID.Hex(),
+        IsPublic:     t.IsPublic,
+        Tags:         t.Tags,
+        PreviewImage: previewImageURL,
+        CreatedAt:    t.CreatedAt.Format(time.RFC3339),
+    }
+}
+
+// PublicTemplates is the resolver for the publicTemplates field.
+func (r *queryResolver) PublicTemplates(ctx context.Context) ([]*model.Template, error) {
+	cursor, err := r.DB.Collection("templates").Find(ctx, bson.M{"isPublic": true})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var templateDocs []TemplateDoc
+	if err = cursor.All(ctx, &templateDocs); err != nil {
+		return nil, err
+	}
+
+	templates := make([]*model.Template, len(templateDocs))
+	for i, t := range templateDocs {
+		templates[i] = r.TemplateDocToModelWithPresignedURL(ctx, &t)
+	}
+
+	return templates, nil
+}
+
+// MyTemplates is the resolver for the myTemplates field.
+func (r *queryResolver) MyTemplates(ctx context.Context) ([]*model.Template, error) {
+	user, err := middleware.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user not authenticated: %w", err)
+	}
+
+	cursor, err := r.DB.Collection("templates").Find(ctx, bson.M{"authorId": user.ID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var templateDocs []TemplateDoc
+	if err = cursor.All(ctx, &templateDocs); err != nil {
+		return nil, err
+	}
+
+	templates := make([]*model.Template, len(templateDocs))
+	for i, t := range templateDocs {
+		templates[i] = r.TemplateDocToModelWithPresignedURL(ctx, &t)
+	}
+
+	return templates, nil
+}
+
+// ============================================================================
+// MUTATION RESOLVERS
+// ============================================================================
+
+// CreateTemplate is the resolver for the createTemplate field.
+// This mutation converts an existing project to a template.
+func (r *mutationResolver) CreateTemplate(ctx context.Context, projectID string, input model.CreateTemplateInput) (*model.Template, error) {
+	user, err := middleware.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user not authenticated: %w", err)
+	}
+
+	projectOID, err := toObjectID(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid project ID: %w", err)
+	}
+
+	// Verify project ownership
+	isOwner, err := r.isProjectOwner(ctx, projectOID, user.ID)
+	if err != nil || !isOwner {
+		return nil, fmt.Errorf("only project owner can create template: %w", err)
+	}
+
+	now := time.Now()
+
+	// Create template document
+	template := TemplateDoc{
+		Name:         input.Name,
+		Description:  input.Description,
+		AuthorID:     user.ID,
+		IsPublic:     input.IsPublic,
+		Tags:         input.Tags,
+		PreviewImage: input.PreviewImage,
+		CreatedAt:    now,
+	}
+
+	result, err := r.DB.Collection("templates").InsertOne(ctx, template)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create template: %w", err)
+	}
+	template.ID = result.InsertedID.(bson.ObjectID)
+
+	// Copy all files from project to template
+	cursor, err := r.DB.Collection("files").Find(ctx, bson.M{"projectId": projectOID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch project files: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var files []FileDoc
+	if err = cursor.All(ctx, &files); err != nil {
+		return nil, fmt.Errorf("failed to decode files: %w", err)
+	}
+
+	// For each file, get its content and create template file
+	for _, file := range files {
+		var workingFile WorkingFileDoc
+		err := r.DB.Collection("working_files").FindOne(ctx, bson.M{"fileId": file.ID}).Decode(&workingFile)
+		if err != nil {
+			continue // Skip if no working file
+		}
+
+		templateFile := TemplateFileDoc{
+			TemplateID: template.ID,
+			Name:       file.Name,
+			Type:       file.Type,
+			Content:    workingFile.Content,
+		}
+
+		_, err = r.DB.Collection("template_files").InsertOne(ctx, templateFile)
+		if err != nil {
+			// Log but continue - don't fail the entire operation
+			fmt.Printf("Warning: failed to create template file %s: %v\n", file.Name, err)
+		}
+	}
+
+	// Copy all assets from project to template
+	assetCursor, err := r.DB.Collection("assets").Find(ctx, bson.M{"projectId": projectOID})
+	if err != nil {
+		// Continue even if assets fetch fails
+		fmt.Printf("Warning: failed to fetch project assets: %v\n", err)
+	} else {
+		defer assetCursor.Close(ctx)
+
+		var assets []AssetDoc
+		if assetCursor.All(ctx, &assets) == nil {
+			for _, asset := range assets {
+				templateAsset := TemplateAssetDoc{
+					TemplateID: template.ID,
+					Path:       asset.Path,
+					MimeType:   asset.MimeType,
+					Size:       asset.Size,
+					CreatedAt:  asset.CreatedAt,
+				}
+				_, err = r.DB.Collection("template_assets").InsertOne(ctx, templateAsset)
+				if err != nil {
+					// Log but continue
+					fmt.Printf("Warning: failed to create template asset %s: %v\n", asset.Path, err)
+				}
+			}
+		}
+	}
+
+	return r.TemplateDocToModel(ctx, &template), nil
+}
+
+// UseTemplate is the resolver for the useTemplate field.
+// This mutation creates a new project by copying template files and assets.
+func (r *mutationResolver) UseTemplate(ctx context.Context, templateID string, projectName string) (*model.Project, error) {
+	user, err := middleware.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user not authenticated: %w", err)
+	}
+
+	templateOID, err := toObjectID(templateID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid template ID: %w", err)
+	}
+
+	// 1. Verify template exists and is accessible
+	var template TemplateDoc
+	err = r.DB.Collection("templates").FindOne(ctx, bson.M{"_id": templateOID}).Decode(&template)
+	if err != nil {
+		return nil, fmt.Errorf("template not found: %w", err)
+	}
+
+	if !template.IsPublic && template.AuthorID != user.ID {
+		return nil, fmt.Errorf("template not accessible: private template")
+	}
+
+	now := time.Now()
+	projectID := bson.NewObjectID() // Generate ID early to link files
+
+	// 2. Fetch all template files
+	cursor, err := r.DB.Collection("template_files").Find(ctx, bson.M{"templateId": templateOID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch template files: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var templateFiles []TemplateFileDoc
+	if err = cursor.All(ctx, &templateFiles); err != nil {
+		return nil, fmt.Errorf("failed to decode template files: %w", err)
+	}
+
+	var rootFileID bson.ObjectID
+	var firstTexFileID bson.ObjectID
+
+	// 3. Create project files and their corresponding working files
+	for _, tf := range templateFiles {
+		newFile := FileDoc{
+			ProjectID: projectID,
+			Name:      tf.Name,
+			Type:      tf.Type,
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+
+		fileResult, err := r.DB.Collection("files").InsertOne(ctx, newFile)
+		if err != nil {
+			fmt.Printf("Warning: failed to create file %s: %v\n", tf.Name, err)
+			continue
+		}
+		newFileID := fileResult.InsertedID.(bson.ObjectID)
+
+		// Logic to determine the Root File:
+		// Priority 1: Exact match "main.tex"
+		// Priority 2: First .tex file found
+		if tf.Name == "main.tex" {
+			rootFileID = newFileID
+		} else if tf.Type == "TEX" && firstTexFileID.IsZero() {
+			firstTexFileID = newFileID
+		}
+
+		// Create working file with the actual template content
+		newWorkingFile := WorkingFileDoc{
+			FileID:    newFileID,
+			ProjectID: projectID,
+			Content:   tf.Content,
+			UpdatedAt: now,
+		}
+		_, err = r.DB.Collection("working_files").InsertOne(ctx, newWorkingFile)
+		if err != nil {
+			fmt.Printf("Warning: failed to create working file content for %s: %v\n", tf.Name, err)
+		}
+	}
+
+	// Fallback: if no "main.tex" was found, use the first .tex file encountered
+	if rootFileID.IsZero() {
+		rootFileID = firstTexFileID
+	}
+
+	// 4. Create the project document
+	project := ProjectDoc{
+		ID:              projectID,
+		ProjectName:     projectName,
+		OwnerID:         user.ID,
+		CollaboratorIDs: []bson.ObjectID{},
+		RootFileID:      rootFileID,
+		LastEditedAt:    now,
+		CreatedAt:       now,
+	}
+
+	_, err = r.DB.Collection("projects").InsertOne(ctx, project)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create project record: %w", err)
+	}
+
+	// 5. Copy template assets to project
+	assetCursor, err := r.DB.Collection("template_assets").Find(ctx, bson.M{"templateId": templateOID})
+	if err == nil {
+		defer assetCursor.Close(ctx)
+		var templateAssets []TemplateAssetDoc
+		if err := assetCursor.All(ctx, &templateAssets); err == nil {
+			for _, ta := range templateAssets {
+				filename := filepath.Base(ta.Path)
+				newPath := fmt.Sprintf("project/%s/assets/%s", project.ID.Hex(), filename)
+
+				// Copy MinIO object
+				err := r.copyMinioObject(ctx, ta.Path, newPath)
+				if err != nil {
+					fmt.Printf("Warning: failed to copy asset file %s: %v\n", ta.Path, err)
+					continue
+				}
+
+				// Insert asset record
+				newAsset := AssetDoc{
+					ProjectID: project.ID,
+					Path:      newPath,
+					MimeType:  ta.MimeType,
+					Size:      ta.Size,
+					CreatedAt: now,
+				}
+				r.DB.Collection("assets").InsertOne(ctx, newAsset)
+			}
+		}
+	}
+
+	// 6. Return the GraphQL model
+	return &model.Project{
+		ID:              project.ID.Hex(),
+		ProjectName:     project.ProjectName,
+		CreatedAt:       project.CreatedAt.Format(time.RFC3339),
+		LastEditedAt:    project.LastEditedAt.Format(time.RFC3339),
+		OwnerID:         project.OwnerID.Hex(),
+		CollaboratorIds: []string{},
+		RootFileID:      project.RootFileID.Hex(),
+	}, nil
+}
+
+func (r *mutationResolver) copyMinioObject(
+	ctx context.Context,
+	srcPath string,
+	dstPath string,
+) error {
+	src := minio.CopySrcOptions{
+		Bucket: r.Bucket,
+		Object: srcPath,
+	}
+
+	dst := minio.CopyDestOptions{
+		Bucket: r.Bucket,
+		Object: dstPath,
+	}
+
+	_, err := r.Minio.CopyObject(ctx, dst, src)
+	return err
+}
+
+// DeleteTemplate is the resolver for the deleteTemplate field.
+func (r *mutationResolver) DeleteTemplate(ctx context.Context, templateID string) (bool, error) {
+	user, err := middleware.GetUserFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("user not authenticated: %w", err)
+	}
+
+	templateOID, err := toObjectID(templateID)
+	if err != nil {
+		return false, fmt.Errorf("invalid template ID: %w", err)
+	}
+
+	// Verify template ownership
+	var template TemplateDoc
+	err = r.DB.Collection("templates").FindOne(ctx, bson.M{"_id": templateOID}).Decode(&template)
+	if err != nil {
+		return false, fmt.Errorf("template not found: %w", err)
+	}
+
+	if template.AuthorID != user.ID {
+		return false, fmt.Errorf("only author can delete template")
+	}
+
+	// Delete template files
+	_, err = r.DB.Collection("template_files").DeleteMany(ctx, bson.M{"templateId": templateOID})
+	if err != nil {
+		return false, fmt.Errorf("failed to delete template files: %w", err)
+	}
+
+	// Delete template assets
+	_, err = r.DB.Collection("template_assets").DeleteMany(ctx, bson.M{"templateId": templateOID})
+	if err != nil {
+		return false, fmt.Errorf("failed to delete template assets: %w", err)
+	}
+
+	// Delete template
+	_, err = r.DB.Collection("templates").DeleteOne(ctx, bson.M{"_id": templateOID})
+	if err != nil {
+		return false, fmt.Errorf("failed to delete template: %w", err)
+	}
+
+	return true, nil
+}
+
+// ============================================================================
+// FIELD RESOLVERS
+// ============================================================================
+
+// Files is the resolver for the files field.
+func (r *templateResolver) Files(ctx context.Context, obj *model.Template) ([]*model.TemplateFile, error) {
+	templateOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid template ID: %w", err)
+	}
+
+	cursor, err := r.DB.Collection("template_files").Find(ctx, bson.M{"templateId": templateOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var templateFileDocs []TemplateFileDoc
+	if err = cursor.All(ctx, &templateFileDocs); err != nil {
+		return nil, err
+	}
+
+	files := make([]*model.TemplateFile, len(templateFileDocs))
+	for i, tf := range templateFileDocs {
+		files[i] = &model.TemplateFile{
+			ID:         tf.ID.Hex(),
+			TemplateID: tf.TemplateID.Hex(),
+			Name:       tf.Name,
+			Type:       stringToFileType(tf.Type),
+			Content:    tf.Content,
+		}
+	}
+
+	return files, nil
+}
+
+// Assets is the resolver for the assets field.
+func (r *templateResolver) Assets(ctx context.Context, obj *model.Template) ([]*model.TemplateAsset, error) {
+	templateOID, err := toObjectID(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid template ID: %w", err)
+	}
+
+	cursor, err := r.DB.Collection("template_assets").Find(ctx, bson.M{"templateId": templateOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var templateAssetDocs []TemplateAssetDoc
+	if err = cursor.All(ctx, &templateAssetDocs); err != nil {
+		return nil, err
+	}
+
+	assets := make([]*model.TemplateAsset, len(templateAssetDocs))
+	for i, ta := range templateAssetDocs {
+		assets[i] = &model.TemplateAsset{
+			ID:         ta.ID.Hex(),
+			TemplateID: ta.TemplateID.Hex(),
+			Path:       ta.Path,
+			MimeType:   ta.MimeType,
+			Size:       int32(ta.Size),
+			CreatedAt:  ta.CreatedAt.Format(time.RFC3339),
+		}
+	}
+
+	return assets, nil
 }

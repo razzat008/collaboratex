@@ -35,18 +35,13 @@ func GinClerkAuthMiddleware(db *mongo.Database) gin.HandlerFunc {
 
 		if token == "" {
 			authHeader := c.GetHeader("Authorization")
-			if authHeader == "" {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
-				c.Abort()
-				return
-			}
-
+			if authHeader != "" {
 			token = strings.TrimPrefix(authHeader, "Bearer ")
-			if token == authHeader {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
-				c.Abort()
-				return
 			}
+		}
+		if token=="" {
+			c.Next()
+			return
 		}
 
 		claims, err := jwt.Verify(c.Request.Context(), &jwt.VerifyParams{

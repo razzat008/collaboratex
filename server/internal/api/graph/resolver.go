@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/minio/minio-go/v7"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -77,17 +78,53 @@ type VersionFileDoc struct {
 }
 
 // =============================================
+// Template Document Models
+// =============================================
+
+type TemplateDoc struct {
+	ID           bson.ObjectID `bson:"_id,omitempty"`
+	Name         string        `bson:"name"`
+	Description  *string       `bson:"description,omitempty"`
+	AuthorID     bson.ObjectID `bson:"authorId"`
+	IsPublic     bool          `bson:"isPublic"`
+	Tags         []string      `bson:"tags"`
+	PreviewImage *string       `bson:"previewImage,omitempty"`
+	CreatedAt    time.Time     `bson:"createdAt"`
+}
+
+type TemplateFileDoc struct {
+	ID         bson.ObjectID `bson:"_id,omitempty"`
+	TemplateID bson.ObjectID `bson:"templateId"`
+	Name       string        `bson:"name"`
+	Type       string        `bson:"type"`
+	Content    string        `bson:"content"`
+}
+
+type TemplateAssetDoc struct {
+	ID         bson.ObjectID `bson:"_id,omitempty"`
+	TemplateID bson.ObjectID `bson:"templateId"`
+	Path       string        `bson:"path"`
+	MimeType   string        `bson:"mimeType"`
+	Size       int           `bson:"size"`
+	CreatedAt  time.Time     `bson:"createdAt"`
+}
+
+// =============================================
 // Resolver struct
 // =============================================
 
 type Resolver struct {
-	DB *mongo.Database
+	DB     *mongo.Database
+	Minio  *minio.Client
+	Bucket string
 }
 
 // NewResolver creates a new resolver with MongoDB database
-func NewResolver(db *mongo.Database) *Resolver {
+func NewResolver(db *mongo.Database, minioClient *minio.Client, bucketName string) *Resolver {
 	return &Resolver{
-		DB: db,
+		DB:     db,
+		Minio:  minioClient,
+		Bucket: bucketName,
 	}
 }
 
@@ -159,10 +196,64 @@ func stringToFileType(s string) model.FileType {
 	}
 }
 
+// templateDocToModel converts a TemplateDoc to a GraphQL Template model
+func (r *Resolver) TemplateDocToModel(ctx context.Context, doc *TemplateDoc) *model.Template {
+	// Fetch template files
+	cursor, _ := r.DB.Collection("template_files").Find(ctx, bson.M{"templateId": doc.ID})
+	var templateFileDocs []TemplateFileDoc
+	if cursor != nil {
+		cursor.All(ctx, &templateFileDocs)
+		cursor.Close(ctx)
+	}
+
+	files := make([]*model.TemplateFile, len(templateFileDocs))
+	for i, tf := range templateFileDocs {
+		files[i] = &model.TemplateFile{
+			ID:         tf.ID.Hex(),
+			TemplateID: tf.TemplateID.Hex(),
+			Name:       tf.Name,
+			Type:       stringToFileType(tf.Type),
+			Content:    tf.Content,
+		}
+	}
+
+	// Fetch template assets
+	assetCursor, _ := r.DB.Collection("template_assets").Find(ctx, bson.M{"templateId": doc.ID})
+	var templateAssetDocs []TemplateAssetDoc
+	if assetCursor != nil {
+		assetCursor.All(ctx, &templateAssetDocs)
+		assetCursor.Close(ctx)
+	}
+
+	assets := make([]*model.TemplateAsset, len(templateAssetDocs))
+	for i, ta := range templateAssetDocs {
+		assets[i] = &model.TemplateAsset{
+			ID:         ta.ID.Hex(),
+			TemplateID: ta.TemplateID.Hex(),
+			Path:       ta.Path,
+			MimeType:   ta.MimeType,
+			Size:       int32(ta.Size),
+			CreatedAt:  ta.CreatedAt.Format(time.RFC3339),
+		}
+	}
+
+	return &model.Template{
+		ID:           doc.ID.Hex(),
+		Name:         doc.Name,
+		Description:  doc.Description,
+		CreatedAt:    doc.CreatedAt.Format(time.RFC3339),
+		AuthorID:     doc.AuthorID.Hex(),
+		IsPublic:     doc.IsPublic,
+		PreviewImage: doc.PreviewImage,
+		Tags:         doc.Tags,
+		Files:        files,
+		Assets:       assets,
+	}
+}
+
 // =============================================
 // Resolver implementations
 // =============================================
-
 // File returns FileResolver implementation.
 func (r *Resolver) File() FileResolver { return &fileResolver{r} }
 
@@ -178,6 +269,9 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
+// Template returns TemplateResolver implementation.
+func (r *Resolver) Template() TemplateResolver { return &templateResolver{r} }
+
 // Version returns VersionResolver implementation.
 func (r *Resolver) Version() VersionResolver { return &versionResolver{r} }
 
@@ -186,4 +280,5 @@ type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+type templateResolver struct{ *Resolver }
 type versionResolver struct{ *Resolver }
