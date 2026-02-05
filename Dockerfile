@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     texlive-latex-base \
     texlive-latex-recommended \
     texlive-latex-extra \
+    texlive-bibtex-extra \
     texlive-fonts-recommended \
     texlive-science \
     latexmk \
