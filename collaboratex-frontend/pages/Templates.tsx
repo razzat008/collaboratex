@@ -356,7 +356,8 @@ const Templates: React.FC = () => {
       await deleteTemplate({ variables: { templateId } });
       refetchAll();
     } catch (err) {
-      alert('Delete failed');
+      const message = err instanceof Error ? err.message : String(err);
+      alert(`Delete failed: ${message}`);
     }
   };
 
