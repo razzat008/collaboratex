@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Search, Upload, Loader2, X, Tag, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
-import { useGetPublicTemplates, useUseTemplate, useDeleteTemplate } from '@/src/graphql/generated';
+import { useGetPublicTemplates, useGetMyTemplates, useUseTemplate, useDeleteTemplate } from '@/src/graphql/generated';
 import BrandLogo from '../components/BrandLogo';
 
 // --- Interfaces ---
@@ -30,6 +30,7 @@ const TemplateUploadDialog: React.FC<TemplateUploadDialogProps> = ({ isOpen, isL
   const [previewImageFile, setPreviewImageFile] = useState<File | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
   const [tagInput, setTagInput] = useState('');
+  const [scopeInput, setScopeInput] = useState<Boolean>('');
   const [error, setError] = useState('');
   const [metadata, setMetadata] = useState<TemplateMetadata>({
     name: '',
@@ -198,6 +199,37 @@ const TemplateUploadDialog: React.FC<TemplateUploadDialogProps> = ({ isOpen, isL
               ))}
             </div>
           </div>
+          {/* Public or Private Scope */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Visibility</label>
+            <div className="flex bg-slate-100 p-1 rounded-lg w-full">
+              <button
+                type="button"
+                onClick={() => setMetadata({ ...metadata, isPublic: true })}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${metadata.isPublic
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+                  }`}
+              >
+                Public (Gallery)
+              </button>
+              <button
+                type="button"
+                onClick={() => setMetadata({ ...metadata, isPublic: false })}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${!metadata.isPublic
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+                  }`}
+              >
+                Private (Only Me)
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500 px-1">
+              {metadata.isPublic
+                ? "Anyone can see and use this template in the gallery."
+                : "Only you will see this template in your dashboard."}
+            </p>
+          </div>
 
           {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
 
@@ -275,9 +307,36 @@ const Templates: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const { data, loading, refetch } = useGetPublicTemplates();
+  const { data: publicData, loading: publicLoading, refetch: refetchPublic } = useGetPublicTemplates();
+  const { data: myData, loading: myLoading, refetch: refetchMy } = useGetMyTemplates();
   const [useTemplateMutation] = useUseTemplate();
   const [deleteTemplate] = useDeleteTemplate();
+
+  const refetchAll = () => {
+    refetchPublic();
+    refetchMy();
+  }
+
+  const allTemplates = React.useMemo(() => {
+    const publicList = publicData?.publicTemplates || [];
+    const myList = myData?.myTemplates || [];
+
+    // Deduplicate in case a public template is also owned by the user
+    const combined = [...publicList];
+    myList.forEach(myT => {
+      if (!combined.find(t => t.id === myT.id)) {
+        combined.push(myT);
+      }
+    });
+
+    return combined.filter(t =>
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (!selectedTag || t.tags.includes(selectedTag))
+    );
+  }, [publicData, myData, searchQuery, selectedTag]);
+
+  const isLoading = publicLoading || myLoading;
+
 
   const handleUseTemplate = async (templateId: string, templateName: string) => {
     if (!isSignedIn) return navigate('/sign-in');
@@ -295,7 +354,7 @@ const Templates: React.FC = () => {
     if (!window.confirm('Delete this template?')) return;
     try {
       await deleteTemplate({ variables: { templateId } });
-      refetch();
+      refetchAll();
     } catch (err) {
       alert('Delete failed');
     }
@@ -320,16 +379,12 @@ const Templates: React.FC = () => {
       });
 
       if (!res.ok) throw new Error('Upload failed');
-      refetch();
+      refetchAll();
     } finally {
       setIsUploading(false);
     }
   };
 
-  const filtered = (data?.publicTemplates || []).filter(t =>
-    (t.name.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (!selectedTag || t.tags.includes(selectedTag))
-  );
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -363,11 +418,11 @@ const Templates: React.FC = () => {
           </div>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-blue-500" size={40} /></div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filtered.map(t => (
+            {allTemplates.map(t => (
               <TemplateCard
                 key={t.id}
                 template={t}
